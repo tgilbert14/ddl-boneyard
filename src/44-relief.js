@@ -1,11 +1,11 @@
 /* BONEYARD PART · 05 · RELIEF
- * technique   scan-processor relief: 96 scanlines of the real Santa Catalina elevation grid, each lifted by height and
+ * technique   scan-processor relief: 64 scanlines of the real Santa Catalina elevation grid, each lifted by height and
  *             drawn as double-stroked phosphor wire; hidden lines removed by filling each line's curtain (the vertical
  *             strip from the wire down to the base) with the field colour, far to near, the Unknown Pleasures way
  * lineage     the Rutt/Etra scan processor (Steve Rutt and Bill Etra, 1973), which bent each video scanline by its
  *             brightness; the CP 1919 pulsar stack (Harold Craft, 1970) that became the Unknown Pleasures cover (1979)
  * original    the scanlines are a real terrain grid (AWS Terrain Tiles, 768 x 768 at about 64 m), block-averaged to
- *             96 lines by 192 samples and held as an object in perspective on the site's one vanishing point; the
+ *             64 lines by 128 samples (112 on phones) and held as an object in perspective on the site's one vanishing point; the
  *             curtains are parallel planes, so sorting them by distance along their normal makes the painter's
  *             order exact from every orbit angle; a low flyover camera (orbit plus a slow swell in height and distance)
  *             that a horizontal drag takes over and that comes back to the three-quarter view from the
@@ -14,8 +14,8 @@
  *             grid's lowest cell, not sea level; block means soften the peaks, so the summit figure comes from the
  *             full-resolution grid, not from the drawn lines
  * deps        none · Canvas 2D · 2026-09
- * budget      1.6 to 2.0 ms/frame on the parts counter @ 1440x900 x1 internal, headless Chromium (2026-09-30); 390x844 at
- *             4x CPU (lite path): 8.0 to 8.4 ms JS, part page 44 to 47 fps; JS time only, not a real-GPU frame time
+ * budget      0.10 ms/host tick in a 1440x900 workbench; 0.11 at 390x844 touch emulation, including skipped redraw ticks;
+ *             one-second local Chromium CPU samples, 2026-09-30, normal CPU rate, 30 Hz drift redraw; excludes GPU and hardware phones
  * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
  * license     MIT, Desert Data Labs LLC
  */
@@ -36,6 +36,9 @@
  *
  * Horizontal drag (a touch drag only once it is clearly sideways, so vertical scrolling is never stolen) turns the
  * range. Let go and it waits, eases to the nearest three-quarter view, rests there, then resumes the slow orbit.
+ * Original survey plinth, corner ticks and a warm scan light make the real terrain read as a dimensional object.
+ * The scan is illustrative light, not a measurement; it sweeps only in Full and holds a designed line in Calm
+ * and Still. Portrait uses a higher camera angle to reveal the surface, without changing terrain heights.
  */
 (() => {
   'use strict';
@@ -57,9 +60,11 @@
     haloWidth: 5, glowWidth: 2.2, coreWidth: 1.1,
     haloAlpha: 0.2, glowAlpha: 0.45, coreAlpha: 1,
     farAlpha: 0.3,       /* alpha of the farthest line relative to the nearest */
-    maxBackingWidth: 760,
-    orbitFps: 30,        /* redraw rate while the camera drifts on its own; drags draw every frame */   /* px; above this the canvas renders smaller and CSS scales it up */
+    maxBackingWidth: 760,/* px; above this the canvas renders smaller and CSS scales it up */
+    orbitFps: 30,        /* redraw rate while the camera drifts on its own; drags draw every frame */
     liteSamples: 112,    /* samples per line when the smaller side is under 600 css px (phones) */
+    scan: 0.72,         /* an illustrative survey light across the real scanlines */
+    base: true,         /* dimensional survey plinth and extent ticks */
   };
   const COMPASS = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'];   /* camera bearing from the centre, yaw 0 = south, +90 = east */
 
@@ -103,7 +108,7 @@
 
     function view() {
       const A = yaw * Math.PI / 180;
-      const E = (params.elevationDeg + params.elevSwing * Math.sin(swell * 0.27)) * Math.PI / 180;
+      const E = (params.elevationDeg + (h > w ? 10 : 0) + params.elevSwing * Math.sin(swell * 0.27)) * Math.PI / 180;
       const D = params.distance + params.distSwing * Math.sin(swell * 0.19 + 1.3);
       const tx = 0, ty = params.lookY, tz = 0;
       const cx = tx + D * Math.cos(E) * Math.sin(A), cy = ty + D * Math.sin(E), cz = tz + D * Math.cos(E) * Math.cos(A);
@@ -119,19 +124,49 @@
       if (!pts) return;
       const T = ctx.tokens, V = view();
       const vpX = ctx.vp.x * w, vpY = ctx.vp.y * h;
-      const f = Math.min(w * 1.7, h * 1.5) * params.fit;
+      let f = Math.min(w * 1.7, h * 1.5) * params.fit;
+      let minX = vpX, maxX = vpX, minY = vpY, maxY = vpY;
       /* project every sample */
       for (let n = 0, m = L * S; n < m; n++) {
         const k = n * 3, dx = pts[k] - V.cx, dy = pts[k + 1] - V.cy, dz = pts[k + 2] - V.cz;
         const zc = dx * V.fx + dy * V.fy + dz * V.fz;
         const xc = dx * V.rx + dz * V.rz, yc = dx * V.ux + dy * V.uy + dz * V.uz;
         scr[n * 2] = vpX + f * xc / zc; scr[n * 2 + 1] = vpY - f * yc / zc;
+        minX = Math.min(minX, scr[n * 2]); maxX = Math.max(maxX, scr[n * 2]);
+        minY = Math.min(minY, scr[n * 2 + 1]); maxY = Math.max(maxY, scr[n * 2 + 1]);
+      }
+      /* Fit the real projected bounds around the shared point, including square workbench previews. */
+      const fit = Math.min(1, (vpX - w * 0.055) / Math.max(1, vpX - minX), (w * 0.945 - vpX) / Math.max(1, maxX - vpX),
+        (vpY - h * 0.1) / Math.max(1, vpY - minY), (h * 0.84 - vpY) / Math.max(1, maxY - vpY));
+      if (fit < 1) {
+        f *= fit;
+        for (let n = 0; n < L * S; n++) { scr[n * 2] = vpX + (scr[n * 2] - vpX) * fit; scr[n * 2 + 1] = vpY + (scr[n * 2 + 1] - vpY) * fit; }
       }
       const base = (x, z) => {
         const dx = x - V.cx, dy = -V.cy, dz = z - V.cz;
         const zc = dx * V.fx + dy * V.fy + dz * V.fz;
         return [vpX + f * (dx * V.rx + dz * V.rz) / zc, vpY - f * (dx * V.ux + dy * V.uy + dz * V.uz) / zc];
       };
+      if (params.base) {
+        const zh = pts[(L - 1) * S * 3 + 2] + 1 / L;
+        const corners = [[-1, -zh], [1, -zh], [1, zh], [-1, zh]].map(([x, z]) => base(x, z));
+        const plate = new Path2D(); corners.forEach((p, i) => i ? plate.lineTo(p[0], p[1]) : plate.moveTo(p[0], p[1])); plate.closePath();
+        g.fillStyle = T.field2; g.globalAlpha = 0.82; g.fill(plate);
+        g.globalAlpha = 0.4; g.strokeStyle = T.phosphorDim; g.lineWidth = px; g.stroke(plate);
+        const gridLines = new Path2D();
+        for (let i = 1; i < 8; i++) {
+          const x = -1 + i / 4, z = -zh + i * zh / 4;
+          const a = base(x, -zh), b = base(x, zh), c = base(-1, z), d = base(1, z);
+          gridLines.moveTo(a[0], a[1]); gridLines.lineTo(b[0], b[1]); gridLines.moveTo(c[0], c[1]); gridLines.lineTo(d[0], d[1]);
+        }
+        g.globalAlpha = 0.12; g.stroke(gridLines);
+        const ticks = new Path2D();
+        for (const [x, z] of [[-1, -zh], [1, -zh], [1, zh], [-1, zh]]) {
+          const a = base(x, z), b = base(x * 0.87, z), c = base(x, z * 0.87);
+          ticks.moveTo(b[0], b[1]); ticks.lineTo(a[0], a[1]); ticks.lineTo(c[0], c[1]);
+        }
+        g.globalAlpha = 0.85; g.strokeStyle = T.amber; g.lineWidth = 1.5 * px; g.stroke(ticks); g.globalAlpha = 1;
+      }
       /* the curtains are the planes z = const; the camera's z decides the painter's order (farthest first) */
       const order = [];
       for (let i = 0; i < L; i++) order.push(i);
@@ -140,6 +175,7 @@
       const dNear = Math.abs(zOf(order[L - 1]) - V.cz), dFar = Math.max(dNear + 1e-3, Math.abs(zOf(order[0]) - V.cz));
       g.lineJoin = 'round'; g.lineCap = 'round';
       const halo = params.haloWidth * px, glow = params.glowWidth * px, core = params.coreWidth * px;
+      const scanRow = (ctx.dial === 'full' ? 0.5 - 0.45 * Math.cos(swell * 0.48 + 1.4) : 0.46) * (L - 1);
       for (let o = 0; o < L; o++) {
         const i = order[o], z = zOf(i), row = i * S * 2;
         const line = new Path2D();
@@ -156,6 +192,11 @@
         g.strokeStyle = T.phosphor; g.lineWidth = halo; g.globalAlpha = a * params.haloAlpha; g.stroke(line);
         if (!lite) { g.lineWidth = glow; g.globalAlpha = a * params.glowAlpha; g.stroke(line); }
         g.strokeStyle = T.phosphorCore; g.lineWidth = core; g.globalAlpha = a * params.coreAlpha; g.stroke(line);
+        const scan = Math.max(0, 1 - Math.abs(i - scanRow) / 2.2) * Math.max(0, Math.min(1, params.scan));
+        if (scan > 0.01) {
+          g.strokeStyle = T.amber; g.globalAlpha = scan * 0.32; g.lineWidth = glow * 2; g.stroke(line);
+          g.strokeStyle = T.amber; g.globalAlpha = scan * 0.95; g.lineWidth = core * 1.1; g.stroke(line);
+        }
       }
       g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
     }

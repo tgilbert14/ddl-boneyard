@@ -11,8 +11,8 @@
  * not         a map for navigation: 64 m cells, an interpretive six-band life-zone framing (boundaries shift with
  *             aspect and have moved upslope), 2x vertical exaggeration by default (named in the readout; v = 1x)
  * deps        none · Canvas 2D · 2026-09
- * budget      2.9 ms/frame @ 384x240 internal (1440x900 backing), desktop Chromium, headless, busy machine (2026-09-29);
- *             177x384 at 390x844 2.0 ms; phone TBD
+ * budget      1.72 ms/tick in a 1440x900 workbench; 1.89 ms/tick at 390x844 touch emulation, 448 px long-side ray buffer;
+ *             one-second local Chromium CPU samples, 2026-09-30, normal CPU rate; excludes GPU, raster and hardware phones
  * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
  * license     MIT, Desert Data Labs LLC · elevation: Mapzen terrain tiles; data from SRTM, NED, and others
  */
@@ -45,7 +45,11 @@
     stillT: 22,          /* the designed still: seconds into the tour (the Labs page's t=22 pose: past the summit, heading for Mount Kimball) */
     idleResume: 8,       /* seconds without input before the tour takes the stick back */
     labels: true,
-    buffer: 384,         /* long side of the internal buffer, pixels */
+    buffer: 448,         /* long side; phone composition uses the same bounded pixel budget */
+    contours: 0.42,      /* luminous accents from actual sampled elevation, not surveyed contour geometry */
+    contourM: 160,       /* metres between illustrative contour accents */
+    survey: 0.24,        /* world-aligned survey lattice, independent of the life-zone colours */
+    haze: 1.1,           /* distance separation, without changing elevation or camera calculations */
   };
 
   const FT = 3.28084, BASE_M = 600, DT = 1 / 60;
@@ -86,7 +90,7 @@
     const g = canvas.getContext('2d', { alpha: false });
     let buf = document.createElement('canvas'), bctx = buf.getContext('2d');   /* the low-res buffer, upscaled pixelated */
     let BW = 0, BH = 0, img = null, px = null, ybuf = null, skyKey = '';
-    let W = 768, H = 768, elev = null, hu = null, colR = null, colG = null, colB = null, ready = false, dead = false;
+    let W = 768, H = 768, elev = null, hu = null, colR = null, colG = null, colB = null, contour = null, ready = false, dead = false;
     let VE = P.ve, mN = mercY(B.north), mS = mercY(B.south);
     const toPx = (lat, lon) => ({ x: (lon - B.west) / (B.east - B.west) * W, z: (mN - mercY(lat)) / (mN - mS) * H });
     let TOUR = [], LM = [], fence = null;
@@ -103,6 +107,10 @@
     const cellIdx = (x, z) => clamp(z | 0, 0, H - 1) * W + clamp(x | 0, 0, W - 1);
     const elevAt = (x, z) => (x < 0 || z < 0 || x >= W || z >= H) ? BASE_M : elev[cellIdx(x, z)];
     const toUnits = (m) => (m - BASE_M) * VE / MPP;
+    function heightAt(x, z) {
+      const xi = clamp(x | 0, 0, W - 2), zi = clamp(z | 0, 0, H - 2), fx = clamp(x - xi, 0, 1), fz = clamp(z - zi, 0, 1), i = zi * W + xi;
+      return (hu[i] * (1 - fx) + hu[i + 1] * fx) * (1 - fz) + (hu[i + W] * (1 - fx) + hu[i + W + 1] * fx) * fz;
+    }
 
     function setBuffer(w, h) {
       if (w === BW && h === BH && img) return;
@@ -110,7 +118,7 @@
     }
     /* colour + height tables, built in row chunks so a phone keeps scrolling while the grid is prepared */
     function build(done) {
-      const n = W * H; hu = new Float32Array(n); colR = new Uint8Array(n); colG = new Uint8Array(n); colB = new Uint8Array(n);
+      const n = W * H; hu = new Float32Array(n); colR = new Uint8Array(n); colG = new Uint8Array(n); colB = new Uint8Array(n); contour = new Uint8Array(n);
       let lx = -0.80, ly = 0.55, lz = 0.28; const ll = Math.hypot(lx, ly, lz); lx /= ll; ly /= ll; lz /= ll;
       const shadeVE = 1.6;
       let z = 0;
@@ -127,13 +135,20 @@
           const eW = elevAt(x - 1, z), eE = elevAt(x + 1, z), eN = elevAt(x, z - 1), eS = elevAt(x, z + 1);
           let nx = -(eE - eW) / (2 * MPP) * shadeVE, nz = -(eS - eN) / (2 * MPP) * shadeVE, ny = 1;
           const nl = Math.hypot(nx, ny, nz); nx /= nl; ny /= nl; nz /= nl;
-          const sh = 0.42 + 0.78 * Math.max(0, nx * lx + ny * ly + nz * lz);
+          const sh = 0.26 + 0.91 * Math.max(0, nx * lx + ny * ly + nz * lz);
           colR[i] = clamp(r * sh, 0, 255); colG[i] = clamp(gg * sh, 0, 255); colB[i] = clamp(b * sh, 0, 255);
         }
-        if (z < H) setTimeout(chunk, 0); else done();
+        if (z < H) setTimeout(chunk, 0); else { rebuildContours(); done(); }
       })();
     }
     const rebuildHeights = () => { for (let i = 0; i < W * H; i++) hu[i] = toUnits(elev[i]); };
+    function rebuildContours() {
+      const interval = clamp(P.contourM, 40, 600);
+      for (let i = 0; i < W * H; i++) {
+        const level = elev[i] / interval;
+        contour[i] = Math.round(Math.max(0, 1 - Math.abs(level - Math.round(level)) * 22) * 255);
+      }
+    }
 
     function reset() {
       const s = toPx(START.lat, START.lon);
@@ -169,14 +184,28 @@
     /* sky: one packed colour per scanline from the tokens, filled row by row (a memset, not a pixel loop) */
     let px32 = null, skyTop = null, skyHz = null, skyRow = null;
     function skyTable(tok) {
-      const key = BH + '|' + tok.field2 + tok.horizonTint;
-      if (key !== skyKey) { skyKey = key; skyTop = BONEYARD_RGB(tok.field2); skyHz = BONEYARD_RGB(tok.horizonTint); skyRow = new Uint32Array(BH); }
+      const key = BH + '|' + tok.field + tok.horizonTint;
+      if (key !== skyKey) { skyKey = key; skyTop = BONEYARD_RGB(tok.field); skyHz = BONEYARD_RGB(tok.horizonTint); skyRow = new Uint32Array(BH); }
       const hy = BH * ctx.vp.y, top = skyTop, hz = skyHz;
       for (let y = 0; y < BH; y++) {
         const t = y < hy ? Math.pow(y / hy, 1.6) : 1;
         skyRow[y] = (255 << 24) | ((top[2] + (hz[2] - top[2]) * t) << 16) | ((top[1] + (hz[1] - top[1]) * t) << 8) | (top[0] + (hz[0] - top[0]) * t);
       }
       for (let y = 0; y < BH; y++) px32.fill(skyRow[y], y * BW, y * BW + BW);
+    }
+    /* Illustrative fixed sky points, not a star catalogue. Bearing follows the real camera yaw. */
+    function skyPoints(view, horizonY) {
+      const ink = BONEYARD_RGB(ctx.tokens.phosphorCore);
+      for (let i = 0; i < 156; i++) {
+        const bearing = ((i * 2.3999632297) % (Math.PI * 2)) - Math.PI;
+        const rel = wrap(bearing - view);
+        if (Math.abs(rel) > P.fov * 0.5) continue;
+        const x = Math.floor((rel / P.fov + 0.5) * BW);
+        const y = Math.floor(horizonY * (0.07 + (((i * 47) % 149) / 149) * 0.71));
+        const a = 0.12 + (i % 5) * 0.075;
+        const q = (y * BW + x) * 4;
+        for (let c = 0; c < 3; c++) px[q + c] += (ink[c] - px[q + c]) * a;
+      }
     }
     function draw() {
       if (!ready || !px) return;
@@ -185,6 +214,7 @@
       const fov = P.fov, far = P.far, horizonY = BH * ctx.vp.y;
       const scale = (BW / fov) * 0.5625 * Math.max(1, Math.min(1.8, (BH / BW) * 0.9));   /* portrait: taller relief, same horizontal fov */
       const view = yaw;
+      skyPoints(view, horizonY);
       /* the sun, low in the west, in the tube's amber */
       const sunRel = wrap(SUN_AZ - view);
       if (Math.abs(sunRel) < fov * 0.5 + 0.2) {
@@ -198,6 +228,7 @@
         }
       }
       const FOG = BONEYARD_RGB(tok.horizonTint), camH = toUnits(altM);
+      const wire = BONEYARD_RGB(tok.phosphor), core = BONEYARD_RGB(tok.phosphorCore);
       const fr = FOG[0], fg = FOG[1], fb = FOG[2];
       for (let col = 0; col < BW; col++) {
         const rel = -fov * 0.5 + fov * ((col + 0.5) / BW), ang = view + rel, cosA = Math.cos(rel);
@@ -207,15 +238,22 @@
           const mx = camX + dx * dist, mz = camZ + dz * dist;
           const inside = mx >= 0 && mz >= 0 && mx < W && mz < H;
           const idx = inside ? ((mz | 0) * W + (mx | 0)) : -1;
-          const hh = inside ? hu[idx] : 0;
+          const hh = inside ? (dist < 100 ? heightAt(mx, mz) : hu[idx]) : 0;
           const sy = ((camH - hh) / (dist * cosA)) * scale + horizonY;
           if (sy < maxY) {
-            const f = dist / far, fog = 1 - Math.min(1, f * f * 1.15);
+            const f = dist / far, fog = Math.exp(-f * f * clamp(P.haze, 0.2, 3) * 2.7);
             let r, gg, b;
             if (inside) { r = colR[idx]; gg = colG[idx]; b = colB[idx]; } else { r = 150; gg = 112; b = 84; }
             r = r * fog + fr * (1 - fog); gg = gg * fog + fg * (1 - fog); b = b * fog + fb * (1 - fog);
             const y0 = sy < 0 ? 0 : sy | 0, y1 = maxY | 0;
             for (let y = y0; y < y1; y++) { const i = (y * BW + col) * 4; px[i] = r; px[i + 1] = gg; px[i + 2] = b; }
+            if (inside && y0 < y1 && y0 < BH) {
+              const near = Math.min(1, 38 / Math.max(1, dist));
+              const lattice = ((mx | 0) % 32 === 0 || (mz | 0) % 32 === 0) ? clamp(P.survey, 0, 0.7) * near : 0;
+              const a = Math.max(contour[idx] / 255 * clamp(P.contours, 0, 0.85), lattice) * fog;
+              const q = (y0 * BW + col) * 4;
+              if (a > 0.01) for (let c = 0; c < 3; c++) px[q + c] += ((lattice > a ? core[c] : wire[c]) - px[q + c]) * a;
+            }
             maxY = sy;
           }
           dist += 0.45 + dist * 0.011;
@@ -235,7 +273,7 @@
       let maxY = BH, dist = 2.5;
       while (dist < stop && maxY > 0) {
         const mx = camX + dx * dist, mz = camZ + dz * dist;
-        const hh = (mx >= 0 && mz >= 0 && mx < W && mz < H) ? hu[(mz | 0) * W + (mx | 0)] : 0;
+        const hh = (mx >= 0 && mz >= 0 && mx < W && mz < H) ? (dist < 100 ? heightAt(mx, mz) : hu[(mz | 0) * W + (mx | 0)]) : 0;
         const sy = ((camH - hh) / (dist * cosA)) * scale + horizonY;
         if (sy < maxY) maxY = sy;
         dist += 0.45 + dist * 0.011;
@@ -324,7 +362,7 @@
       },
       resize(w, h) {
         /* the long side of the buffer is P.buffer pixels (the Labs page's rule): a phone costs what a desktop costs */
-        const aspect = Math.max(1, w) / Math.max(1, h), L = Math.round(P.buffer);
+        const aspect = Math.max(1, w) / Math.max(1, h), L = Math.round(clamp(P.buffer, 240, 640));
         setBuffer(aspect >= 1 ? L : Math.max(160, Math.round(L * aspect)), aspect >= 1 ? Math.max(120, Math.round(L / aspect)) : L);
         cssW = canvas.clientWidth || 0; cssH = canvas.clientHeight || 0;
         if (ready) draw();
@@ -339,15 +377,17 @@
       params(p) {
         const veChanged = p.ve !== P.ve;
         const bufChanged = p.buffer !== P.buffer;
+        const contoursChanged = p.contourM !== P.contourM;
         P = Object.assign({}, PARAMS, p);
         if (bufChanged) { BW = 0; this.resize(canvas.width, canvas.height); }
         if (veChanged) { VE = clamp(Math.round(P.ve), 1, 3); if (ready) rebuildHeights(); }
+        if (contoursChanged && ready) rebuildContours();
         if (ready) draw();
       },
       destroy() {
         dead = true; ready = false;
         for (const el of labelEls) el.remove();
-        elev = hu = colR = colG = colB = null; img = px = px32 = ybuf = skyRow = null; buf = bctx = null;
+        elev = hu = colR = colG = colB = contour = null; img = px = px32 = ybuf = skyRow = null; buf = bctx = null;
       },
     };
   }

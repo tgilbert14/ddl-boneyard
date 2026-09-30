@@ -1,0 +1,71 @@
+{
+  "passed": true,
+  "results": [
+    {
+      "slug": "jump",
+      "width": 1440
+    },
+    {
+      "slug": "gate",
+      "width": 1440
+    },
+    {
+      "slug": "range",
+      "width": 1440
+    },
+    {
+      "slug": "wash",
+      "width": 1440
+    },
+    {
+      "slug": "relief",
+      "width": 1440
+    },
+    {
+      "slug": "terminator",
+      "width": 1440
+    },
+    {
+      "slug": "scope",
+      "width": 1440
+    },
+    {
+      "slug": "mark",
+      "width": 1440
+    },
+    {
+      "slug": "jump",
+      "width": 390
+    },
+    {
+      "slug": "gate",
+      "width": 390
+    },
+    {
+      "slug": "range",
+      "width": 390
+    },
+    {
+      "slug": "wash",
+      "width": 390
+    },
+    {
+      "slug": "relief",
+      "width": 390
+    },
+    {
+      "slug": "terminator",
+      "width": 390
+    },
+    {
+      "slug": "scope",
+      "width": 390
+    },
+    {
+      "slug": "mark",
+      "width": 390
+    }
+  ],
+  "errors": [],
+  "conditions": "Local Chromium, desktop and portrait touch emulation, main-scene composition and keyboard-operable Still rain integration; no hardware certification"
+}

@@ -1,18 +1,18 @@
 /* BONEYARD PART · 08 · MARK
- * technique   glenz vectors: a low-poly solid whose faces are translucent, painter-sorted by depth and filled
- *             additively, so the back faces show through the front ones and pile up as light; edges stroked on top
+ * technique   a gimballed glenz-vector insignia: a translucent low-poly solid painter-sorted by depth, with distinct
+ *             front, back and side materials, held inside a segmented observatory aperture; edges are stroked on top
  * lineage     Amiga demoscene glenz vectors (about 1989 to 1990), with the demo finale's sunburst behind the object
  * original    the solid is the Desert Data Labs chip mark from ddl-cactus-mark.svg: the rounded square as a thick
  *             glass slab, with the saguaro circuit (trunk, the two arms that close into a diamond, the node, the
  *             ground rail) extruded off its face; 57 faces; projected toward the shared vanishing point. On switch-on
  *             every face flies out of the vanishing point and locks into the chip in under a second (one amber lock
  *             ring, once); then it sways face-on (never edge-on), leans toward the pointer, dollies slowly in, and a
- *             specular band sweeps the glass every few seconds with the front edges running amber under it; drag to
- *             turn it, and it eases back to its sway
+ *             specular band sweeps the glass every few seconds with the front edges running amber under it; the
+ *             aperture counter-turns, and a drag or button turn pulls brief geometric edge echoes behind the solid
  * not         a textured logo render, a physics toy, a Boing ball. No lighting model beyond facing, no text.
  * deps        none · Canvas 2D · 2026-09
- * budget      0.39 ms/frame @ 1440x900 x1 internal, 1.96 ms at 4x CPU; 390x844 at 4x CPU 1.82 ms; desktop Chromium on a
- *             real GPU (RX 5600M, D3D11), harness counter (2026-09-30); ride 59 to 60 fps incl. the arrival; phone device TBD
+ * budget      0.54 ms/frame active drag @ 1440x900 internal; 0.73 ms/frame @ 390x844; fourfold CPU slowdown,
+ *             local Chromium parts harness (2026-09-30); phone hardware TBD
  * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
  * license     MIT, Desert Data Labs LLC
  */
@@ -28,11 +28,11 @@
  * face lands, one amber ring leaves the chip. After that the motion is a sway, not a spin: yaw is amp * sin(phase)
  * about the face-on pose plus a lean toward the pointer, so the chip never turns edge-on.
  *
- * Each frame the faces are sorted far to near by mean depth and filled with 'lighter' compositing at a low alpha,
- * so wherever faces overlap the light adds up. Behind the chip a slow sunburst turns on the vanishing point and
- * rings recede into it. Every few seconds a specular band crosses the chip: a screen-space linear gradient filled
- * inside the union of the lit faces (glass catching a light), and the same band, in amber, stroked over the front
- * edges. still() draws the finished 30 degree pose with the band held a third of the way across.
+ * Each frame the faces are sorted far to near by mean depth. Back caps are dim, side facets gather edge light, and
+ * front faces use one diagonal glass gradient before the familiar additive glenz pass. Behind the chip, a segmented
+ * octagonal aperture is tethered to the shared vanishing point and turns slightly against the solid. Every few
+ * seconds a specular band crosses the lit faces. Visitor turns add short projected outline echoes and an amber
+ * commutation arc around the aperture, then settle cleanly. still() holds the finished 30 degree composition.
  */
 (() => {
   'use strict';
@@ -60,9 +60,22 @@
     rays: 20,            /* sunburst wedges on the vanishing point */
     rayAlpha: 0.075,
     rings: 3,            /* rings receding into the vanishing point */
+    aperture: 1.42,      /* segmented gimbal radius in chip radii */
+    apertureAlpha: 0.3,
+    turnEchoes: 3,
+    turnDecay: 0.48,
     settle: 1.4,         /* seconds for a flicked spin to ease back */
     stillYaw: 30,        /* degrees */
   };
+
+  function slabPolygon() {
+    const half = 42.5, r = 22, slab = [];
+    const corners = [[half - r, half - r, 0], [-(half - r), half - r, 0.5], [-(half - r), -(half - r), 1], [half - r, -(half - r), 1.5]];
+    for (const [cx, cy, q] of corners) for (let k = 0; k <= 3; k++) {
+      const a = (q + k / 6) * Math.PI; slab.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
+    }
+    return slab;
+  }
 
   /* ---------- geometry, built once in SVG units ---------- */
   function build(P) {
@@ -72,18 +85,16 @@
     /* extrude a 2-D polygon between z0 and z1; bottom cap optional; smooth = no seam strokes on the sides */
     function prism(poly, z0, z1, kind, opts) {
       const pts = ccw(poly), n = pts.length, o = opts || {};
-      faces.push({ v: pts.map((p) => [p[0], p[1], z1]), kind, edges: true });
-      if (o.bottom) faces.push({ v: pts.map((p) => [p[0], p[1], z0]).reverse(), kind, edges: true });
+      faces.push({ v: pts.map((p) => [p[0], p[1], z1]), kind, surface: 'front', edges: true });
+      if (o.bottom) faces.push({ v: pts.map((p) => [p[0], p[1], z0]).reverse(), kind, surface: 'back', edges: true });
       for (let i = 0; i < n; i++) {
         const a = pts[i], b = pts[(i + 1) % n];
-        faces.push({ v: [[a[0], a[1], z0], [b[0], b[1], z0], [b[0], b[1], z1], [a[0], a[1], z1]], kind, edges: !o.smooth });
+        faces.push({ v: [[a[0], a[1], z0], [b[0], b[1], z0], [b[0], b[1], z1], [a[0], a[1], z1]], kind, surface: 'side', edges: !o.smooth });
       }
     }
     const S = (x, y) => [x - 48, 48 - y];                 /* SVG -> model, y up */
     /* the slab: rect 5.5..90.5, rx 22, three segments per corner */
-    const half = 42.5, r = 22, slab = [];
-    const corners = [[half - r, half - r, 0], [-(half - r), half - r, 0.5], [-(half - r), -(half - r), 1], [half - r, -(half - r), 1.5]];
-    for (const [cx, cy, q] of corners) for (let k = 0; k <= 3; k++) { const a = (q + k / 6) * Math.PI; slab.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); }
+    const slab = slabPolygon();
     prism(slab, -P.slab, P.slab, 'slab', { bottom: true, smooth: true });
     /* a stroke of the glyph: a box of width wd from A to B, square-capped by cap units */
     const bar = (A, B, wd, cap) => {
@@ -113,9 +124,10 @@
     let w = canvas.width, h = canvas.height, px = 1;
     let faces = build(params), yaw = params.stillYaw * Math.PI / 180, pitch = params.pitch;
     let ph = Math.asin(Math.min(1, params.stillYaw / params.swayDeg)), off = 0, offVel = 0, leanX = 0, leanY = 0;
+    let turnPulse = 0, turnDir = 1;
     let tOn = 1e9, rayRot = 0.12, sweepU = 0.34, sweepA = 0.7, still = true, calm = false;
     let drag = null, lastText = '', curText = '', sentAt = -1e9, flushT = 0, dead = false;   /* sentAt: a still drawn in the first 150 ms of page life must still report */
-    const out = [];
+    const out = [], slabPoly = slabPolygon();
 
     function draw() {
       const T = ctx.tokens, TAU = Math.PI * 2;
@@ -129,6 +141,18 @@
       const spinIn = (1 - ease(fly)) * Math.PI * 0.9;                    /* the solid unwinds a half turn as it lands */
       const cyw = Math.cos(yaw - spinIn), syw = Math.sin(yaw - spinIn), cp = Math.cos(pitch), sp = Math.sin(pitch);
       const oy = -h * (w > h ? params.drop : 0.04) * 42.5 / R;          /* below the eye line, in camera space */
+      const gy = cy - oy * R / 42.5;
+      const projectSlab = (ang, pit, z) => {
+        const p = new Path2D(), ca = Math.cos(ang), sa = Math.sin(ang), cpi = Math.cos(pit), spi = Math.sin(pit);
+        for (let i = 0; i < slabPoly.length; i++) {
+          const x = slabPoly[i][0], y = slabPoly[i][1];
+          const x1 = x * ca + z * sa, z1 = -x * sa + z * ca;
+          const y2 = y * cpi + z1 * spi + oy, z2 = -y * spi + z1 * cpi;
+          const k = f / (D - z2), X = cx + x1 * k, Y = cy - y2 * k;
+          if (i) p.lineTo(X, Y); else p.moveTo(X, Y);
+        }
+        p.closePath(); return p;
+      };
       out.length = 0;
       let away = 0;
       for (const fc of faces) {
@@ -152,14 +176,15 @@
         const nl = Math.hypot(nx, ny, nz) || 1, vl = Math.hypot(vx, vy, vz) || 1;
         const facing = (nx * vx + ny * vy + nz * vz) / (nl * vl);
         if (facing <= 0) away++;
-        out.push({ sx, sy, z: zs / n, facing, kind: fc.kind, edges: fc.edges, u });
+        out.push({ sx, sy, z: zs / n, facing, kind: fc.kind, surface: fc.surface, edges: fc.edges, u });
       }
       out.sort((a, b) => a.z - b.z);                                     /* painter: far first */
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
       g.clearRect(0, 0, w, h); g.fillStyle = T.field; g.fillRect(0, 0, w, h);
       g.globalCompositeOperation = 'lighter';
-      const heat = Math.pow(Math.max(0, cyw * cp), 4) * params.amber * fly;
+      const intensity = calm ? 0.58 : 1;
+      const heat = Math.pow(Math.max(0, cyw * cp), 4) * params.amber * fly * intensity;
       const reach = Math.hypot(Math.max(cx, w - cx), Math.max(cy, h - cy));
       /* the finale backdrop: a slow sunburst on the vanishing point, and rings receding into it */
       const bloom = still ? 1 : ease(clamp01(tOn / (arrT * 1.4)));
@@ -170,8 +195,8 @@
           rays.moveTo(cx, cy); rays.arc(cx, cy, reach, a - wedge / 2, a + wedge / 2); rays.closePath();
         }
         const rg = g.createRadialGradient(cx, cy, R * 0.05, cx, cy, reach);
-        rg.addColorStop(0, ctx.rgba(T.phosphor, params.rayAlpha * 2.2 * bloom));
-        rg.addColorStop(0.35, ctx.rgba(T.phosphor, params.rayAlpha * bloom));
+        rg.addColorStop(0, ctx.rgba(T.phosphor, params.rayAlpha * 2.2 * bloom * intensity));
+        rg.addColorStop(0.35, ctx.rgba(T.phosphor, params.rayAlpha * bloom * intensity));
         rg.addColorStop(1, ctx.rgba(T.phosphor, 0));
         g.fillStyle = rg; g.fill(rays);
       }
@@ -181,22 +206,61 @@
         for (let i = 0; i < n; i++) {
           const q = (cyc + i / n) % 1, depth = 1 - q;                     /* q: 0 near (large), 1 at the vanishing point */
           const rr = R * 0.1 + reach * 1.1 * depth * depth;
-          g.globalAlpha = 0.16 * bloom * Math.sin(Math.PI * q);
+          g.globalAlpha = 0.16 * bloom * intensity * Math.sin(Math.PI * q);
           g.beginPath(); g.arc(cx, cy, rr, 0, TAU); g.stroke();
         }
         g.globalAlpha = 1;
       }
+      /* A segmented observatory aperture surrounds the keepsake. Its rear half is drawn now and its near half
+         after the solid, so the mark sits physically inside it. The whole mount counter-turns against yaw. */
+      const apR = Math.min(R * params.aperture, w * 0.47, h * 0.46), apY = Math.min(apR * 0.76, h * 0.44);
+      const apA = rayRot * 0.34 - (yaw - spinIn) * 0.18;
+      const backGimbal = new Path2D(), frontGimbal = new Path2D(), rearNodes = [], frontNodes = [];
+      for (let i = 0; i < 16; i++) {
+        const base = apA + i / 16 * TAU, a0 = base + 0.035, a1 = base + TAU / 16 - 0.055;
+        const path = Math.sin((a0 + a1) / 2) < 0 ? backGimbal : frontGimbal;
+        path.ellipse(cx, gy, apR, apY, 0, a0, a1);
+      }
+      for (let i = 0; i < 8; i++) {
+        const a = apA + (i + 0.5) / 8 * TAU, x = cx + Math.cos(a) * apR, y = gy + Math.sin(a) * apY;
+        (Math.sin(a) < 0 ? rearNodes : frontNodes).push([x, y]);
+      }
+      const tethers = new Path2D();
+      for (const a of [apA + Math.PI * 1.18, apA + Math.PI * 1.82]) {
+        tethers.moveTo(cx, cy); tethers.lineTo(cx + Math.cos(a) * apR, gy + Math.sin(a) * apY);
+      }
+      g.strokeStyle = T.phosphorDim || T.phosphor; g.lineWidth = px; g.globalAlpha = params.apertureAlpha * 0.32 * bloom * intensity; g.stroke(tethers);
+      g.strokeStyle = T.phosphor; g.lineWidth = 8 * px; g.globalAlpha = params.apertureAlpha * 0.09 * bloom * intensity; g.stroke(backGimbal);
+      g.strokeStyle = T.phosphorDim || T.phosphor; g.lineWidth = 1.2 * px; g.globalAlpha = params.apertureAlpha * 0.72 * bloom * intensity; g.stroke(backGimbal);
+      g.fillStyle = T.phosphorDim || T.phosphor;
+      for (const n of rearNodes) { g.globalAlpha = params.apertureAlpha * 0.65 * bloom * intensity; g.beginPath(); g.arc(n[0], n[1], 2.5 * px, 0, TAU); g.fill(); }
       /* the chip's own light on the field behind it: phosphor, warming toward amber as the face squares up */
-      const gy = cy - oy * R / 42.5, gl = g.createRadialGradient(cx, gy, R * 0.1, cx, gy, R * 1.5);
-      gl.addColorStop(0, ctx.rgba(T.phosphor, params.backGlow * fly * (1 - 0.5 * heat)));
+      const gl = g.createRadialGradient(cx, gy, R * 0.1, cx, gy, R * 1.5);
+      gl.addColorStop(0, ctx.rgba(T.phosphor, params.backGlow * fly * intensity * (1 - 0.5 * heat)));
       gl.addColorStop(1, ctx.rgba(T.phosphor, 0));
       g.fillStyle = gl; g.fillRect(0, 0, w, h);
       if (heat > 0.01 && T.amber) {
         const ga = g.createRadialGradient(cx, gy, R * 0.1, cx, gy, R * 1.3);
-        ga.addColorStop(0, ctx.rgba(T.amber, params.backGlow * 0.6 * heat)); ga.addColorStop(1, ctx.rgba(T.amber, 0));
+        ga.addColorStop(0, ctx.rgba(T.amber, params.backGlow * 0.6 * heat * intensity)); ga.addColorStop(1, ctx.rgba(T.amber, 0));
         g.fillStyle = ga; g.fillRect(0, 0, w, h);
       }
-      const front = new Path2D(), back = new Path2D(), lit = new Path2D();
+      const echoK = turnPulse * fly * intensity, echoes = Math.max(0, Math.round(params.turnEchoes));
+      if (echoK > 0.01 && echoes) {
+        g.globalCompositeOperation = 'lighter'; g.lineJoin = 'round';
+        for (let i = echoes; i >= 1; i--) {
+          const q = i / echoes, ep = projectSlab(yaw - spinIn - turnDir * q * (0.08 + 0.13 * turnPulse), pitch, -params.slab);
+          g.strokeStyle = i === 1 && T.amber ? T.amber : T.phosphor;
+          g.globalAlpha = echoK * (1 - q * 0.55) * 0.08; g.lineWidth = (9 - q * 3) * px; g.stroke(ep);
+          g.globalAlpha = echoK * (1 - q * 0.62) * 0.42; g.lineWidth = (1.35 - q * 0.35) * px; g.stroke(ep);
+        }
+      }
+      const front = new Path2D(), back = new Path2D(), lit = new Path2D(), slabFront = new Path2D(), glyphFront = new Path2D();
+      const glassFace = g.createLinearGradient(cx - R, gy - R, cx + R, gy + R);
+      glassFace.addColorStop(0, ctx.rgba(T.phosphorCore, 0.2)); glassFace.addColorStop(0.38, ctx.rgba(T.phosphor, 0.06));
+      glassFace.addColorStop(0.72, ctx.rgba(T.field2 || T.field, 0.36)); glassFace.addColorStop(1, ctx.rgba(T.phosphor, 0.13));
+      const glyphFace = g.createLinearGradient(cx - R * 0.5, gy - R, cx + R * 0.45, gy + R);
+      glyphFace.addColorStop(0, ctx.rgba(T.phosphorCore, 0.95)); glyphFace.addColorStop(0.62, ctx.rgba(T.phosphor, 0.72));
+      glyphFace.addColorStop(1, ctx.rgba(T.amber || T.phosphorCore, 0.76));
       for (const o of out) {
         const p = new Path2D();
         p.moveTo(o.sx[0], o.sy[0]);
@@ -204,20 +268,35 @@
         p.closePath();
         const isLit = o.facing > 0;
         const base = o.kind === 'slab' ? (isLit ? params.frontAlpha : params.backAlpha) : (isLit ? params.glyphAlpha : params.backAlpha);
-        g.globalAlpha = base * (0.45 + 0.55 * Math.abs(o.facing)) * (0.35 + 0.65 * o.u);
-        g.fillStyle = isLit ? (o.kind === 'slab' ? T.phosphor : T.phosphorCore) : (T.phosphorDim || T.phosphor);
+        const surfaceK = o.surface === 'front' ? 1 : o.surface === 'side' ? 0.72 : 0.45;
+        g.globalCompositeOperation = 'source-over';
+        g.globalAlpha = base * surfaceK * (0.45 + 0.55 * Math.abs(o.facing)) * (0.35 + 0.65 * o.u);
+        if (!isLit || o.surface === 'back') g.fillStyle = T.phosphorDim || T.phosphor;
+        else if (o.kind === 'slab' && o.surface === 'front') g.fillStyle = glassFace;
+        else if (o.surface === 'front') g.fillStyle = glyphFace;
+        else g.fillStyle = heat > 0.2 && T.amber ? T.amber : T.phosphor;
         g.fill(p);
+        if (isLit && o.surface !== 'back') {
+          g.globalCompositeOperation = 'lighter'; g.fillStyle = o.kind === 'slab' ? T.phosphor : T.phosphorCore;
+          g.globalAlpha = base * 0.32 * Math.max(0.2, o.facing) * o.u; g.fill(p);
+        }
         if (isLit) lit.addPath(p);
+        if (isLit && o.surface === 'front' && o.kind === 'slab') slabFront.addPath(p);
+        if (isLit && o.surface === 'front' && o.kind !== 'slab') glyphFront.addPath(p);
         if (o.edges) (isLit ? front : back).addPath(p);
       }
+      g.globalCompositeOperation = 'lighter';
       g.lineJoin = 'round';
       g.lineWidth = params.edgeWidth * px;
-      g.strokeStyle = T.phosphorDim || T.phosphor; g.globalAlpha = params.edgeBack; g.stroke(back);
+      g.strokeStyle = T.phosphorDim || T.phosphor; g.globalAlpha = params.edgeBack * 0.9; g.setLineDash([2 * px, 6 * px]); g.stroke(back); g.setLineDash([]);
       g.lineWidth = params.glowWidth * px; g.strokeStyle = T.phosphor; g.globalAlpha = params.glowAlpha * (1 - 0.8 * heat); g.stroke(front);
       if (heat > 0.01 && T.amber) { g.strokeStyle = T.amber; g.globalAlpha = heat * 0.45; g.stroke(front); }
       g.lineWidth = params.edgeWidth * px;
       g.strokeStyle = T.phosphorCore; g.globalAlpha = params.edgeFront * (1 - 0.85 * heat); g.stroke(front);
       if (heat > 0.01 && T.amber) { g.strokeStyle = T.amber; g.globalAlpha = heat; g.stroke(front); }
+      /* Separate front-plane contours keep the glass slab and raised circuit readable at oblique poses. */
+      g.lineWidth = 1.05 * px; g.strokeStyle = T.phosphor; g.globalAlpha = 0.48 * fly; g.stroke(slabFront);
+      g.lineWidth = 1.25 * px; g.strokeStyle = T.phosphorCore; g.globalAlpha = 0.82 * fly; g.stroke(glyphFront);
       /* the specular sweep: a diagonal band across the chip, filled inside the lit glass, amber on the edges under it */
       if (sweepA > 0.01) {
         const span = R * 1.5, bx = cx + (sweepU * 2 - 1) * span, by = gy + (sweepU * 2 - 1) * span * 0.35;
@@ -241,6 +320,23 @@
         g.beginPath(); g.arc(cx, gy, R * (1.05 + 1.1 * e), 0, TAU); g.stroke();
         g.globalAlpha = 0.5 * (1 - lockU); g.lineWidth = params.edgeWidth * 2 * px; g.stroke(front);
       }
+      /* The near half of the aperture completes the depth sandwich. A user turn sends one directional
+         commutation arc through it, matching the outline echoes behind the solid. */
+      g.globalCompositeOperation = 'lighter';
+      g.strokeStyle = T.phosphor; g.globalAlpha = params.apertureAlpha * 0.14 * bloom * intensity; g.lineWidth = 9 * px; g.stroke(frontGimbal);
+      g.strokeStyle = T.phosphorCore; g.globalAlpha = params.apertureAlpha * bloom * intensity; g.lineWidth = 1.35 * px; g.stroke(frontGimbal);
+      g.fillStyle = T.phosphorCore;
+      for (const n of frontNodes) {
+        g.globalAlpha = params.apertureAlpha * bloom * intensity; g.beginPath(); g.arc(n[0], n[1], 2.8 * px, 0, TAU); g.fill();
+        g.strokeStyle = T.phosphor; g.globalAlpha *= 0.5; g.lineWidth = 5 * px; g.stroke();
+      }
+      if (turnPulse > 0.01 && T.amber) {
+        const comm = new Path2D(), span = 0.5 + turnPulse * 1.05;
+        const start = apA + (turnDir > 0 ? -0.3 : Math.PI + 0.3);
+        comm.ellipse(cx, gy, apR * 1.025, apY * 1.025, 0, start, start + turnDir * span, turnDir < 0);
+        g.strokeStyle = T.amber; g.globalAlpha = turnPulse * 0.13 * intensity; g.lineWidth = 12 * px; g.stroke(comm);
+        g.globalAlpha = turnPulse * 0.92 * intensity; g.lineWidth = 1.8 * px; g.stroke(comm);
+      }
       g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
       const deg = ((((yaw - spinIn) * 180 / Math.PI) + 180) % 360 + 360) % 360 - 180;   /* signed: 0 is face-on */
       const text = `yaw ${Math.round(deg)}° · ${faces.length} faces · ${away} facing away`;
@@ -252,9 +348,10 @@
     return {
       tick(dt, t, progress, pointer) {
         calm = ctx.dial === 'calm'; still = false;
-        if (t < tOn) { off = 0; offVel = 0; ph = -params.spin * (calm ? 0.5 : 1) * (params.arrive * (calm ? 1.5 : 1) - t); }   /* a fresh switch-on: arrive again, and land face-on */
+        if (t < tOn) { off = 0; offVel = 0; turnPulse = 0; ph = -params.spin * (calm ? 0.5 : 1) * (params.arrive * (calm ? 1.5 : 1) - t); }   /* a fresh switch-on: arrive again, and land face-on */
         tOn = t;
         const cssW = Math.max(1, w / px), TAU = Math.PI * 2;
+        turnPulse *= Math.exp(-dt / Math.max(0.08, params.turnDecay));
         ph += params.spin * (calm ? 0.5 : 1) * dt;
         if (ph > TAU * 64) ph -= TAU * 64;
         rayRot = (rayRot + dt * (calm ? 0.03 : 0.07)) % TAU;
@@ -272,6 +369,7 @@
             const d = (pointer.x - drag.last) / cssW * Math.PI * 1.6;
             drag.last = pointer.x;
             off += d;
+            if (Math.abs(d) > 0.0001) { turnDir = Math.sign(d); turnPulse = Math.min(1, turnPulse + Math.abs(d) * 4.2); }
             const v = dt > 0 ? d / dt : 0;
             offVel += (v - offVel) * (1 - Math.exp(-dt / 0.06));
           }
@@ -297,14 +395,18 @@
       resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); },
       still() {
         still = true; tOn = 1e9; calm = false;
-        yaw = params.stillYaw * Math.PI / 180; pitch = params.pitch; off = 0; offVel = 0; leanX = 0; leanY = 0;
+        yaw = params.stillYaw * Math.PI / 180; pitch = params.pitch; off = 0; offVel = 0; turnPulse = 0; leanX = 0; leanY = 0;
         ph = Math.asin(Math.max(-1, Math.min(1, params.stillYaw / params.swayDeg)));
         rayRot = 0.12; sweepU = 0.34; sweepA = 0.7;
         draw();
         /* the host throttles readouts on the leading edge; one trailing emit makes sure the Still line lands */
         clearTimeout(flushT); flushT = setTimeout(() => { if (!dead && curText) { lastText = curText; ctx.readout('mark', curText); } }, 400);
       },
-      turn(degrees) { const delta = degrees * Math.PI / 180; off += delta; yaw += delta; offVel = 0; draw(); },
+      turn(degrees) {
+        const delta = degrees * Math.PI / 180;
+        off += delta; yaw += delta; offVel = 0; turnDir = Math.sign(delta) || turnDir;
+        turnPulse = Math.min(1, 0.5 + Math.abs(delta) / Math.PI); draw();
+      },
       destroy() { dead = true; clearTimeout(flushT); g.clearRect(0, 0, w, h); faces = []; out.length = 0; },
       params(p) { params = p; faces = build(p); },
     };

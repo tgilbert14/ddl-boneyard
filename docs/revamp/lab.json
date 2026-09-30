@@ -1,11 +1,11 @@
 {
-  "date": "2026-09-30T18:26:53.909Z",
+  "date": "2026-09-30T19:43:01.183Z",
   "conditions": "Local Chromium, deviceScaleFactor 1, CPU slowdown 4x, localhost transport, no network throttle. Observe navigation through network idle plus 3 seconds. blockingMs is a fixed-window long-task proxy, not field INP or Lighthouse TBT.",
-  "sourceBytes": 436357,
-  "gzipBytes": 157721,
+  "sourceBytes": 519533,
+  "gzipBytes": 178963,
   "results": [
     {
-      "lcpMs": 80,
+      "lcpMs": 132,
       "cls": 0.0219815515588831,
       "blockingMs": 0,
       "longTasks": 0,
@@ -16,19 +16,19 @@
       "overflow": false,
       "resources": [
         {
-          "name": "http://127.0.0.1:4186/assets/machine-jump.webp",
-          "encodedBodySize": 14414,
-          "transferSize": 14714
-        },
-        {
           "name": "http://127.0.0.1:4186/assets/machine-relief.webp",
-          "encodedBodySize": 16940,
-          "transferSize": 17240
+          "encodedBodySize": 7652,
+          "transferSize": 7952
         },
         {
           "name": "http://127.0.0.1:4186/assets/machine-scope.webp",
-          "encodedBodySize": 7686,
-          "transferSize": 7986
+          "encodedBodySize": 7388,
+          "transferSize": 7688
+        },
+        {
+          "name": "http://127.0.0.1:4186/assets/machine-jump.webp",
+          "encodedBodySize": 14222,
+          "transferSize": 14522
         }
       ],
       "motion": "full",
@@ -65,18 +65,18 @@
         }
       ],
       "ticker": {
-        "dt": 14.800000000000182,
-        "work": 0.7999999523162842,
+        "dt": 26.699999999999818,
+        "work": 1.3999998569488525,
         "slow": 0,
-        "frames": 210,
+        "frames": 147,
         "tasks": 1
       },
       "errors": [],
       "offsite": []
     },
     {
-      "lcpMs": 76,
-      "cls": 0.008216391886369958,
+      "lcpMs": 128,
+      "cls": 0.008255094451969943,
       "blockingMs": 0,
       "longTasks": 0,
       "viewport": [
@@ -87,18 +87,18 @@
       "resources": [
         {
           "name": "http://127.0.0.1:4186/assets/machine-jump.webp",
-          "encodedBodySize": 14414,
-          "transferSize": 14714
-        },
-        {
-          "name": "http://127.0.0.1:4186/assets/machine-scope.webp",
-          "encodedBodySize": 7686,
-          "transferSize": 7986
+          "encodedBodySize": 14222,
+          "transferSize": 14522
         },
         {
           "name": "http://127.0.0.1:4186/assets/machine-relief.webp",
-          "encodedBodySize": 16940,
-          "transferSize": 17240
+          "encodedBodySize": 7652,
+          "transferSize": 7952
+        },
+        {
+          "name": "http://127.0.0.1:4186/assets/machine-scope.webp",
+          "encodedBodySize": 7388,
+          "transferSize": 7688
         }
       ],
       "motion": "full",
@@ -135,10 +135,10 @@
         }
       ],
       "ticker": {
-        "dt": 8.299999999999727,
-        "work": 0.09999990463256836,
+        "dt": 16.40000000000009,
+        "work": 1.1000001430511475,
         "slow": 0,
-        "frames": 415,
+        "frames": 325,
         "tasks": 1
       },
       "errors": [],

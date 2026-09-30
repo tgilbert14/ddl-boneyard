@@ -71,6 +71,7 @@ The build fails on a missing field, a duplicate slug, a surviving `__PLACEHOLDER
   your data is ready, and draw it again when async data (the DEM) arrives. It is the frame the
   approach shows, the reduced-motion frame, and what the harness's Still box shows.
 - **turn(degrees)** optional: an immediate turn or steering action for left/right buttons and arrow keys. Draw immediately even in Still. This supplements pointer interaction.
+- **rain(nx = 0.5, ny = 0.46)** optional: a bounded, explicit WASH rain burst at a normalized preview position. Return false while data is unavailable. In Still, draw a settled result without starting a ticker. PNG export retains the chosen frame.
 - **params(p)** optional: live re-tune from the tweak row. Without it the harness remounts.
 
 The ride runs ONE ticker; never call `requestAnimationFrame` yourself, never add scroll or

@@ -1,0 +1,1102 @@
+{
+  "passed": true,
+  "observedAt": "2026-09-30T19:42:16.979Z",
+  "base": "http://127.0.0.1:4186/",
+  "conditions": "Installed Chromium, DPR 1, normal autoplay policy. 1440x900 and 390x844 touch emulation. One-second live module CPU samples after first frame; excludes GPU/raster, field performance and hardware-phone certification.",
+  "results": [
+    {
+      "slug": "gate",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          320,
+          260
+        ],
+        "readout": "strip 2025-03-01 sunset · still"
+      },
+      "mutation": {
+        "key": "gain",
+        "from": "1.28",
+        "to": "1.4336",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 1.089166675011317,
+        "p95CpuMs": 1.5,
+        "tasks": 1,
+        "backing": [
+          320,
+          260
+        ]
+      }
+    },
+    {
+      "slug": "greetings",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          300,
+          150
+        ],
+        "readout": ""
+      },
+      "mutation": null,
+      "full": {
+        "ticks": 121,
+        "meanCpuMs": 0.07685950176774962,
+        "p95CpuMs": 0.20000004768371582,
+        "tasks": 1,
+        "backing": [
+          300,
+          150
+        ]
+      }
+    },
+    {
+      "slug": "hyperspace",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          1050,
+          852
+        ],
+        "readout": ""
+      },
+      "mutation": {
+        "key": "streakLen",
+        "from": "11.5",
+        "to": "12.88",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.12499999602635702,
+        "p95CpuMs": 0.20000004768371582,
+        "tasks": 1,
+        "backing": [
+          1050,
+          852
+        ]
+      }
+    },
+    {
+      "slug": "jump",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          1050,
+          852
+        ],
+        "readout": ""
+      },
+      "mutation": {
+        "key": "stillWarp",
+        "from": "0.42",
+        "to": "0.4704",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.13499999443689983,
+        "p95CpuMs": 0.20000004768371582,
+        "tasks": 1,
+        "backing": [
+          1050,
+          852
+        ]
+      }
+    },
+    {
+      "slug": "mark",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          1050,
+          852
+        ],
+        "readout": "yaw 30° · 57 faces · 27 facing away"
+      },
+      "mutation": {
+        "key": "apertureAlpha",
+        "from": "0.3",
+        "to": "0.336",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 108,
+        "meanCpuMs": 0.15277779323083382,
+        "p95CpuMs": 0.2999999523162842,
+        "tasks": 1,
+        "backing": [
+          1050,
+          852
+        ]
+      }
+    },
+    {
+      "slug": "placeholder",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          1050,
+          852
+        ],
+        "readout": ""
+      },
+      "mutation": {
+        "key": "probeAlpha",
+        "from": "0.72",
+        "to": "0.8064",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.05666667819023132,
+        "p95CpuMs": 0.10000014305114746,
+        "tasks": 1,
+        "backing": [
+          1050,
+          852
+        ]
+      }
+    },
+    {
+      "slug": "range",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          1050,
+          852
+        ],
+        "readout": "ALT 8,178 ft · GROUND 5,545 ft · Madrean Oak Woodland · 2x vertical"
+      },
+      "mutation": {
+        "key": "haze",
+        "from": "1.1",
+        "to": "1.232",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 1.7183333396911622,
+        "p95CpuMs": 1.9000000953674316,
+        "tasks": 1,
+        "backing": [
+          1050,
+          852
+        ]
+      }
+    },
+    {
+      "slug": "relief",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          760,
+          617
+        ],
+        "readout": "64 scanlines · 768 x 768 grid · summit 9,157 ft · 4x vertical · seen from the SW"
+      },
+      "mutation": {
+        "key": "scan",
+        "from": "0.72",
+        "to": "0.8064",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.098333340883255,
+        "p95CpuMs": 0.40000009536743164,
+        "tasks": 1,
+        "backing": [
+          760,
+          617
+        ]
+      }
+    },
+    {
+      "slug": "rings",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          1050,
+          852
+        ],
+        "readout": ""
+      },
+      "mutation": {
+        "key": "radius",
+        "from": "1.42",
+        "to": "1.5904",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.2708333412806193,
+        "p95CpuMs": 0.40000009536743164,
+        "tasks": 1,
+        "backing": [
+          1050,
+          852
+        ]
+      }
+    },
+    {
+      "slug": "row",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          1050,
+          852
+        ],
+        "readout": ""
+      },
+      "mutation": {
+        "key": "pylonH",
+        "from": "1.3",
+        "to": "1.456",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.06166668335596721,
+        "p95CpuMs": 0.20000004768371582,
+        "tasks": 1,
+        "backing": [
+          1050,
+          852
+        ]
+      }
+    },
+    {
+      "slug": "scope",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          720,
+          584
+        ],
+        "readout": "ratio 3:2 · X 165.0 Hz · Y 110 Hz · still frame"
+      },
+      "mutation": {
+        "key": "bezelAlpha",
+        "from": "0.28",
+        "to": "0.3136",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.12166666189829509,
+        "p95CpuMs": 0.20000004768371582,
+        "tasks": 1,
+        "backing": [
+          720,
+          584
+        ]
+      }
+    },
+    {
+      "slug": "sky",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          1050,
+          852
+        ],
+        "readout": ""
+      },
+      "mutation": {
+        "key": "bandAlpha",
+        "from": "0.5",
+        "to": "0.56",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.06250000397364298,
+        "p95CpuMs": 0.19999980926513672,
+        "tasks": 1,
+        "backing": [
+          1050,
+          852
+        ]
+      }
+    },
+    {
+      "slug": "switch",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          300,
+          150
+        ],
+        "readout": ""
+      },
+      "mutation": null,
+      "full": {
+        "ticks": 0,
+        "meanCpuMs": null,
+        "p95CpuMs": null,
+        "tasks": 0,
+        "backing": [
+          300,
+          150
+        ]
+      }
+    },
+    {
+      "slug": "terminator",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          1050,
+          852
+        ],
+        "readout": "sub-solar point 3.0 S, 117.9 W · Tucson: midday, sun 54° up"
+      },
+      "mutation": {
+        "key": "atmosphere",
+        "from": "0.52",
+        "to": "0.5824",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.014166667064030965,
+        "p95CpuMs": 0.09999990463256836,
+        "tasks": 1,
+        "backing": [
+          1050,
+          852
+        ]
+      }
+    },
+    {
+      "slug": "tube",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          1050,
+          852
+        ],
+        "readout": ""
+      },
+      "mutation": null,
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.11249998609224955,
+        "p95CpuMs": 0.20000004768371582,
+        "tasks": 1,
+        "backing": [
+          1050,
+          852
+        ]
+      }
+    },
+    {
+      "slug": "wash",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          1050,
+          852
+        ],
+        "readout": "slope model, not hydrology · 2,400 drops"
+      },
+      "mutation": {
+        "key": "contours",
+        "from": "0.3",
+        "to": "0.336",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 1.1833333293596904,
+        "p95CpuMs": 1.3000001907348633,
+        "tasks": 1,
+        "backing": [
+          1050,
+          852
+        ]
+      }
+    },
+    {
+      "slug": "yard-scene",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          1050,
+          852
+        ],
+        "readout": ""
+      },
+      "mutation": {
+        "key": "consoleScale",
+        "from": "1",
+        "to": "1.12",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.1283333440621694,
+        "p95CpuMs": 0.20000004768371582,
+        "tasks": 1,
+        "backing": [
+          1050,
+          852
+        ]
+      }
+    },
+    {
+      "slug": "gate",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          277,
+          312
+        ],
+        "readout": "strip 2025-03-01 sunset · still"
+      },
+      "mutation": {
+        "key": "gain",
+        "from": "1.28",
+        "to": "1.4336",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 1.053333334128062,
+        "p95CpuMs": 1.3000001907348633,
+        "tasks": 1,
+        "backing": [
+          277,
+          312
+        ]
+      }
+    },
+    {
+      "slug": "greetings",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          300,
+          150
+        ],
+        "readout": ""
+      },
+      "mutation": null,
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.06583333810170491,
+        "p95CpuMs": 0.20000004768371582,
+        "tasks": 1,
+        "backing": [
+          300,
+          150
+        ]
+      }
+    },
+    {
+      "slug": "hyperspace",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          390,
+          439
+        ],
+        "readout": ""
+      },
+      "mutation": {
+        "key": "streakLen",
+        "from": "11.5",
+        "to": "12.88",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.13416666984558107,
+        "p95CpuMs": 0.20000004768371582,
+        "tasks": 1,
+        "backing": [
+          390,
+          439
+        ]
+      }
+    },
+    {
+      "slug": "jump",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          390,
+          439
+        ],
+        "readout": ""
+      },
+      "mutation": {
+        "key": "stillWarp",
+        "from": "0.42",
+        "to": "0.4704",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.12333333492279053,
+        "p95CpuMs": 0.20000004768371582,
+        "tasks": 1,
+        "backing": [
+          390,
+          439
+        ]
+      }
+    },
+    {
+      "slug": "mark",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          390,
+          439
+        ],
+        "readout": "yaw 30° · 57 faces · 28 facing away"
+      },
+      "mutation": {
+        "key": "apertureAlpha",
+        "from": "0.3",
+        "to": "0.336",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.15166667302449544,
+        "p95CpuMs": 0.2999999523162842,
+        "tasks": 1,
+        "backing": [
+          390,
+          439
+        ]
+      }
+    },
+    {
+      "slug": "placeholder",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          390,
+          439
+        ],
+        "readout": ""
+      },
+      "mutation": {
+        "key": "probeAlpha",
+        "from": "0.72",
+        "to": "0.8064",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.05833335320154826,
+        "p95CpuMs": 0.10000014305114746,
+        "tasks": 1,
+        "backing": [
+          390,
+          439
+        ]
+      }
+    },
+    {
+      "slug": "range",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          390,
+          439
+        ],
+        "readout": "ALT 8,178 ft · GROUND 5,545 ft · Madrean Oak Woodland · 2x vertical"
+      },
+      "mutation": {
+        "key": "haze",
+        "from": "1.1",
+        "to": "1.232",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 1.8866666873296103,
+        "p95CpuMs": 2.1000001430511475,
+        "tasks": 1,
+        "backing": [
+          390,
+          439
+        ]
+      }
+    },
+    {
+      "slug": "relief",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          390,
+          439
+        ],
+        "readout": "64 scanlines · 768 x 768 grid · summit 9,157 ft · 4x vertical · seen from the SW"
+      },
+      "mutation": {
+        "key": "scan",
+        "from": "0.72",
+        "to": "0.8064",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 119,
+        "meanCpuMs": 0.10840336615297974,
+        "p95CpuMs": 0.39999985694885254,
+        "tasks": 1,
+        "backing": [
+          390,
+          439
+        ]
+      }
+    },
+    {
+      "slug": "rings",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          390,
+          439
+        ],
+        "readout": ""
+      },
+      "mutation": {
+        "key": "radius",
+        "from": "1.42",
+        "to": "1.5904",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.3224999924500783,
+        "p95CpuMs": 0.40000009536743164,
+        "tasks": 1,
+        "backing": [
+          390,
+          439
+        ]
+      }
+    },
+    {
+      "slug": "row",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          390,
+          439
+        ],
+        "readout": ""
+      },
+      "mutation": {
+        "key": "pylonH",
+        "from": "1.3",
+        "to": "1.456",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.10583333770434061,
+        "p95CpuMs": 0.20000004768371582,
+        "tasks": 1,
+        "backing": [
+          390,
+          439
+        ]
+      }
+    },
+    {
+      "slug": "scope",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          390,
+          439
+        ],
+        "readout": "ratio 3:2 · X 165.0 Hz · Y 110 Hz · still frame"
+      },
+      "mutation": {
+        "key": "bezelAlpha",
+        "from": "0.28",
+        "to": "0.3136",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.1074999988079071,
+        "p95CpuMs": 0.20000004768371582,
+        "tasks": 1,
+        "backing": [
+          390,
+          439
+        ]
+      }
+    },
+    {
+      "slug": "sky",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          390,
+          439
+        ],
+        "readout": ""
+      },
+      "mutation": {
+        "key": "bandAlpha",
+        "from": "0.5",
+        "to": "0.56",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.1166666845480601,
+        "p95CpuMs": 0.20000004768371582,
+        "tasks": 1,
+        "backing": [
+          390,
+          439
+        ]
+      }
+    },
+    {
+      "slug": "switch",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          300,
+          150
+        ],
+        "readout": ""
+      },
+      "mutation": null,
+      "full": {
+        "ticks": 0,
+        "meanCpuMs": null,
+        "p95CpuMs": null,
+        "tasks": 0,
+        "backing": [
+          300,
+          150
+        ]
+      }
+    },
+    {
+      "slug": "terminator",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          390,
+          439
+        ],
+        "readout": "sub-solar point 3.0 S, 118.1 W · Tucson: midday, sun 54° up"
+      },
+      "mutation": {
+        "key": "atmosphere",
+        "from": "0.52",
+        "to": "0.5824",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.005833333730697632,
+        "p95CpuMs": 0,
+        "tasks": 1,
+        "backing": [
+          390,
+          439
+        ]
+      }
+    },
+    {
+      "slug": "tube",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          390,
+          439
+        ],
+        "readout": ""
+      },
+      "mutation": null,
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.10833334922790527,
+        "p95CpuMs": 0.20000004768371582,
+        "tasks": 1,
+        "backing": [
+          390,
+          439
+        ]
+      }
+    },
+    {
+      "slug": "wash",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          390,
+          439
+        ],
+        "readout": "slope model, not hydrology · 2,400 drops"
+      },
+      "mutation": {
+        "key": "contours",
+        "from": "0.3",
+        "to": "0.336",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 1.4991666773955028,
+        "p95CpuMs": 1.7000000476837158,
+        "tasks": 1,
+        "backing": [
+          390,
+          439
+        ]
+      }
+    },
+    {
+      "slug": "yard-scene",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "still": {
+        "mounted": true,
+        "tasks": 0,
+        "overflow": false,
+        "canvas": [
+          390,
+          439
+        ],
+        "readout": ""
+      },
+      "mutation": {
+        "key": "consoleScale",
+        "from": "1",
+        "to": "1.12",
+        "renderChanged": true
+      },
+      "full": {
+        "ticks": 120,
+        "meanCpuMs": 0.14583332737286886,
+        "p95CpuMs": 0.20000004768371582,
+        "tasks": 1,
+        "backing": [
+          390,
+          439
+        ]
+      }
+    }
+  ],
+  "errors": [],
+  "external": []
+}

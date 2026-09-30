@@ -1,9 +1,9 @@
 /* BONEYARD PART · L1 · THE TUBE
- * technique   WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a two-scale bloom (quarter-res tight, eighth-res wide) added back, overdriven white-hot cores, a very slight barrel, a vignette, and a light chromatic fringe only at peak warp or a punch
+ * technique   WebGL1 phosphor post-pass over the composited 2D layers: decay-tinted persistence behind an untouched current frame, a two-scale bloom with a restrained horizontal lens flare, overdriven white-hot cores, a very slight barrel, a vignette, and a light chromatic fringe only at peak warp or a punch
  * lineage     the vector CRT: the oscilloscope; Asteroids (Atari, 1979); Battlezone (Atari, 1980); Tempest (Atari, 1981); Vectrex (1982)
  * original    one skin over the whole row that no room depends on: it takes the sky, the row and the corridor canvases as textures, and the rooms stay crisp DOM above it with a static CSS halo on their frames
  * not         scanlines (vector tubes drew lines, not rasters, so they had none), a curvature gimmick, a blocking dependency; it does not skin the rooms (see HOW IT WORKS)
- * deps        none · WebGL1 when present, a clean no-op otherwise · 2026-09
+ * deps        none · WebGL1 when present; a clean ride no-op and an authored Canvas 2D diagnostic on the standalone part otherwise · 2026-09
  * budget      0.24 ms/frame JS (3 uploads + 5 passes) @ 2160x1350 internal (1440x900 x1.5), desktop Chromium 149 on an AMD RX 5600M (D3D11), 2026-09-29;
  *             A/B over 5 s of scroll, frame work with the tube 4.7 to 5.5 ms vs 4.2 to 5.7 ms without (inside the noise);
  *             390x844 x1: 0.21 ms JS, +0.6 to 1.4 ms frame work. A readPixels-synced upper bound (?tubeprobe=1) reads 10 to 14 ms
@@ -14,10 +14,13 @@
 /* HOW IT WORKS
  * Each frame the ride hands the tube its three stacked 2D canvases (sky, row, corridor). They are uploaded as
  * textures and composited over the field gradient, then combined with the previous tube frame by keeping the
- * brighter of "now" and "last frame times a decay". That is phosphor persistence without the blow-out a plain sum
- * gives a static line: anything that moves leaves a short tail, anything still stays exactly as bright as it is.
+ * brighter of "now" and "last frame times a decay". The old frame drifts slightly toward the warmer core token first,
+ * like a long-persistence phosphor changing colour as it fades. The current frame is never softened or recoloured:
+ * anything that moves leaves a distinct optical tail, while anything still stays exactly as crisp and bright as drawn.
  * A 4x4 box downsample to quarter resolution (four bilinear taps) keeps one-pixel lines from falling between
- * samples; a horizontal then a vertical 9-tap blur makes the bloom, which is added back. The last pass samples
+ * samples; a horizontal then a vertical 9-tap blur makes the bloom, which is added back. Two low-energy horizontal
+ * samples of that tight bloom make the small lens flare a real bright vector tube produces, without blurring the source.
+ * The last pass samples
  * through a barrel of k = 0.04 centered on the vanishing point (so the one vanishing point never moves), scaled so
  * the farthest corner samples its own corner (no black rim), and darkens the corners.
  * The rooms are CSS-transformed canvases in the DOM, animated by the core and by SWITCH. Rebuilding their
@@ -26,7 +29,8 @@
  * the frame, rasterized once and then only transformed). Every room already looks right without the tube.
  * The adaptive budget drops it first: below internal scale 1 the bloom goes; at 0.5 the tube goes. It turns itself
  * off under the dial's Still (the layers underneath are the still). Without WebGL it reports enabled: false and the
- * page never knows. On this parts page it draws its own vector test card so the pass has something to hold.
+ * ride keeps using its untouched source canvases. The standalone part instead draws an honest Canvas 2D vector
+ * diagnostic: it is a designed fallback, not a claim that the phosphor post-pass or the visitor's GPU was tested.
  */
 (() => {
   'use strict';
@@ -37,19 +41,24 @@
     knee: 0.17,            /* bloom starts above this luma, per 2x2 tap */
     radius: 1.8,           /* blur step in quarter-res texels */
     hot: 0.55,             /* overdrive: how far the brightest strokes whiten toward a white-hot core */
+    afterglow: 0.18,       /* old strokes drift this far toward the warmer phosphor-core token */
+    flare: 0.12,           /* horizontal optical flare taken from the tight bloom, never from the crisp source */
     fringe: 0.006,         /* chromatic split at the far corner (uv) at full warp or punch; 0 at the vanishing point */
     barrel: 0.04,          /* barrel distortion k */
     vignette: 0.30,        /* corner darkening */
   };
+  const finite = (v, fallback) => Number.isFinite(+v) ? +v : fallback;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, finite(v, lo)));
 
   const VS = 'attribute vec2 p;varying vec2 v;void main(){v=p*.5+.5;gl_Position=vec4(p,0.,1.);}';
   /* A: composite field + three premultiplied layers, then persistence against the last frame */
-  const FS_COMP = 'precision mediump float;varying vec2 v;uniform sampler2D s0,s1,s2,sp;uniform vec3 top,bot;uniform float vpY,decay,n;' +
+  const FS_COMP = 'precision mediump float;varying vec2 v;uniform sampler2D s0,s1,s2,sp;uniform vec3 top,bot,after;uniform float vpY,decay,afterMix,n;' +
     'void main(){vec3 c=mix(top,bot,clamp((1.-v.y)/vpY,0.,1.));' +
     'vec4 a=texture2D(s0,v);c=a.rgb+c*(1.-a.a);' +
     'if(n>1.){a=texture2D(s1,v);c=a.rgb+c*(1.-a.a);}' +
     'if(n>2.){a=texture2D(s2,v);c=a.rgb+c*(1.-a.a);}' +
-    'c=max(c,texture2D(sp,v).rgb*decay);gl_FragColor=vec4(c,1.);}';
+    'vec3 p=texture2D(sp,v).rgb;float pl=max(p.r,max(p.g,p.b));p=mix(p,after*pl,afterMix);' +
+    'c=max(c,p*decay);gl_FragColor=vec4(c,1.);}';
   /* B: 4x4 box to quarter res (four bilinear taps, each a 2x2 average, so a 1 px line still lands at half
      strength); the knee is applied PER TAP on luma, so thin strokes bloom and broad dim fills (the hour band) do not */
   const FS_DOWN = 'precision mediump float;varying vec2 v;uniform sampler2D s;uniform vec2 px;uniform float knee;' +
@@ -69,12 +78,13 @@
      stroke, the overdriven vector beam), then the tight and wide blooms are added. Fringe: R and B are sampled
      a hair apart ALONG the ray from the vanishing point, so the split is 0 at the vanishing point and grows
      outward; the uniform is 0 unless warp is near peak or a punch lands (Full only). */
-  const FS_OUT = 'precision mediump float;varying vec2 v;uniform sampler2D s,b,w;uniform float k,gain,wgain,hot,fr,vig,aspect;uniform vec2 vp;' +
+  const FS_OUT = 'precision mediump float;varying vec2 v;uniform sampler2D s,b,w;uniform float k,gain,wgain,hot,flare,fr,vig,aspect;uniform vec2 vp,bpx;' +
     'void main(){vec2 d=v-vp;vec2 da=vec2(d.x*aspect,d.y);vec2 fc=vec2(max(vp.x,1.-vp.x)*aspect,max(vp.y,1.-vp.y));' +
     'float r2=dot(da,da)/dot(fc,fc);vec2 u=vp+d*(1.+k*r2)/(1.+k);' +
     'vec3 c=texture2D(s,u).rgb;if(fr>0.){vec2 o=d*fr;c.r=texture2D(s,u+o).r;c.b=texture2D(s,u-o).b;}' +
     'float l=dot(c,vec3(.2126,.7152,.0722));c=mix(c,vec3(max(c.r,max(c.g,c.b))),hot*smoothstep(.55,.95,l));' +
-    'c+=texture2D(b,u).rgb*gain+texture2D(w,u).rgb*wgain;' +
+    'vec3 tight=texture2D(b,u).rgb;vec3 lens=(texture2D(b,u+vec2(bpx.x*3.,0.)).rgb+texture2D(b,u-vec2(bpx.x*3.,0.)).rgb)*.5;' +
+    'c+=tight*gain+texture2D(w,u).rgb*wgain+lens*flare;' +
     'vec2 q=(v*2.-1.)*vec2(aspect,1.);float rv=dot(q,q)/(1.+aspect*aspect);' +
     'c*=1.-vig*pow(rv,1.6);gl_FragColor=vec4(c,1.);}';
 
@@ -91,6 +101,100 @@
     setTimeout(() => html.classList.add('ignited'), 1500);
   }
 
+  /* A useful standalone card when failIfMajorPerformanceCaveat declines WebGL. This never runs on #c-tube: the
+     ride must keep showing the real source layers rather than substitute demo art. It deliberately draws only
+     geometry, because canvas text would turn a portable visual diagnostic into inaccessible interface copy. */
+  function mountDiagnostic(canvas, params, ctx) {
+    const g = canvas.getContext('2d');
+    if (!g) return null;
+    let W = Math.max(2, canvas.width), H = Math.max(2, canvas.height), lastT = 0, bloomOn = true;
+    function pathLissajous(cx, cy, rx, ry, phase, from, to) {
+      g.beginPath();
+      const n = 360;
+      for (let i = 0; i <= n; i++) {
+        const a = from + (to - from) * i / n;
+        const x = cx + rx * Math.sin(3 * a + phase), y = cy + ry * Math.sin(2 * a);
+        if (i) g.lineTo(x, y); else g.moveTo(x, y);
+      }
+    }
+    function draw(t) {
+      lastT = finite(t, 0);
+      const T = ctx.tokens || {}, s = Math.max(2, Math.min(W, H));
+      const vp = { x: clamp(ctx.vp && ctx.vp.x, 0.08, 0.92) * W, y: clamp(ctx.vp && ctx.vp.y, 0.12, 0.74) * H };
+      const calm = ctx.dial === 'calm', still = ctx.dial === 'still';
+      const phase = (still ? 0.36 : lastT * (calm ? 0.28 : 0.62));
+      const top = T.field2 || '#081116', bottom = T.field || '#030708';
+      g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+      g.shadowBlur = 0; g.clearRect(0, 0, W, H);
+      const field = g.createLinearGradient(0, 0, 0, H);
+      field.addColorStop(0, top); field.addColorStop(0.62, bottom); field.addColorStop(1, top);
+      g.fillStyle = field; g.fillRect(0, 0, W, H);
+
+      /* Perspective fan and range arcs register the same shared vanishing point used by the world. */
+      g.save(); g.strokeStyle = T.phosphorDim || '#286c73'; g.globalAlpha = 0.3;
+      g.lineWidth = Math.max(0.7, s / 900); g.beginPath();
+      for (let i = -8; i <= 8; i++) { g.moveTo(vp.x, vp.y); g.lineTo(vp.x + i * W * 0.12, H * 0.94); }
+      for (let i = 1; i <= 9; i++) {
+        const q = i / 9, y = vp.y + (H * 0.94 - vp.y) * q * q;
+        g.moveTo(W * (0.08 - q * 0.18), y); g.lineTo(W * (0.92 + q * 0.18), y);
+      }
+      g.stroke(); g.restore();
+
+      const cx = W * 0.5, cy = Math.max(H * 0.26, Math.min(H * 0.5, vp.y - s * 0.02));
+      const tubeRx = Math.min(W * 0.43, s * 0.62), tubeRy = Math.min(H * 0.34, s * 0.37);
+      /* Curved tube face, focus rings and axes form a legible calibration field at any aspect ratio. */
+      g.save(); g.translate(cx, cy); g.strokeStyle = T.line || T.phosphorDim || '#286c73';
+      g.lineWidth = Math.max(0.8, s / 780); g.globalAlpha = 0.5;
+      for (const k of [1, 0.72, 0.43]) { g.beginPath(); g.ellipse(0, 0, tubeRx * k, tubeRy * k, 0, 0, Math.PI * 2); g.stroke(); }
+      g.globalAlpha = 0.32; g.beginPath(); g.moveTo(-tubeRx, 0); g.lineTo(tubeRx, 0); g.moveTo(0, -tubeRy); g.lineTo(0, tubeRy); g.stroke();
+      const mark = s * 0.018;
+      for (let i = 0; i < 12; i++) {
+        const a = i / 12 * Math.PI * 2, x = Math.cos(a) * tubeRx * 0.88, y = Math.sin(a) * tubeRy * 0.88;
+        g.beginPath(); g.moveTo(x - Math.cos(a) * mark, y - Math.sin(a) * mark); g.lineTo(x + Math.cos(a) * mark, y + Math.sin(a) * mark); g.stroke();
+      }
+      g.restore();
+
+      const rx = Math.min(W * 0.27, s * 0.39), ry = Math.min(H * 0.19, s * 0.25);
+      /* Three phase-separated traces make decay direction visible while the final trace stays pin-sharp. */
+      const trails = calm ? 2 : clamp(Math.round(2 + clamp(params.persistence, 0, 0.98) * 3), 2, 5);
+      const trailEnergy = 0.7 + clamp(params.afterglow, 0, 0.6) * 0.8;
+      for (let i = trails; i >= 1; i--) {
+        g.save(); g.globalAlpha = (0.045 + (trails - i) * 0.03) * trailEnergy;
+        g.strokeStyle = T.phosphor || '#6ee7ed'; g.lineWidth = Math.max(1, s / 420);
+        pathLissajous(cx, cy, rx, ry, phase - i * 0.045, 0, Math.PI * 2); g.stroke(); g.restore();
+      }
+      g.save(); g.strokeStyle = T.phosphor || '#6ee7ed'; g.globalAlpha = 0.82;
+      g.lineWidth = Math.max(1.15, s / 370); if (bloomOn) { g.shadowColor = T.phosphor || '#6ee7ed'; g.shadowBlur = Math.max(2, s * 0.008 * (0.4 + clamp(params.bloom, 0, 3) * 0.6)); }
+      pathLissajous(cx, cy, rx, ry, phase, 0, Math.PI * 2); g.stroke();
+      g.shadowBlur = 0; g.strokeStyle = T.phosphorCore || '#d8ffff'; g.globalAlpha = 0.72 + clamp(params.hot, 0, 1) * 0.23; g.lineWidth = Math.max(0.7, s / 760);
+      pathLissajous(cx, cy, rx, ry, phase, 0, Math.PI * 2); g.stroke(); g.restore();
+
+      /* The amber probe is the only moving marker. Its short bright tail exposes direction without twinkle. */
+      const a = (still ? 0.84 : lastT * (calm ? 0.52 : 1.05)) % (Math.PI * 2);
+      const hx = cx + rx * Math.sin(3 * a + phase), hy = cy + ry * Math.sin(2 * a);
+      g.save(); g.strokeStyle = T.phosphorCore || '#d8ffff'; g.globalAlpha = 0.9; g.lineWidth = Math.max(0.8, s / 650);
+      pathLissajous(cx, cy, rx, ry, phase, a - 0.22, a); g.stroke();
+      g.fillStyle = T.amber || '#e7a44b'; g.shadowColor = T.amber || '#e7a44b'; g.shadowBlur = bloomOn ? Math.max(4, s * 0.014) : 0;
+      g.beginPath(); g.arc(hx, hy, Math.max(1.8, s * 0.0055), 0, Math.PI * 2); g.fill(); g.restore();
+
+      /* A restrained glass falloff makes the face read as an object while preserving every diagnostic line. */
+      const glass = g.createRadialGradient(cx, cy, s * 0.12, cx, cy, Math.max(tubeRx, tubeRy));
+      const edge = 0.3 + clamp(params.vignette, 0, 1) * 0.58;
+      glass.addColorStop(0, 'rgba(0,0,0,0)'); glass.addColorStop(0.72, 'rgba(0,0,0,0.04)'); glass.addColorStop(1, `rgba(0,0,0,${edge.toFixed(3)})`);
+      g.fillStyle = glass; g.fillRect(0, 0, W, H);
+    }
+    return {
+      enabled: false,
+      diagnostic: true,
+      tick(dt, t) { if (!document.hidden) draw(t); },
+      resize(w, h) { W = Math.max(2, finite(w, canvas.width)); H = Math.max(2, finite(h, canvas.height)); draw(lastT); },
+      still(t) { draw(t); },
+      destroy() { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, canvas.width, canvas.height); },
+      bloom(on) { bloomOn = !!on; draw(lastT); },
+      params(p) { params = p || PARAMS; draw(lastT); },
+    };
+  }
+
   function mount(canvas, params, ctx) {
     latchIgnition(canvas);
     const OFF = { enabled: false, tick() {}, resize() {}, still() {}, destroy() {}, bloom() {}, params() {} };
@@ -98,7 +202,8 @@
     try {
       gl = canvas.getContext('webgl', { alpha: false, antialias: false, depth: false, stencil: false, premultipliedAlpha: false, preserveDrawingBuffer: false, failIfMajorPerformanceCaveat: true });   /* software GL: the tube declines (measured 30 to 41 ms/frame on SwiftShader) */
     } catch (_) { gl = null; }
-    if (!gl || /[?&]tube=0(&|$)/.test(location.search)) return OFF;   /* ?tube=0: the A/B switch for measuring */
+    if (!gl) return canvas.id === 'part' ? (mountDiagnostic(canvas, params, ctx) || OFF) : OFF;
+    if (/[?&]tube=0(&|$)/.test(location.search)) return OFF;   /* ?tube=0: the A/B switch for measuring */
     const R = typeof BONEYARD !== 'undefined' ? BONEYARD : {};   /* a top-level const, not a window property */
     const toRgb = R.toRgb || (() => [0, 0, 0]);
 
@@ -114,10 +219,10 @@
     let P;
     try {
       P = {
-        comp: prog(FS_COMP, ['s0', 's1', 's2', 'sp', 'top', 'bot', 'vpY', 'decay', 'n']),
+        comp: prog(FS_COMP, ['s0', 's1', 's2', 'sp', 'top', 'bot', 'after', 'vpY', 'decay', 'afterMix', 'n']),
         down: prog(FS_DOWN, ['s', 'px', 'knee']),
         blur: prog(FS_BLUR, ['s', 'd']),
-        out: prog(FS_OUT, ['s', 'b', 'w', 'k', 'gain', 'wgain', 'hot', 'fr', 'vig', 'aspect', 'vp']),
+        out: prog(FS_OUT, ['s', 'b', 'w', 'k', 'gain', 'wgain', 'hot', 'flare', 'fr', 'vig', 'aspect', 'vp', 'bpx']),
       };
     } catch (e) { return OFF; }
 
@@ -145,13 +250,14 @@
     const src = [tex(), tex(), tex()];
     let acc = [null, null], q = [null, null], e = [null, null], iw = 0, ih = 0, cur = 0;
     let bloomOn = true, lost = false, shown = false, fresh = true, age = 0, W = canvas.width, H = canvas.height;
-    let col = { top: [0, 0, 0], bot: [0, 0, 0] };
+    let col = { top: [0, 0, 0], bot: [0, 0, 0], after: [0, 0, 0] };
     const stats = { ms: 0, n: 0, avg: 0, w: 0, h: 0 };
     ctx.share.tubeStats = stats;
 
     function readColors() {
       const T = ctx.tokens || {};
       col.top = toRgb(T.field2).map((x) => x / 255); col.bot = toRgb(T.field).map((x) => x / 255);
+      col.after = toRgb(T.phosphorCore || T.phosphor).map((x) => x / 255);
     }
     readColors();
 
@@ -218,29 +324,34 @@
       gl.uniform1i(u.s0, 0); gl.uniform1i(u.s1, 1); gl.uniform1i(u.s2, 2); gl.uniform1i(u.sp, 3);
       bindTex(3, prev.t);
       gl.uniform3fv(u.top, col.top); gl.uniform3fv(u.bot, col.bot);
-      gl.uniform1f(u.vpY, Math.max(0.05, ctx.vp.y)); gl.uniform1f(u.decay, fresh ? 0 : decay); gl.uniform1f(u.n, list.length);
+      gl.uniform3fv(u.after, col.after);
+      gl.uniform1f(u.vpY, Math.max(0.05, ctx.vp.y)); gl.uniform1f(u.decay, fresh ? 0 : decay);
+      gl.uniform1f(u.afterMix, clamp(params.afterglow, 0, 0.6)); gl.uniform1f(u.n, list.length);
       draw();
       cur = 1 - cur; fresh = false;
       /* B, C, D */
       if (useBloom) {
         gl.bindFramebuffer(gl.FRAMEBUFFER, q[0].f); gl.viewport(0, 0, q[0].w, q[0].h);
         gl.useProgram(P.down.p); gl.uniform1i(P.down.u.s, 0); bindTex(0, next.t);
-        gl.uniform2f(P.down.u.px, 1 / iw, 1 / ih); gl.uniform1f(P.down.u.knee, params.knee); draw();
+        gl.uniform2f(P.down.u.px, 1 / iw, 1 / ih); gl.uniform1f(P.down.u.knee, clamp(params.knee, 0, 1)); draw();
         gl.useProgram(P.blur.p); gl.uniform1i(P.blur.u.s, 0);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, q[1].f); bindTex(0, q[0].t); gl.uniform2f(P.blur.u.d, params.radius / q[0].w, 0); draw();
-        gl.bindFramebuffer(gl.FRAMEBUFFER, q[0].f); bindTex(0, q[1].t); gl.uniform2f(P.blur.u.d, 0, params.radius / q[0].h); draw();
+        const radius = clamp(params.radius, 0.2, 8);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, q[1].f); bindTex(0, q[0].t); gl.uniform2f(P.blur.u.d, radius / q[0].w, 0); draw();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, q[0].f); bindTex(0, q[1].t); gl.uniform2f(P.blur.u.d, 0, radius / q[0].h); draw();
         /* the wide halo: the blurred quarter-res bloom, halved again (bilinear) and blurred at eighth res */
         gl.viewport(0, 0, e[0].w, e[0].h);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, e[1].f); bindTex(0, q[0].t); gl.uniform2f(P.blur.u.d, params.radius * 1.5 / e[0].w, 0); draw();
-        gl.bindFramebuffer(gl.FRAMEBUFFER, e[0].f); bindTex(0, e[1].t); gl.uniform2f(P.blur.u.d, 0, params.radius * 1.5 / e[0].h); draw();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, e[1].f); bindTex(0, q[0].t); gl.uniform2f(P.blur.u.d, radius * 1.5 / e[0].w, 0); draw();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, e[0].f); bindTex(0, e[1].t); gl.uniform2f(P.blur.u.d, 0, radius * 1.5 / e[0].h); draw();
       }
       /* E */
       gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, W, H);
       gl.useProgram(P.out.p); const o = P.out.u;
       gl.uniform1i(o.s, 0); gl.uniform1i(o.b, 1); gl.uniform1i(o.w, 2); bindTex(0, next.t); bindTex(1, q[0].t); bindTex(2, e[0].t);
-      gl.uniform1f(o.k, params.barrel); gl.uniform1f(o.gain, useBloom ? params.bloom * fx.gain : 0); gl.uniform1f(o.wgain, useBloom ? params.wide * fx.gain : 0);
-      gl.uniform1f(o.hot, params.hot); gl.uniform1f(o.fr, fx.fr); gl.uniform1f(o.vig, params.vignette);
+      gl.uniform1f(o.k, clamp(params.barrel, -0.2, 0.3)); gl.uniform1f(o.gain, useBloom ? clamp(params.bloom, 0, 4) * fx.gain : 0); gl.uniform1f(o.wgain, useBloom ? clamp(params.wide, 0, 3) * fx.gain : 0);
+      gl.uniform1f(o.hot, clamp(params.hot, 0, 1.5)); gl.uniform1f(o.flare, useBloom ? clamp(params.flare, 0, 0.5) * fx.gain : 0);
+      gl.uniform1f(o.fr, clamp(fx.fr, 0, 0.04)); gl.uniform1f(o.vig, clamp(params.vignette, 0, 1));
       gl.uniform1f(o.aspect, W / Math.max(1, H)); gl.uniform2f(o.vp, ctx.vp.x, 1 - ctx.vp.y);
+      gl.uniform2f(o.bpx, 1 / Math.max(1, q[0].w), 1 / Math.max(1, q[0].h));
       draw();
     }
 
@@ -277,11 +388,11 @@
         if (age < 0.6 && onRide) { fresh = true; return; }     /* hold until the 500 ms switch-on is done, then warm up */
         readColorsMaybe();
         const calm = ctx.dial === 'calm';
-        const decay = Math.pow(params.persistence, Math.max(0, dt) * 60) * (calm ? 0.85 : 1);
+        const decay = Math.pow(clamp(params.persistence, 0, 0.995), Math.max(0, finite(dt, 0)) * 60) * (calm ? 0.85 : 1);
         /* the fringe: only in Full, only near peak warp (above 0.6) or on a punch; share.punch is optional (0 when absent) */
         const S = ctx.share || {};
         const heat = calm ? 0 : Math.min(1, Math.max(0, ((+S.warp || 0) - 0.6) / 0.4) * 0.7 + Math.max(0, Math.min(1, +S.punch || 0)));
-        const fx = { gain: calm ? 0.7 : 1, fr: params.fringe * heat };
+        const fx = { gain: calm ? 0.7 : 1, fr: clamp(params.fringe, 0, 0.04) * heat };
         timed(() => render(list, decay, bloomOn && ctx.scale >= 1, fx));
         show(true);
       },
@@ -303,7 +414,7 @@
         if (ctx.share.tubeStats === stats) delete ctx.share.tubeStats;
       },
       bloom(on) { bloomOn = !!on; },
-      params(p) { params = p; },
+      params(p) { params = p || PARAMS; fresh = true; readColors(); },
     };
 
     /* the field tokens only change with a theme; re-read them on a slow clock, never per frame */

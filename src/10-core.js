@@ -319,6 +319,15 @@ const bootBoneyardRide = () => {
     const b = bays.find((bay) => bay.slug === button.dataset.slug);
     b?.m?.handle.turn?.(Number(button.dataset.turn)); wake();
   }));
+  document.querySelectorAll('.bay-rain').forEach((button) => {
+    let feedback = 0;
+    button.addEventListener('click', () => {
+      const b = bays.find((bay) => bay.slug === button.dataset.slug);
+      if (!b?.m?.handle.rain?.()) return;
+      clearTimeout(feedback); button.classList.add('is-fired'); wake();
+      feedback = setTimeout(() => button.classList.remove('is-fired'), 450);
+    });
+  });
   document.querySelectorAll('.bay-hold').forEach((button) => {
     const hold = () => { if (ctx.dial === 'still') return; ptr.down = true; button.classList.add('is-held'); button.setAttribute('aria-pressed', 'true'); wake(); };
     const release = () => { ptr.down = false; { button.classList.remove('is-held'); button.setAttribute('aria-pressed', 'false'); }; wake(); };

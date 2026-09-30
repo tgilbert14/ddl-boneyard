@@ -1,6 +1,6 @@
 /* BONEYARD PART · L3 · THE YARD
- * technique   layered Canvas 2D industrial matte: cached vector chassis paths, local effect captures clipped into
- *             shaped CRT glass, and three console silhouettes staged in one-point perspective
+ * technique   layered Canvas 2D industrial matte: cached multi-plane chassis paths, local effect captures clipped into
+ *             recessed CRT glass, projected screen spill, contact shadows, floor cabling and three machines staged in one-point perspective
  * lineage     the black-and-cyan light world of Tron (Steven Lisberger, 1982); the Tektronix 4014 storage terminal
  *             (1974); Syd Mead's painted production designs for electronic landscapes and working machines
  * original    a Desert Data Labs salvage observatory built from new vector shapes; its three live screens are actual
@@ -17,9 +17,10 @@
  * This layer is the establishing shot before BAY 01. A broad RELIEF console fills the lower frame while a tall JUMP
  * cabinet and a low SCOPE station sit farther up the floor. Their bases, service rails and scale all point back to
  * the shared vanishing point. The bodies use broad dark faces, silver edge planes, recessed vents, feet, controls
- * and a small amount of cyan screen spill, so they read as heavy stored hardware instead of glowing wire boxes.
- * Landscape keeps the centre console low beneath the title. Portrait gives it a taller chassis and a wider screen,
- * with both side machines cropped at the edges like a close camera placement.
+ * and restrained cyan screen spill, so they read as heavy stored hardware instead of glowing wire boxes. Their cast
+ * pools and shadows widen away from the shared vanishing point, while a service cable sits on the same floor plane.
+ * Landscape keeps the centre console low beneath the title. Portrait gives it a taller chassis, a deeper glass opening
+ * and a wider screen, with both side machines cropped at the edges like a close camera placement.
  *
  * The host publishes ctx.share.yardProgress as scrollY / bayHeight. At zero the yard holds; after the visitor leaves,
  * the consoles drift toward the lens and dissolve before JUMP takes the frame. A standalone part has no published
@@ -35,9 +36,11 @@
     consoleScale: 1,
     beamGlow: 0.72,
     sceneryDensity: 1,
+    screenSpill: 0.62,
   };
 
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const finite = (v, fallback) => Number.isFinite(+v) ? +v : fallback;
   const smooth = (a, b, v) => { const k = clamp((v - a) / (b - a), 0, 1); return k * k * (3 - 2 * k); };
 
   /* Main console, drawn in a one-unit box centred on x = 0. */
@@ -49,8 +52,8 @@
   const MAIN_LOWER = new Path2D('M-.34 .815 L.325 .815 L.35 .93 L.24 .99 L.17 .82 L-.16 .82 L-.22 1 L-.36 .98 Z');
   const MAIN_SCREEN = new Path2D('M-.315 .105 Q-.315 .075 -.278 .075 L.278 .075 Q.315 .075 .32 .112 L.347 .535 Q.35 .575 .305 .58 L-.302 .58 Q-.345 .575 -.342 .535 Z');
   const MAIN_GLASS = new Path2D('M-.287 .125 Q-.287 .102 -.26 .102 L.255 .102 Q.282 .102 .286 .13 L.311 .514 Q.314 .544 .281 .548 L-.275 .548 Q-.307 .544 -.304 .514 Z');
-  const MAIN_SCREEN_P = new Path2D('M-.39 .115 Q-.39 .085 -.35 .085 L.35 .085 Q.39 .085 .392 .118 L.405 .405 Q.407 .438 .368 .442 L-.365 .442 Q-.405 .438 -.403 .405 Z');
-  const MAIN_GLASS_P = new Path2D('M-.365 .132 Q-.365 .11 -.336 .11 L.335 .11 Q.365 .11 .368 .136 L.378 .385 Q.38 .414 .349 .417 L-.347 .417 Q-.378 .414 -.377 .385 Z');
+  const MAIN_SCREEN_P = new Path2D('M-.39 .115 Q-.39 .085 -.35 .085 L.35 .085 Q.39 .085 .392 .118 L.409 .465 Q.411 .5 .37 .505 L-.368 .505 Q-.409 .5 -.407 .465 Z');
+  const MAIN_GLASS_P = new Path2D('M-.365 .132 Q-.365 .11 -.336 .11 L.335 .11 Q.365 .11 .368 .136 L.382 .445 Q.384 .477 .351 .48 L-.349 .48 Q-.382 .477 -.381 .445 Z');
   const MAIN_VENTS = new Path2D('M-.285 .86 L-.08 .86 L-.07 .93 L-.29 .93 Z');
   const MAIN_PANEL = new Path2D('M.04 .855 L.275 .855 L.29 .93 L.055 .93 Z');
   const MAIN_FOOT_L = new Path2D('M-.32 .92 L-.2 .925 L-.22 1 L-.36 .98 Z');
@@ -258,7 +261,7 @@
       g.save();
       g.fillStyle = C.cyan07;
       g.shadowColor = C.cyan50;
-      g.shadowBlur = Math.max(2, params.beamGlow * px * bd);
+      g.shadowBlur = Math.max(2, clamp(finite(params.beamGlow, 0.72), 0, 3) * px * bd);
       g.globalAlpha *= alpha;
       g.fill(path);
       g.globalAlpha /= alpha;
@@ -304,6 +307,12 @@
     function drawGround(vpX, vpY, cx, baseY, cw, alpha, ride) {
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.globalAlpha = alpha;
+      /* A hard contact shadow opens toward the lens, then a soft pool seats the chassis on the floor. */
+      g.fillStyle = C.black76;
+      g.beginPath();
+      g.moveTo(cx - cw * 0.2, baseY - h * 0.006); g.lineTo(cx + cw * 0.2, baseY - h * 0.006);
+      g.lineTo(cx + cw * (0.43 + ride * 0.04), baseY + h * 0.07); g.lineTo(cx - cw * (0.43 + ride * 0.04), baseY + h * 0.07);
+      g.closePath(); g.fill();
       g.fillStyle = C.black52;
       g.beginPath();
       g.ellipse(cx, baseY - h * 0.008, cw * (0.48 + ride * 0.03), h * 0.026, 0, 0, Math.PI * 2);
@@ -317,6 +326,45 @@
       g.lineTo(cx + cw * 0.36, baseY);
       g.stroke();
       g.globalAlpha = 1;
+    }
+
+    function drawScreenSpill(cx, topY, baseY, cw, alpha, pulse) {
+      const amount = clamp(finite(params.screenSpill, 0.62), 0, 2) * alpha;
+      if (amount <= 0.002) return;
+      g.save();
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.globalCompositeOperation = 'lighter';
+      const cone = g.createLinearGradient(0, topY, 0, baseY + h * 0.055);
+      cone.addColorStop(0, ctx.rgba(T.phosphor, 0.12));
+      cone.addColorStop(0.54, ctx.rgba(T.phosphor, 0.035));
+      cone.addColorStop(1, ctx.rgba(T.phosphor, 0));
+      g.globalAlpha = amount * (0.45 + pulse * 0.16);
+      g.fillStyle = cone;
+      g.beginPath();
+      g.moveTo(cx - cw * 0.2, topY); g.lineTo(cx + cw * 0.2, topY);
+      g.lineTo(cx + cw * 0.53, baseY + h * 0.055); g.lineTo(cx - cw * 0.53, baseY + h * 0.055);
+      g.closePath(); g.fill();
+      g.translate(cx, baseY + h * 0.018); g.scale(1, 0.18);
+      const pool = g.createRadialGradient(0, 0, 0, 0, 0, cw * 0.58);
+      pool.addColorStop(0, ctx.rgba(T.phosphor, 0.18)); pool.addColorStop(0.52, ctx.rgba(T.phosphor, 0.055)); pool.addColorStop(1, ctx.rgba(T.phosphor, 0));
+      g.globalAlpha = amount * (0.46 + pulse * 0.15); g.fillStyle = pool;
+      g.beginPath(); g.arc(0, 0, cw * 0.58, 0, Math.PI * 2); g.fill();
+      g.restore();
+    }
+
+    function drawCable(cx, baseY, cw, alpha, portrait) {
+      g.save();
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      const side = portrait ? 1 : -1;
+      const x0 = cx + side * cw * 0.27, y0 = baseY - h * 0.008;
+      const x1 = portrait ? w * 1.07 : cx - cw * 0.86, y1 = Math.min(h * 1.02, baseY + h * 0.08);
+      g.lineCap = 'round';
+      g.strokeStyle = C.black92; g.globalAlpha = alpha * 0.9; g.lineWidth = Math.max(2, bd * 3.2);
+      g.beginPath(); g.moveTo(x0, y0); g.bezierCurveTo(x0 + side * cw * 0.25, y0 + h * 0.018, x1 - side * cw * 0.22, y1 - h * 0.025, x1, y1); g.stroke();
+      g.strokeStyle = C.silver20; g.globalAlpha = alpha * 0.52; g.lineWidth = Math.max(0.65, bd * 0.8); g.stroke();
+      g.fillStyle = C.amber85; g.globalAlpha = alpha * 0.75;
+      g.beginPath(); g.arc(x0, y0, Math.max(1.1, bd * 1.5), 0, Math.PI * 2); g.fill();
+      g.restore();
     }
 
     function drawLeft(cx, baseY, mh, alpha, time, pulse) {
@@ -392,7 +440,7 @@
       const gx = portrait ? -.377 : -.304;
       const gy = portrait ? .11 : .102;
       const gw = portrait ? .755 : .615;
-      const gh = portrait ? .307 : .446;
+      const gh = portrait ? .37 : .446;
 
       g.setTransform(cw, 0, 0, ch, cx, baseY - ch);
       g.globalAlpha = alpha;
@@ -441,6 +489,12 @@
       line(MAIN_DECK, C.line72, 0.006, 1);
       fillPath(MAIN_LOWER, C.blue96);
       line(MAIN_LOWER, C.line72, 0.006, 1);
+      /* Recessed lower rails and an underbody brace keep the large portrait face from reading as a flat panel. */
+      g.strokeStyle = C.silver20; g.lineWidth = 0.0045; g.globalAlpha = alpha * 0.8;
+      g.beginPath(); g.moveTo(-.31, .84); g.lineTo(.3, .84); g.moveTo(-.28, .95); g.lineTo(.27, .95); g.stroke();
+      g.strokeStyle = C.cyan28; g.globalAlpha = alpha * 0.45;
+      g.beginPath(); g.moveTo(-.17, .82); g.lineTo(-.1, .965); g.moveTo(.17, .82); g.lineTo(.11, .965); g.stroke();
+      g.globalAlpha = alpha;
       fillPath(MAIN_FOOT_L, C.black92);
       fillPath(MAIN_FOOT_R, C.black92);
 
@@ -493,7 +547,7 @@
       const mt = fixed ? 3.85 : t * (calm ? 0.28 : 1);
       const pulse = fixed ? 0.52 : (calm ? 0.52 + Math.sin(mt * 0.55) * 0.025 : 0.54 + Math.sin(mt * 0.85) * 0.085);
       const ride = smooth(0.04, 0.9, p);
-      const density = clamp(params.sceneryDensity, 0, 3);
+      const density = clamp(finite(params.sceneryDensity, 1), 0, 3);
       const vpX = ctx.vp.x * w, vpY = ctx.vp.y * h;
       const centreX = w * 0.5 + (vpX - w * 0.5) * 0.24;
 
@@ -512,6 +566,8 @@
         const rx = centreX + w * (0.49 + ride * 0.03);
         const ly = h * (0.715 + ride * 0.04);
         const ry = h * (0.675 + ride * 0.045);
+        drawScreenSpill(lx, ly - lh * 0.58, ly, lh * 0.72, sideAlpha * 0.48, pulse);
+        drawScreenSpill(rx, ry - rh * 0.5, ry, rh * 0.9, sideAlpha * 0.42, pulse);
         drawGround(vpX, vpY, lx, ly, lh * 0.72, sideAlpha * 0.72, ride);
         drawGround(vpX, vpY, rx, ry, rh * 0.9, sideAlpha * 0.68, ride);
         drawLeft(lx, ly, lh, sideAlpha, mt, pulse);
@@ -523,25 +579,29 @@
         const rx = centreX + w * (0.31 + ride * 0.03);
         const ly = h * (0.76 + ride * 0.045);
         const ry = h * (0.705 + ride * 0.05);
+        drawScreenSpill(lx, ly - lh * 0.58, ly, lh * 0.72, sideAlpha * 0.48, pulse);
+        drawScreenSpill(rx, ry - rh * 0.5, ry, rh * 0.9, sideAlpha * 0.42, pulse);
         drawGround(vpX, vpY, lx, ly, lh * 0.72, sideAlpha * 0.72, ride);
         drawGround(vpX, vpY, rx, ry, rh * 0.9, sideAlpha * 0.68, ride);
         drawLeft(lx, ly, lh, sideAlpha, mt, pulse);
         drawRight(rx, ry, rh, sideAlpha * 0.94, mt, pulse);
       }
 
-      const cs = clamp(params.consoleScale, 0.55, 1.7) * (1 + ride * 0.15);
+      const cs = clamp(finite(params.consoleScale, 1), 0.55, 1.7) * (1 + ride * 0.15);
       let cw, ch, baseY;
       if (portrait) {
-        cw = Math.min(w * 0.96, h * 0.54) * cs;
-        ch = h * 0.59 * cs;
+        cw = Math.min(w * 1.02, h * 0.54) * cs;
+        ch = h * 0.575 * cs;
         baseY = h * (0.965 + ride * 0.12);
       } else {
         cw = Math.min(w * 0.58, h * 0.86) * cs;
         ch = cw * 0.66;
         baseY = h * (0.95 + ride * 0.105);
       }
+      drawScreenSpill(centreX, baseY - ch * (portrait ? 0.72 : 0.82), baseY, cw, fade * 0.78, pulse);
       drawGround(vpX, vpY, centreX, baseY, cw, fade * 0.92, ride);
       drawCentral(centreX, baseY, cw, ch, fade, mt, pulse, portrait);
+      drawCable(centreX, baseY, cw, fade, portrait);
     }
 
     load(0); load(1); load(2);
@@ -568,7 +628,7 @@
         g.clearRect(0, 0, w, h);
       },
       params(p) {
-        params = p;
+        params = p || PARAMS;
       },
     };
   }

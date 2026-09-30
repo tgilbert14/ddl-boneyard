@@ -1,35 +1,36 @@
 /* BONEYARD PART · 06 · TERMINATOR
- * technique   a back-culled dotted sphere in orthographic projection with faint graticule, land drawn as denser and
- *             brighter dots from a 1-degree land mask, lit by a Lambert term from the real sub-solar point so the
- *             day line sits where it sits right now
+ * technique   a back-culled dotted sphere in orthographic projection with a filled solar hemisphere, graticule and
+ *             axis cage; land is denser dots from a 1-degree mask, lit by the real sub-solar point
  * lineage     Elite's dotted planets (David Braben and Ian Bell, Acornsoft, 1984); the IRIX-era wireframe globe
  *             (Silicon Graphics workstations, early 1990s)
  * original    the sun is computed, not animated: solar declination plus the equation of time from the visitor's
  *             clock place the sub-solar point, and the readout prints it with the sun's real altitude over Tucson,
- *             whose one dot is amber; the sunlit limb is stroked amber in proportion to how lit it is; the globe is
- *             centred on the site's shared vanishing point, so the pointer parallax that moves every other room
- *             moves the planet too; drag spins it and it comes home to face Tucson
+ *             whose one dot is amber; the projected terminator encloses the exact visible day hemisphere, the poles
+ *             and equator orient the sphere, and an amber sight marks the screen-plane direction of the sun; the
+ *             globe is centred on the shared vanishing point; drag spins it and it comes home to face Tucson
  * not         precise: the low-precision solar formulas (Astronomical Almanac style) are good to about 0.1 degree, but
  *             the drawn day line is a sharp Lambert edge with no refraction or twilight, which puts the visible
  *             line up to about a degree from where the sun actually sets. The land mask is Natural Earth 110m
  *             rasterised to 1 degree, so small islands and narrow coasts are coarse. No city lights: there is no data
  *             for them here, so the night side is simply dim.
  * deps        none · Canvas 2D · 2026-09
- * budget      0.67 ms per full redraw @ 2160x1350 internal (1440x900 x1.5), 0.52 ms/frame on the parts counter while
- *             dragging, 0.01 ms/frame idle (it redraws only on change); headless Chromium, software raster (2026-09-29); phone TBD
+ * budget      1.80 ms/frame active drag @ 1440x900 internal; 1.57 ms/frame @ 390x844; fourfold CPU slowdown,
+ *             local Chromium parts harness (2026-09-30); idle redraws only on change; phone hardware TBD
  * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
  * license     MIT, Desert Data Labs LLC
  */
 /* HOW IT WORKS
- * Two Fibonacci spheres give the dots: a sparse one kept everywhere (the ocean) and a dense one kept only where the
- * land mask has a bit set, so continents read as crowded, brighter dots. The mask is 360 x 180 bits, row 0 at 90 N,
- * column 0 at 180 W; it loads after mount, and the globe redraws when it arrives.
+ * Two Fibonacci spheres give the dots: a sparse one kept over ocean and a dense one kept only where the land mask
+ * has a bit set, so continents read as crowded, brighter dots. Behind them, the visible half of the sunlit hemisphere
+ * is an exact projected path: the front half of the terminator great circle closes along the sunward limb. The mask
+ * is 360 x 180 bits, row 0 at 90 N, column 0 at 180 W; it loads after mount, and the globe redraws when it arrives.
  *
  * The sun: from days since J2000 the sun's mean longitude and mean anomaly give its ecliptic longitude, then its
  * declination and right ascension. The equation of time is mean longitude minus right ascension. The sub-solar point
  * is at latitude = declination and longitude = 180 - 15 x UTC hours - equation of time (in degrees). Each dot's
  * brightness is ambient plus the Lambert term max(0, n . s), binned into a handful of alpha levels so the whole globe
- * is about twenty fills. Dots with a negative view-space z are behind the globe and are culled.
+ * is about twenty fills. Dots with a negative view-space z are behind the globe and are culled. The polar axle,
+ * equator and projected sun sight all use the same rotated vectors, so the instrument cage carries real orientation.
  *
  * Rotation brings Tucson (32.22 N, 110.97 W) to the centre of the disc. A horizontal drag (touch only once it is
  * clearly sideways) spins the globe about its axis; released, it waits and eases back to face Tucson. Nothing moves
@@ -38,16 +39,21 @@
 (() => {
   'use strict';
   const PARAMS = {
-    radius: 0.31,        /* globe radius, fraction of height (and at most 0.36 of width) */
+    radius: 0.33,        /* globe radius, fraction of height */
+    portraitRadius: 0.43,/* phone cap, fraction of width */
     oceanDots: 2600,
     landDots: 11000,     /* dense sphere, kept only over land */
-    ambient: 0.34,       /* night-side brightness */
-    oceanLevel: 0.55,    /* ocean dot brightness relative to land */
-    dotPx: 2,            /* land dot size, CSS px */
-    oceanPx: 1.3,
+    ambient: 0.22,       /* night-side brightness */
+    oceanLevel: 0.48,    /* ocean dot brightness relative to land */
+    dotPx: 2.1,          /* land dot size, CSS px */
+    oceanPx: 1.2,
     graticuleDeg: 30,
     graticuleAlpha: 0.22,
     limbAlpha: 0.85,     /* amber on the sunlit limb */
+    bodyAlpha: 0.92,
+    dayAlpha: 0.2,
+    cageAlpha: 0.26,
+    atmosphere: 0.52,
     dayLine: true,       /* stroke the terminator great circle, faintly */
     returnAfter: 1.8,    /* seconds after a drag before it turns home */
     dragDegPerPx: 0.3,
@@ -126,13 +132,38 @@
     }
     loadMask().then((fn) => { if (dead) return; isLand = fn; prepare(); dirty = true; draw(); }).catch(() => {});
 
-    const BINS = 7;
+    const BINS = 8;
+    function solarPaths(s, cx, cy, R) {
+      const p = Math.hypot(s[0], s[1]), circle = new Path2D();
+      circle.arc(cx, cy, R, 0, Math.PI * 2);
+      if (p < 0.0001) return { day: s[2] > 0 ? circle : null, line: null, p };
+      /* q is on the limb and perpendicular to the projected sun. r completes the terminator basis
+         and has positive z, so q cos(t) + r sin(t), 0..pi, is exactly its visible half. */
+      const qx = -s[1] / p, qy = s[0] / p;
+      const rx = -s[2] * s[0] / p, ry = -s[2] * s[1] / p, rz = p;
+      const line = new Path2D(), day = new Path2D(), N = 72;
+      line.moveTo(cx + R * qx, cy - R * qy);
+      day.moveTo(cx + R * qx, cy - R * qy);
+      for (let i = 1; i <= N; i++) {
+        const a = i / N * Math.PI, c = Math.cos(a), sn = Math.sin(a);
+        const x = qx * c + rx * sn, y = qy * c + ry * sn;
+        line.lineTo(cx + R * x, cy - R * y);
+        day.lineTo(cx + R * x, cy - R * y);
+      }
+      const sunA = Math.atan2(-s[1], s[0]);
+      day.arc(cx, cy, R, sunA + Math.PI / 2, sunA - Math.PI / 2, true);
+      day.closePath();
+      return { day, line, p };
+    }
+
     function draw() {
       dirty = false;
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.clearRect(0, 0, w, h);
-      const T = ctx.tokens;
-      const R = Math.min(h * params.radius, w * 0.36), cx = ctx.vp.x * w, cy = ctx.vp.y * h;
+      const T = ctx.tokens, calmK = ctx.dial === 'calm' ? 0.66 : 1;
+      const portrait = w < h * 0.82;
+      const R = Math.min(h * params.radius, w * (portrait ? params.portraitRadius : 0.38));
+      const cx = ctx.vp.x * w, cy = ctx.vp.y * h;
       const grow = Math.min(2, Math.max(1, R / (150 * px)));             /* dots keep their density on a big globe */
       /* rotation: longitude so the facing meridian is at +z, then tilt by Tucson's latitude */
       const lon0 = TUCSON.lon + spin, lat0 = TUCSON.lat * D2R, cl = Math.cos(lat0), sl = Math.sin(lat0);
@@ -141,18 +172,60 @@
         const x = ca * Math.sin(b), y = Math.sin(a), z = ca * Math.cos(b);
         out[0] = x; out[1] = y * cl - z * sl; out[2] = y * sl + z * cl;
       };
-      const v = [0, 0, 0], s = [0, 0, 0];
+      const v = [0, 0, 0], s = [0, 0, 0], north = [0, 0, 0], south = [0, 0, 0];
       rot(S.lat, S.lon, s);
-      /* the disc: a faint fill so the globe reads as a body against the stars, and the dim limb */
-      g.globalAlpha = 1; g.fillStyle = T.field; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill();
-      /* graticule, front half only */
-      const grat = new Path2D(), step = params.graticuleDeg;
-      const seg = (fn) => { let pen = false; for (let u = 0; u <= 360; u += 4) { const [la, lo] = fn(u); rot(la, lo, v); if (v[2] > 0) { const X = cx + R * v[0], Y = cy - R * v[1]; if (pen) grat.lineTo(X, Y); else grat.moveTo(X, Y); pen = true; } else pen = false; } };
-      if (step > 0) {
-        for (let lo = -180; lo < 180; lo += step) seg((u) => [Math.min(90, u / 2 - 90), lo]);
-        for (let la = -90 + step; la < 90; la += step) seg((u) => [la, u - 180]);
+      rot(90, 0, north); rot(-90, 0, south);
+      const solar = solarPaths(s, cx, cy, R);
+
+      /* A restrained instrument cage. Its axle is the projected terrestrial axis; the amber sight is the
+         projected direction of the real sun. Everything remains centred on the site's vanishing point. */
+      g.globalCompositeOperation = 'lighter';
+      const aura = g.createRadialGradient(cx, cy, R * 0.78, cx, cy, R * 1.35);
+      aura.addColorStop(0, ctx.rgba(T.phosphor, 0));
+      aura.addColorStop(0.62, ctx.rgba(T.phosphor, 0.035 * params.atmosphere * calmK));
+      aura.addColorStop(1, ctx.rgba(T.phosphor, 0));
+      g.fillStyle = aura; g.globalAlpha = 1; g.beginPath(); g.arc(cx, cy, R * 1.35, 0, Math.PI * 2); g.fill();
+      const adx = north[0] - south[0], ady = -(north[1] - south[1]), alen = Math.hypot(adx, ady) || 1;
+      const ax = adx / alen, ay = ady / alen;
+      g.strokeStyle = T.phosphorDim || T.phosphor; g.lineWidth = px; g.globalAlpha = params.cageAlpha * 0.72 * calmK;
+      g.setLineDash([3 * px, 7 * px]); g.beginPath();
+      g.moveTo(cx - ax * R * 1.2, cy - ay * R * 1.2); g.lineTo(cx + ax * R * 1.2, cy + ay * R * 1.2); g.stroke();
+      g.setLineDash([]);
+      const cage = new Path2D(), cageR = R * 1.14;
+      for (let i = 0; i < 36; i++) {
+        if (i % 3 === 1) continue;
+        const a0 = i / 36 * Math.PI * 2, a1 = a0 + Math.PI * 2 / 36 * (i % 3 ? 0.38 : 0.7);
+        cage.moveTo(cx + Math.cos(a0) * cageR, cy + Math.sin(a0) * cageR);
+        cage.arc(cx, cy, cageR, a0, a1);
       }
-      g.lineWidth = 1 * px; g.strokeStyle = T.phosphor; g.globalAlpha = params.graticuleAlpha; g.stroke(grat);
+      g.globalAlpha = params.cageAlpha * 0.58 * calmK; g.stroke(cage);
+
+      /* The body starts dark enough to hold a silhouette, then the exact visible day hemisphere is laid over it. */
+      g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+      const body = g.createRadialGradient(cx - R * 0.25, cy - R * 0.3, R * 0.05, cx, cy, R);
+      body.addColorStop(0, ctx.rgba(T.field2 || T.field, params.bodyAlpha));
+      body.addColorStop(0.72, ctx.rgba(T.field2 || T.field, Math.min(1, params.bodyAlpha + 0.04)));
+      body.addColorStop(1, ctx.rgba(T.field, 1));
+      g.fillStyle = body; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill();
+      if (solar.day) {
+        const p = Math.max(0.001, solar.p), dx = s[0] / p, dy = -s[1] / p;
+        const day = g.createLinearGradient(cx - dx * R, cy - dy * R, cx + dx * R, cy + dy * R);
+        day.addColorStop(0, ctx.rgba(T.phosphorDim || T.phosphor, params.dayAlpha * 0.15 * calmK));
+        day.addColorStop(0.58, ctx.rgba(T.phosphor, params.dayAlpha * 0.54 * calmK));
+        day.addColorStop(1, ctx.rgba(T.amber || T.phosphorCore, params.dayAlpha * calmK));
+        g.fillStyle = day; g.fill(solar.day);
+      }
+      /* graticule, front half only */
+      const grat = new Path2D(), reference = new Path2D(), step = params.graticuleDeg;
+      const seg = (fn, path) => { let pen = false; for (let u = 0; u <= 360; u += 4) { const [la, lo] = fn(u); rot(la, lo, v); if (v[2] > 0) { const X = cx + R * v[0], Y = cy - R * v[1]; if (pen) path.lineTo(X, Y); else path.moveTo(X, Y); pen = true; } else pen = false; } };
+      if (step > 0) {
+        for (let lo = -180; lo < 180; lo += step) seg((u) => [Math.min(90, u / 2 - 90), lo], grat);
+        for (let la = -90 + step; la < 90; la += step) seg((u) => [la, u - 180], grat);
+      }
+      seg((u) => [0, u - 180], reference);
+      seg((u) => [Math.min(90, u / 2 - 90), lon0], reference);
+      g.lineWidth = px; g.strokeStyle = T.phosphorDim || T.phosphor; g.globalAlpha = params.graticuleAlpha * calmK; g.stroke(grat);
+      g.lineWidth = 1.3 * px; g.strokeStyle = T.phosphor; g.globalAlpha = params.cageAlpha * calmK; g.stroke(reference);
       /* dots, binned by brightness */
       const paths = [[], []];
       for (let b = 0; b < BINS; b++) { paths[0].push(new Path2D()); paths[1].push(new Path2D()); }
@@ -165,7 +238,7 @@
           if (v[2] <= 0.02) continue;
           const lit = Math.max(0, v[0] * s[0] + v[1] * s[1] + v[2] * s[2]);
           const amb = kind ? params.ambient * 0.45 : params.ambient;          /* night ocean nearly black, night land still legible */
-          const lum = amb + (1 - amb) * lit;
+          const lum = amb + (1 - amb) * Math.pow(lit, 0.72);
           const b = Math.min(BINS - 1, Math.floor(lum * BINS));
           const k = 0.55 + 0.45 * v[2];                                /* foreshorten toward the limb */
           paths[kind][b].rect(cx + R * v[0] - half * k, cy - R * v[1] - half, size * k, size);
@@ -173,27 +246,24 @@
       };
       put(land, 0, null);
       put(ocean, 1, oceanKeep);
-      g.fillStyle = T.phosphorCore;
       for (let kind = 0; kind < 2; kind++) {
         const lvl = kind ? params.oceanLevel : 1;
-        for (let b = 0; b < BINS; b++) { g.globalAlpha = Math.min(1, ((b + 1) / BINS) * lvl); g.fill(paths[kind][b]); }
+        for (let b = 0; b < BINS; b++) {
+          const heat = (b + 1) / BINS;
+          g.fillStyle = heat < 0.34 ? (T.phosphorDim || T.phosphor) : heat > 0.76 ? T.phosphorCore : T.phosphor;
+          g.globalAlpha = Math.min(1, (0.12 + heat * 0.88) * lvl * (0.76 + 0.24 * calmK)); g.fill(paths[kind][b]);
+        }
       }
       /* the day line: the great circle perpendicular to the sun, front half */
-      if (params.dayLine) {
-        const e1 = Math.abs(s[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
-        let ax = [s[1] * e1[2] - s[2] * e1[1], s[2] * e1[0] - s[0] * e1[2], s[0] * e1[1] - s[1] * e1[0]];
-        const al = Math.hypot(ax[0], ax[1], ax[2]); ax = ax.map((c) => c / al);
-        const bx = [s[1] * ax[2] - s[2] * ax[1], s[2] * ax[0] - s[0] * ax[2], s[0] * ax[1] - s[1] * ax[0]];
-        const dl = new Path2D(); let pen = false;
-        for (let u = 0; u <= 360; u += 3) {
-          const c = Math.cos(u * D2R), sn = Math.sin(u * D2R);
-          const x = ax[0] * c + bx[0] * sn, y = ax[1] * c + bx[1] * sn, z = ax[2] * c + bx[2] * sn;
-          if (z > 0) { const X = cx + R * x, Y = cy - R * y; if (pen) dl.lineTo(X, Y); else dl.moveTo(X, Y); pen = true; } else pen = false;
-        }
-        g.setLineDash([2 * px, 5 * px]); g.lineWidth = 1 * px; g.strokeStyle = T.amber; g.globalAlpha = 0.45; g.stroke(dl); g.setLineDash([]);
+      if (params.dayLine && solar.line) {
+        g.strokeStyle = T.amber; g.lineCap = 'round';
+        g.setLineDash([2 * px, 5 * px]); g.lineWidth = 8 * px; g.globalAlpha = 0.035 * params.atmosphere * calmK; g.stroke(solar.line);
+        g.lineWidth = px; g.globalAlpha = 0.52 * calmK; g.stroke(solar.line); g.setLineDash([]);
       }
       /* the limb: dim all round, amber where the sun lights it */
-      g.lineWidth = 1 * px; g.strokeStyle = T.phosphor; g.globalAlpha = 0.28;
+      g.lineWidth = 7 * px; g.strokeStyle = T.phosphor; g.globalAlpha = 0.055 * params.atmosphere * calmK;
+      g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.stroke();
+      g.lineWidth = 1.2 * px; g.strokeStyle = T.phosphor; g.globalAlpha = 0.42 * calmK;
       g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.stroke();
       const N = 144, limb = [new Path2D(), new Path2D(), new Path2D(), new Path2D()];
       for (let i = 0; i < N; i++) {
@@ -206,8 +276,34 @@
       g.lineCap = 'round'; g.strokeStyle = T.amber;
       for (let b = 0; b < 4; b++) {
         const a = (b + 0.5) / 4 * params.limbAlpha;
-        g.lineWidth = 4 * px; g.globalAlpha = a * 0.22; g.stroke(limb[b]);
-        g.lineWidth = 1.4 * px; g.globalAlpha = a; g.stroke(limb[b]);
+        g.globalCompositeOperation = 'lighter';
+        g.lineWidth = 11 * px; g.globalAlpha = a * 0.075 * params.atmosphere * calmK; g.stroke(limb[b]);
+        g.lineWidth = 4 * px; g.globalAlpha = a * 0.25 * calmK; g.stroke(limb[b]);
+        g.lineWidth = 1.35 * px; g.globalAlpha = a * calmK; g.stroke(limb[b]);
+      }
+      g.globalCompositeOperation = 'source-over';
+      /* pole markers: the nearer cap is solid, the far cap is hollow */
+      const pole = (p, near) => {
+        const X = cx + R * p[0], Y = cy - R * p[1], rr = (near ? 2.4 : 1.9) * px;
+        g.strokeStyle = near ? T.phosphorCore : (T.phosphorDim || T.phosphor); g.fillStyle = T.phosphorCore;
+        g.globalAlpha = near ? 0.9 : 0.42; g.lineWidth = px;
+        g.beginPath(); g.arc(X, Y, rr, 0, Math.PI * 2); near ? g.fill() : g.stroke();
+      };
+      pole(north, north[2] > 0); pole(south, south[2] > 0);
+      /* screen-plane sun sight and, when visible, the sub-solar point on the body */
+      if (solar.p > 0.001) {
+        const dx = s[0] / solar.p, dy = -s[1] / solar.p;
+        const x0 = cx + dx * R * 1.03, y0 = cy + dy * R * 1.03;
+        const x1 = cx + dx * R * 1.29, y1 = cy + dy * R * 1.29;
+        g.strokeStyle = T.amber; g.globalAlpha = 0.65 * calmK; g.lineWidth = px; g.setLineDash([2 * px, 4 * px]);
+        g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.setLineDash([]);
+        const rr = 4.2 * px; g.globalAlpha = 0.9 * calmK; g.beginPath();
+        g.moveTo(x1, y1 - rr); g.lineTo(x1 + rr, y1); g.lineTo(x1, y1 + rr); g.lineTo(x1 - rr, y1); g.closePath(); g.stroke();
+      }
+      if (s[2] > 0) {
+        const X = cx + R * s[0], Y = cy - R * s[1], rr = 3.1 * px;
+        g.fillStyle = T.amber; g.globalAlpha = 0.18; g.beginPath(); g.arc(X, Y, rr * 2.6, 0, Math.PI * 2); g.fill();
+        g.globalAlpha = 0.95; g.beginPath(); g.moveTo(X, Y - rr); g.lineTo(X + rr, Y); g.lineTo(X, Y + rr); g.lineTo(X - rr, Y); g.closePath(); g.fill();
       }
       /* Tucson */
       rot(TUCSON.lat, TUCSON.lon, v);
@@ -217,7 +313,7 @@
         g.globalAlpha = 0.25; g.beginPath(); g.arc(X, Y, 5 * px, 0, Math.PI * 2); g.fill();
         g.globalAlpha = 1; g.beginPath(); g.arc(X, Y, 2.2 * px, 0, Math.PI * 2); g.fill();
       }
-      g.globalAlpha = 1;
+      g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; g.setLineDash([]);
     }
 
     function readout() {

@@ -10,9 +10,9 @@
  * not         hydrology: no flow accumulation, infiltration, channels, rainfall or discharge. It shows where water
  *             would run downhill on a 64 m surface, not where it does run
  * deps        none · Canvas 2D · 2026-09
- * budget      2.4 ms/frame @ 480x300 internal (1440x900 backing), 2,400 drops, desktop Chromium, headless, busy machine
- *             (2026-09-29); 222x480 at 390x844 2.2 ms; phone TBD
- * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
+ * budget      1.18 ms/tick in a 1440x900 workbench; 1.50 ms/tick at 390x844 touch emulation, 2,400 drops;
+ *             one-second local Chromium CPU samples, 2026-09-30, normal CPU rate; excludes GPU, raster and hardware phones
+ * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), rain(nx, ny), destroy() }
  * license     MIT, Desert Data Labs LLC · elevation: Mapzen terrain tiles; data from SRTM, NED, and others
  */
 /* HOW IT WORKS
@@ -28,6 +28,9 @@
  * seconds at a fixed step with a seeded random source, so the still is already full of canyons and the live bay
  * continues from that exact state. Each frame maps the view window of the grid onto a buffer whose long side is 480 pixels: a
  * faint hillshade in the tube's line colour, plus phosphor where the density is.
+ * Warm contour accents are derived from sampled elevation. A bounded set of bright moving heads follows the
+ * actual drops, with short tails from each last step. The explicit rain() action seeds drops in a cloud, draws
+ * its location immediately, and in Still advances a small deterministic batch without starting a ticker.
  */
 (() => {
   'use strict';
@@ -43,6 +46,9 @@
     cloud: 26,           /* rain-cloud radius, cells */
     stillSeconds: 20,
     buffer: 480,         /* long side of the internal buffer, pixels */
+    contours: 0.3,       /* illustrative elevation accents behind the live slope flow */
+    contourM: 180,
+    heads: 0.8,          /* moving phosphor heads, distinct from the accumulated trail */
   };
 
   const MPP_X = 64.59248259040142, MPP_Y = 64.15933123256292;
@@ -60,12 +66,13 @@
     let W = 768, H = 768, elev = null, gx = null, gy = null, shadeG = null, dens = null, ready = false, dead = false;
     let BW = 0, BH = 0, img = null, px = null, map = null, base = null, baseKey = '';
     let view = { x0: 0, y0: 0, cw: 1 };               /* grid cell at buffer pixel 0,0 and cells per pixel */
-    let N = 0, pxs = null, pys = null, age = null, lifeA = null, sx0 = null, sy0 = null;
+    let N = 0, pxs = null, pys = null, age = null, lifeA = null, sx0 = null, sy0 = null, prevX = null, prevY = null;
     let tone = null, toneKey = '';                  /* the tone LUT: density -> packed phosphor add, rebuilt when tokens change */
     let S = 1, simT = 0, rand = rng(1947), readAt = 0, wantStill = true, cloudFt = null;
+    let rainCloud = null, cloudPulse = 0;
 
     function allocDrops(n) {
-      N = n; pxs = new Float32Array(n); pys = new Float32Array(n); age = new Float32Array(n); lifeA = new Float32Array(n); sx0 = new Float32Array(n); sy0 = new Float32Array(n);
+      N = n; pxs = new Float32Array(n); pys = new Float32Array(n); age = new Float32Array(n); lifeA = new Float32Array(n); sx0 = new Float32Array(n); sy0 = new Float32Array(n); prevX = new Float32Array(n); prevY = new Float32Array(n);
       for (let i = 0; i < n; i++) { spawn(i, null); age[i] = rand() * lifeA[i]; }
     }
     function spawn(i, at) {
@@ -78,6 +85,7 @@
         pxs[i] = view.x0 - vw * 0.08 + rand() * vw * 1.16; pys[i] = view.y0 - vh * 0.08 + rand() * vh * 1.16;
       }
       age[i] = 0; lifeA[i] = P.life * (0.4 + rand() * 1.2); sx0[i] = pxs[i]; sy0[i] = pys[i];
+      prevX[i] = pxs[i]; prevY[i] = pys[i];
     }
 
     /* slope field from the smoothed grid, and a hillshade for the backdrop */
@@ -118,6 +126,7 @@
       if (S > 1e24) { const k = 1 / S; for (let i = 0; i < dens.length; i++) dens[i] *= k; S = 1; }
       for (let i = 0; i < count; i++) {
         let x = pxs[i], y = pys[i];
+        prevX[i] = x; prevY[i] = y;
         age[i] += dt;
         /* reborn when old, off the grid, or stalled in a pit (a drop that has not left a 3-cell circle in a second and a half) */
         const stalled = age[i] > 1.5 && Math.abs(x - sx0[i]) + Math.abs(y - sy0[i]) < 3;
@@ -161,10 +170,10 @@
        stays dark and the range reads as relief; packed as one 32-bit word per pixel */
     let base32 = null, px32 = null;
     function backdrop() {
-      const tok = ctx.tokens, key = BW + 'x' + BH + tok.field + tok.line + tok.phosphorDim + P.shade + view.x0 + view.y0;
+      const tok = ctx.tokens, key = BW + 'x' + BH + tok.field + tok.line + tok.phosphorDim + tok.amber + P.shade + P.contours + P.contourM + view.x0 + view.y0;
       if (key === baseKey) return;
       baseKey = key;
-      const f = BONEYARD.toRgb(tok.field), l = BONEYARD.toRgb(tok.line), d = BONEYARD.toRgb(tok.phosphorDim);
+      const f = BONEYARD.toRgb(tok.field), l = BONEYARD.toRgb(tok.line), d = BONEYARD.toRgb(tok.phosphorDim), amber = BONEYARD.toRgb(tok.amber);
       const lo = 625, hi = 2791;
       base = new Uint8ClampedArray(BW * BH * 3); base32 = new Uint32Array(BW * BH);
       for (let p = 0; p < BW * BH; p++) {
@@ -173,6 +182,9 @@
         base[p * 3] = f[0] + (l[0] - f[0]) * a + (d[0] - f[0]) * b;
         base[p * 3 + 1] = f[1] + (l[1] - f[1]) * a + (d[1] - f[1]) * b;
         base[p * 3 + 2] = f[2] + (l[2] - f[2]) * a + (d[2] - f[2]) * b;
+        const level = elev[i] / clamp(P.contourM, 40, 600);
+        const accent = Math.max(0, 1 - Math.abs(level - Math.round(level)) * 24) * clamp(P.contours, 0, 0.7) * (0.22 + 0.4 * e);
+        for (let c = 0; c < 3; c++) base[p * 3 + c] += (amber[c] - base[p * 3 + c]) * accent;
         base32[p] = (255 << 24) | (base[p * 3 + 2] << 16) | (base[p * 3 + 1] << 8) | base[p * 3];
       }
     }
@@ -203,6 +215,52 @@
       bctx.putImageData(img, 0, 0);
       g.imageSmoothingEnabled = false;
       g.drawImage(buf, 0, 0, canvas.width, canvas.height);
+      drawHeads();
+      drawCloud();
+    }
+    function drawHeads() {
+      if (!(P.heads > 0)) return;
+      const count = ctx.dial === 'calm' ? N >> 1 : N;
+      const limit = ctx.dial === 'calm' ? 90 : 220, stride = Math.max(1, Math.ceil(count / limit));
+      const kx = canvas.width / (BW * view.cw), ky = canvas.height / (BH * view.cw);
+      const streaks = new Path2D(), heads = new Path2D();
+      const radius = Math.max(0.7, Math.min(canvas.width, canvas.height) / 720);
+      for (let i = 0; i < count; i += stride) {
+        const x = (pxs[i] - view.x0) * kx, y = (pys[i] - view.y0) * ky;
+        if (x < 0 || y < 0 || x > canvas.width || y > canvas.height || age[i] < 0.04) continue;
+        const dx = (pxs[i] - prevX[i]) * kx, dy = (pys[i] - prevY[i]) * ky;
+        const length = Math.hypot(dx, dy);
+        if (length < 0.04) continue;
+        const tail = Math.min(5, 2.2 / Math.max(0.1, length));
+        streaks.moveTo(x - dx * tail, y - dy * tail); streaks.lineTo(x, y);
+        heads.moveTo(x + radius, y); heads.arc(x, y, radius, 0, Math.PI * 2);
+      }
+      g.globalCompositeOperation = 'lighter'; g.globalAlpha = clamp(P.heads, 0, 1) * 0.55;
+      g.strokeStyle = ctx.tokens.phosphor; g.lineWidth = radius * 2.5; g.stroke(streaks);
+      g.globalAlpha = clamp(P.heads, 0, 1) * 0.85; g.fillStyle = ctx.tokens.phosphorCore; g.fill(heads);
+      g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    }
+    function drawCloud() {
+      if (!rainCloud || cloudPulse < 0.02) return;
+      const x = (rainCloud.x - view.x0) / (BW * view.cw) * canvas.width;
+      const y = (rainCloud.y - view.y0) / (BH * view.cw) * canvas.height;
+      const r = P.cloud / (BW * view.cw) * canvas.width * (1 + (1 - cloudPulse) * 0.3);
+      g.globalAlpha = cloudPulse * 0.72; g.strokeStyle = ctx.tokens.amber;
+      g.lineWidth = Math.max(1, canvas.width / 1100); g.setLineDash([4, 6]);
+      g.beginPath(); g.arc(x, y, Math.max(4, r), 0, Math.PI * 2); g.stroke(); g.setLineDash([]);
+      g.beginPath(); g.moveTo(x - 6, y); g.lineTo(x + 6, y); g.moveTo(x, y - 6); g.lineTo(x, y + 6); g.stroke();
+      g.globalAlpha = 1;
+    }
+    function rain(nx = 0.5, ny = 0.46) {
+      if (!ready || dead) return false;
+      rainCloud = { x: view.x0 + clamp(nx, 0.05, 0.95) * BW * view.cw, y: view.y0 + clamp(ny, 0.05, 0.95) * BH * view.cw };
+      cloudPulse = 1;
+      const count = Math.min(N, ctx.dial === 'calm' ? 180 : 320);
+      for (let i = 0; i < count; i++) spawn(i, rainCloud);
+      if (ctx.dial === 'still') for (let i = 0; i < 24; i++) advance(1 / 30, count, rainCloud);
+      cloudFt = elev[clamp(rainCloud.y | 0, 0, H - 1) * W + clamp(rainCloud.x | 0, 0, W - 1)] * 3.28084;
+      draw(); readout(ctx.dial === 'calm' ? N >> 1 : N, true);
+      return true;
     }
     function readout(active, force) {
       const now = performance.now();
@@ -242,6 +300,8 @@
         wantStill = false;
         const count = ctx.dial === 'calm' ? N >> 1 : N;
         const cloud = cloudAt(pointer || ctx.pointer);
+        cloudPulse *= Math.exp(-dt / 0.65);
+        if (cloud) { rainCloud = cloud; cloudPulse = Math.max(cloudPulse, pointer?.down ? 0.85 : 0.4); }
         cloudFt = cloud && cloud.x >= 0 && cloud.y >= 0 && cloud.x < W && cloud.y < H ? elev[(cloud.y | 0) * W + (cloud.x | 0)] * 3.28084 : null;
         if (cloud) for (let j = 0; j < 6; j++) spawn((rand() * count) | 0, cloud);   /* the cloud rains: recycle a few drops under it */
         advance(Math.min(0.05, dt), count, cloud);
@@ -250,7 +310,7 @@
       },
       resize(w, h) {
         /* the long side of the buffer is P.buffer pixels, whatever the aspect: a phone costs what a desktop costs */
-        const aspect = Math.max(1, w) / Math.max(1, h), L = Math.round(P.buffer);
+        const aspect = Math.max(1, w) / Math.max(1, h), L = Math.round(clamp(P.buffer, 240, 640));
         const bw = aspect >= 1 ? L : Math.max(120, Math.round(L * aspect)), bh = aspect >= 1 ? Math.max(90, Math.round(L / aspect)) : L;
         if (bw !== BW || bh !== BH || !img) { BW = bw; BH = bh; buf.width = bw; buf.height = bh; img = bctx.createImageData(bw, bh); px = img.data; px32 = new Uint32Array(px.buffer); baseKey = ''; }
         if (gx) { layout(); if (!ready) { ready = true; precompute(); } }
@@ -269,9 +329,10 @@
         if (p.drops !== old.drops || p.stillSeconds !== old.stillSeconds) precompute();
         baseKey = ''; draw();
       },
+      rain,
       destroy() {
         dead = true; ready = false;
-        elev = gx = gy = shadeG = dens = tone = null; buf = bctx = null; pxs = pys = age = lifeA = sx0 = sy0 = null; img = px = px32 = map = base = base32 = null;
+        elev = gx = gy = shadeG = dens = tone = null; buf = bctx = null; pxs = pys = age = lifeA = sx0 = sy0 = prevX = prevY = null; img = px = px32 = map = base = base32 = null; rainCloud = null;
       },
     };
   }

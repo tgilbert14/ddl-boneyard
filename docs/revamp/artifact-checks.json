@@ -1,5 +1,5 @@
 {
-  "date": "2026-09-30T18:26:46.337Z",
+  "date": "2026-09-30T19:41:31.640Z",
   "conditions": "Local Chromium, DPR 1, reduced motion, 17 standalone pages plus four exact export API artifacts lifted with adjacent assets. User download buttons are exercised separately in the visible browser.",
   "results": [
     {
@@ -270,9 +270,13 @@
         "stillT": 22,
         "idleResume": 8,
         "labels": true,
-        "buffer": 384
+        "buffer": 448,
+        "contours": 0.42,
+        "contourM": 160,
+        "survey": 0.24,
+        "haze": 1.1
       },
-      "htmlBytes": 160204,
+      "htmlBytes": 165117,
       "errors": []
     },
     {
@@ -290,19 +294,26 @@
         "ceilH": 1.15,
         "focalK": 0.62,
         "fog": 20,
-        "gain": 1.995,
-        "sat": 2,
-        "edge": 0.85,
+        "gain": 1.9968,
+        "sat": 1.72,
+        "edge": 0.78,
         "shove": 0.9,
-        "haze": 1.05,
-        "coreW": 0.11,
-        "coreH": 0.05,
-        "bloomW": 0.26,
-        "bloomH": 0.14,
-        "bloom": 0.32,
+        "haze": 0.38,
+        "coreW": 0.05,
+        "coreH": 0.012,
+        "bloomW": 0.22,
+        "bloomH": 0.065,
+        "bloom": 0.2,
+        "eyeDark": 0.9,
+        "rim": 0.54,
+        "ribSpacing": 1.65,
+        "ribWidth": 0.075,
+        "ribShade": 0.58,
+        "sideShade": 0.28,
+        "toneKnee": 214,
         "stillDolly": 23.5
       },
-      "htmlBytes": 175164,
+      "htmlBytes": 168479,
       "errors": []
     },
     {
@@ -311,9 +322,10 @@
       "parameters": {
         "consoleScale": 1.2,
         "beamGlow": 0.72,
-        "sceneryDensity": 1
+        "sceneryDensity": 1,
+        "screenSpill": 0.62
       },
-      "htmlBytes": 161884,
+      "htmlBytes": 166684,
       "errors": []
     },
     {
@@ -327,7 +339,7 @@
         "snapPull": 0.88,
         "drift": 0.5,
         "sweep": 0.9,
-        "radius": 0.39,
+        "radius": 0.34,
         "copies": 5,
         "copyEvery": 0.05,
         "decay": 0.58,
@@ -338,13 +350,17 @@
         "glowAlpha": 0.42,
         "coreAlpha": 1,
         "gridAlpha": 0.07,
+        "bezelAlpha": 0.28,
+        "glassAlpha": 0.14,
+        "phaseAlpha": 0.62,
+        "holdBoost": 0.55,
         "minHold": 0.06,
         "peak": 0.08,
         "attack": 0.07,
         "release": 0.28,
         "fftSize": 256
       },
-      "htmlBytes": 157336,
+      "htmlBytes": 168641,
       "errors": []
     },
     {

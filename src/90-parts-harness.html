@@ -394,6 +394,13 @@ __MODULE__
       actionButton('Turn right', () => { try { handle.turn(15); } catch (err) { setStatus('Turn failed: ' + err.message, 'error'); } });
       hints.push('Drag or use arrow keys');
     }
+    if (handle && typeof handle.rain === 'function') {
+      const button = actionButton('Rain burst', () => {
+        if (handle.rain()) { buttonState(button, 'ok'); setStatus('Rain burst follows the terrain slope.'); }
+        else setStatus('Terrain is not ready yet.');
+      });
+      hints.push('Move over the terrain or use Rain burst');
+    }
     if (HOLDS) {
       holdButton = actionButton('Hold', (e) => {
         if (e.detail !== 0) return;
@@ -569,7 +576,8 @@ __MODULE__
   pngButton.addEventListener('click', () => {
     if (KIND === 'dom' || !handle) { buttonState(pngButton, 'error'); setStatus('PNG export is unavailable for this DOM part.', 'error'); return; }
     try {
-      if ((ctx.dial === 'still' || KIND === 'post') && handle.still) handle.still(t);
+      /* A Still turn or rain burst is already drawn. Preserve that chosen frame in the PNG. */
+      if (KIND === 'post' && handle.still) handle.still(t);
       canvas.toBlob((blob) => {
         if (!blob) { buttonState(pngButton, 'error'); setStatus('PNG export failed.', 'error'); return; }
         downloadBlob(blob, SLUG + '-frame.png'); buttonState(pngButton, 'ok'); setStatus('PNG download requested.');
