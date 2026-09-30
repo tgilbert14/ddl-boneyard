@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The shelf · BONEYARD parts · Desert Data Labs</title>
+<meta name="description" content="Every BONEYARD effect as one plain file: technique, lineage, size and measured cost. Pull any part.">
+<style>
+/* ============================================================
+   BONEYARD · 00-tokens.css · PROVISIONAL tokens (legolas, 2026-09-29)
+   arwen replaces these. Every color and font sits behind a custom property so
+   nothing below this file names a hex. Color tokens are @property-registered
+   as <color>: the runtime reads them with getComputedStyle and hands modules a
+   RESOLVED rgb string (ctx.tokens), so arwen can move any of them to oklch()
+   and every canvas keeps working.
+   ============================================================ */
+
+@property --field          { syntax: "<color>"; inherits: true; initial-value: #030509; }
+@property --field-2        { syntax: "<color>"; inherits: true; initial-value: #070b16; }
+@property --phosphor       { syntax: "<color>"; inherits: true; initial-value: #8ef3ff; }
+@property --phosphor-core  { syntax: "<color>"; inherits: true; initial-value: #eafff8; }
+@property --phosphor-dim   { syntax: "<color>"; inherits: true; initial-value: #2c6b75; }
+@property --amber          { syntax: "<color>"; inherits: true; initial-value: #ffb347; }
+@property --ink            { syntax: "<color>"; inherits: true; initial-value: #d9f4f7; }
+@property --ink-dim        { syntax: "<color>"; inherits: true; initial-value: #93b8bd; }
+@property --line           { syntax: "<color>"; inherits: true; initial-value: #17313a; }
+@property --horizon-tint   { syntax: "<color>"; inherits: true; initial-value: #1a2a5a; }
+
+:root {
+  /* the field: black to blue-black */
+  --field: #030509;
+  --field-2: #070b16;
+
+  /* ONE phosphor, two temperatures: cyan-white stroke, warmer core */
+  --phosphor: #8ef3ff;
+  --phosphor-core: #eafff8;
+  --phosphor-dim: #2c6b75;
+
+  /* ONE accent: desert amber. Pull glyph, visited ticks, the Terminator's sunlit limb. */
+  --amber: #ffb347;
+
+  /* type ink */
+  --ink: #d9f4f7;
+  --ink-dim: #93b8bd;
+  --line: #17313a;
+
+  /* the horizon hour tint (22-sky.js writes the live value here for the CSS floor) */
+  --horizon-tint: #1a2a5a;
+
+  /* type: Eurostile-family display (Michroma is arwen's OFL stand-in; system fallbacks today,
+     no font request), humanist mono for the HUD and notes */
+  --font-display: "Michroma", "Eurostile", "Bank Gothic", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "Space Mono", ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+
+  /* the shared vanishing point (10-core.js keeps these in step with the canvas) */
+  --vp-x: 50%;
+  --vp-y: 38%;
+
+  /* chrome metrics */
+  --hud-pad: clamp(12px, 2vw, 22px);
+  --hud-h: 44px;              /* bottom HUD row */
+  --greet-h: 30px;            /* the greetings bar */
+  --plate-w: 36rem;
+  --bezel: 1px;
+  --radius: 6px;
+
+  /* z ladder */
+  --z-stage: 0;
+  --z-main: 10;
+  --z-hud: 20;
+  --z-skip: 30;
+
+  /* motion */
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --switch-on: 500ms;
+}
+
+body { margin: 0; background: var(--field); color: var(--ink); font: 15px/1.5 var(--font-mono); padding: clamp(1rem, 4vw, 3rem); }
+h1 { font: 600 clamp(1.4rem, 4vw, 2.2rem)/1.1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: var(--phosphor); margin: 0 0 .4rem; }
+p { max-width: 62ch; color: var(--ink-dim); }
+a { color: var(--phosphor); }
+a:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+table { border-collapse: collapse; width: 100%; margin-top: 1.5rem; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: .6rem .7rem; border-top: 1px solid var(--line); }
+thead th { color: var(--ink-dim); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; font-size: 12px; }
+tbody th { font-weight: 600; white-space: nowrap; }
+.role { display: block; font-size: 11px; color: var(--ink-dim); letter-spacing: .08em; text-transform: uppercase; }
+.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.wrap { overflow-x: auto; }
+nav { margin-top: 2rem; }
+</style>
+</head>
+<body>
+<main>
+<h1>The shelf</h1>
+<p>Every effect on the BONEYARD row is one plain file: a provenance header, a PARAMS block, and one mount() factory. Each part below runs on its own page with its tweak row and a note on how it works.</p>
+<div class="wrap">
+<table>
+<thead><tr><th scope="col">Part</th><th scope="col">Technique</th><th scope="col">Lineage</th><th scope="col">Size</th><th scope="col">Measured cost</th><th scope="col">Still</th></tr></thead>
+<tbody>
+<tr>
+  <th scope="row"><a href="sky.html">The sky</a><span class="role">layer</span></th>
+  <td>two-plane 1/z starfield drifting with camera z, plus a 24-stop horizon band tinted by the visitor's local hour</td>
+  <td>Star Raiders (Atari, 1979) and Galaga (Namco, 1981) multi-plane stars</td>
+  <td class="num">6.8 KB</td>
+  <td>see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD</td>
+  <td><a href="sky.html" class="still">open</a></td>
+</tr>
+<tr>
+  <th scope="row"><a href="tube.html">The tube</a><span class="role">layer</span></th>
+  <td>WebGL1 phosphor post-pass over the composited 2D layers (persistence, bloom, slight barrel, vignette)</td>
+  <td>the vector CRT: the oscilloscope; Asteroids (Atari, 1979); Battlezone (Atari, 1980); Tempest (Atari, 1981); Vectrex (1982)</td>
+  <td class="num">2.2 KB</td>
+  <td>0.0 ms/frame (no-op hook), desktop Chromium, measured 2026-09-29; the real pass has its own line when it lands</td>
+  <td><a href="tube.html" class="still">open</a></td>
+</tr>
+<tr>
+  <th scope="row"><a href="row.html">The row</a><span class="role">layer</span></th>
+  <td>1/z perspective light-grid with billboard vector pylons, all projected to one shared vanishing point</td>
+  <td>the Tron light-grid (Disney, 1982); the Battlezone horizon (Atari, 1980); the per-scanline perspective floor (Sega, Space Harrier, 1985; Super Nintendo Mode 7, 1990)</td>
+  <td class="num">7.4 KB</td>
+  <td>see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD</td>
+  <td><a href="row.html" class="still">open</a></td>
+</tr>
+<tr>
+  <th scope="row"><a href="greetings.html">Greetings</a><span class="role">layer</span></th>
+  <td>real-DOM sine scroller: a duplicated track moved by transform, each glyph a span on a negative-delay phased translateY (playbook 2.7), so the wave runs from t=0 with no per-frame JavaScript</td>
+  <td>the C64 and Amiga cracktro sine scroller, about 1985 to 1992</td>
+  <td class="num">6.1 KB</td>
+  <td>0.0 ms/frame of JavaScript after start (CSS transform animations only); compositor cost measured in docs/BUILD-LOG.md, desktop Chromium, 2026-09-29; phone TBD</td>
+  <td><a href="greetings.html" class="still">open</a></td>
+</tr>
+<tr>
+  <th scope="row"><a href="switch.html">Switch</a><span class="role">corridor</span></th>
+  <td>the CRT switch-off as compositor-only transforms on a room's wrapper: scaleY to a 2 px line (200 ms), scaleX to a dot (150 ms), the dot recedes to the vanishing point (600 ms); switch-on is the reverse</td>
+  <td>every CRT television's power-off, formalised by 1980s title sequences</td>
+  <td class="num">5.2 KB</td>
+  <td>0.0 ms/frame of JavaScript during the transition (compositor animations); measured in docs/BUILD-LOG.md, desktop Chromium, 2026-09-29</td>
+  <td><a href="switch.html" class="still">open</a></td>
+</tr>
+<tr>
+  <th scope="row"><a href="hyperspace.html">Hyperspace</a><span class="role">corridor</span></th>
+  <td>the sky's own stars streaked along their 1/z rays: each star drawn as a line from its projection at z to its projection at z + warp * streakLen, scrubbed by scroll position through the gap between two bays</td>
+  <td>the Star Wars jump (1977); the demoscene 1/z starfields (early 1990s); Windows 3.1 Starfield Simulation (1992)</td>
+  <td class="num">5.2 KB</td>
+  <td>see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD</td>
+  <td><a href="hyperspace.html" class="still">open</a></td>
+</tr>
+<tr>
+  <th scope="row"><a href="jump.html">Jump</a><span class="role">bay</span></th>
+  <td>1/z starfield in warp: stars flow toward the camera along rays from the vanishing point and are drawn as streaks whose length is the warp; press-and-hold raises warp, release settles to cruise</td>
+  <td>the Star Wars jump (1977); the demoscene 1/z starfields (early 1990s); Windows 3.1 Starfield Simulation (1992)</td>
+  <td class="num">5.1 KB</td>
+  <td>see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD</td>
+  <td><a href="jump.html" class="still">open</a></td>
+</tr>
+<tr>
+  <th scope="row"><a href="placeholder.html">Tube idle (placeholder)</a><span class="role">placeholder</span></th>
+  <td>the designed idle of a switched-on vector tube: a centre bloom on the vanishing point, one horizontal hairline that breathes, an inset bezel; nothing else</td>
+  <td>the idle screen of a vector CRT with no program loaded (the oscilloscope at rest; Vectrex, 1982, between games)</td>
+  <td class="num">3.6 KB</td>
+  <td>see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD</td>
+  <td><a href="placeholder.html" class="still">open</a></td>
+</tr>
+</tbody>
+</table>
+</div>
+<nav><a href="../">Ride the row</a> · <a href="https://desertdatalabs.com/">Desert Data Labs</a></nav>
+</main>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!-- BONEYARD · 02-body.html · every bay in the DOM from byte one (legolas, 2026-09-29)
+     Copy is PROVISIONAL and factual: lineage lines come from vision-brief 4.3 and the verified
+     list 4.4 only. chaz writes the final lines; Grinch gates them. No em dashes anywhere. -->
+<a class="skip" href="#shelf">Skip to the shelf</a>
+
+<div id="stage" aria-hidden="true">
+  <div id="field">
+    <div id="horizon"><i></i></div>
+    <canvas class="layer" id="c-sky"></canvas>
+    <canvas class="layer" id="c-row"></canvas>
+    <canvas class="layer" id="c-corridor"></canvas>
+    <div id="rooms"></div>
+  </div>
+  <canvas class="layer" id="c-tube" hidden></canvas>
+</div>
+
+<header id="hud" aria-label="Heads-up display">
+  <div class="hud__clock hud__js"><time id="hud-clock" aria-label="Your local time"></time><span class="dev" id="hud-dev" hidden></span></div>
+  <div class="hud__readout hud__js" id="hud-readout" aria-live="polite">Bay 00 <span class="dot">/</span> 08 <span class="dot">·</span> The yard</div>
+  <div class="hud__bl hud__js">
+    <fieldset class="dial" id="dial">
+      <legend>Motion</legend>
+      <label><input type="radio" name="dial" id="dial-full" value="full"><span>Full</span></label>
+      <label><input type="radio" name="dial" id="dial-calm" value="calm"><span>Calm</span></label>
+      <label><input type="radio" name="dial" id="dial-still" value="still"><span>Still</span></label>
+    </fieldset>
+    <button type="button" class="autofly" id="autofly" aria-pressed="false">Auto-fly</button>
+  </div>
+  <ol class="index" id="index" aria-label="Bays">
+    <li><a href="#jump" data-bay="1">01</a></li>
+    <li><a href="#gate" data-bay="2">02</a></li>
+    <li><a href="#range" data-bay="3">03</a></li>
+    <li><a href="#wash" data-bay="4">04</a></li>
+    <li><a href="#relief" data-bay="5">05</a></li>
+    <li><a href="#terminator" data-bay="6">06</a></li>
+    <li><a href="#scope" data-bay="7">07</a></li>
+    <li><a href="#mark" data-bay="8">08</a></li>
+  </ol>
+</header>
+
+<main id="row-main">
+  <section class="bay bay--yard" id="yard" data-bay="0" data-slug="yard" aria-labelledby="title">
+    <p class="yard__kicker">A Desert Data Labs experience</p>
+    <h1 class="yard__title" id="title">Boneyard</h1>
+    <p class="yard__line">Eight retired display machines, tubes still on, in a row on the desert floor. Scroll to fly the row. Pull any part.</p>
+    <p class="yard__plate">A fiction of display machines, not the aircraft at Davis-Monthan. The clock in the corner is yours; the horizon takes its tint from your hour.</p>
+    <span class="yard__cue" id="cue"></span>
+  </section>
+
+  <section class="bay" id="jump" data-bay="1" data-slug="jump" data-holds="true" aria-labelledby="h-jump">
+    <div class="plate">
+      <h2 id="h-jump"><span class="n">01</span>Jump</h2>
+      <p class="lineage">Hyperspace starfield · Star Wars 1977 · the 1/z starfields of the early 1990s · Windows 3.1 Starfield Simulation 1992</p>
+      <p class="note">The stars you were resting under begin to streak. Hold the pointer, a finger or Space to raise warp; let go and it settles.</p>
+      <a class="pull" href="parts/jump.html" aria-label="Pull Jump: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
+    </div>
+  </section>
+
+  <section class="bay" id="gate" data-bay="2" data-slug="gate" aria-labelledby="h-gate">
+    <div class="plate">
+      <h2 id="h-gate"><span class="n">02</span>Gate</h2>
+      <p class="lineage">Slit-scan · Douglas Trumbull, 2001: A Space Odyssey, 1968</p>
+      <p class="note">One column of a real Sonoran sunset, stretched into a corridor. The photograph never ships; one column of it does.</p>
+      <a class="pull" href="parts/gate.html" aria-label="Pull Gate: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
+    </div>
+  </section>
+
+  <section class="bay" id="range" data-bay="3" data-slug="range" aria-labelledby="h-range">
+    <div class="plate">
+      <h2 id="h-range"><span class="n">03</span>Range</h2>
+      <p class="lineage">Voxel Space · NovaLogic, Comanche: Maximum Overkill, 1992</p>
+      <p class="note">A flight over the real Santa Catalinas: SRTM and USGS 3DEP elevation in 64 m cells, drawn with 2x vertical exaggeration.</p>
+      <a class="pull" href="parts/range.html" aria-label="Pull Range: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
+    </div>
+  </section>
+
+  <section class="bay" id="wash" data-bay="4" data-slug="wash" aria-labelledby="h-wash">
+    <div class="plate">
+      <h2 id="h-wash"><span class="n">04</span>Wash</h2>
+      <p class="lineage">Vector-field particle advection · scientific visualization, 1990s</p>
+      <p class="note">Rain finds the washes on the same mountains you just flew. Where water would run downhill, not where it does: a slope model, not hydrology.</p>
+      <a class="pull" href="parts/wash.html" aria-label="Pull Wash: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
+    </div>
+  </section>
+
+  <section class="bay" id="relief" data-bay="5" data-slug="relief" aria-labelledby="h-relief">
+    <div class="plate">
+      <h2 id="h-relief"><span class="n">05</span>Relief</h2>
+      <p class="lineage">Rutt/Etra scan processor · Steve Rutt and Bill Etra, 1973 · CP 1919 plot, Harold Craft, 1970</p>
+      <p class="note">The range you flew and watered, held as an object: scanlines bent by elevation, turning slowly until you drag it.</p>
+      <a class="pull" href="parts/relief.html" aria-label="Pull Relief: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
+    </div>
+  </section>
+
+  <section class="bay" id="terminator" data-bay="6" data-slug="terminator" aria-labelledby="h-terminator">
+    <div class="plate">
+      <h2 id="h-terminator"><span class="n">06</span>Terminator</h2>
+      <p class="lineage">Dotted planets · Elite, David Braben and Ian Bell, 1984</p>
+      <p class="note">A dotted globe with today's day line, computed from the date. Tucson in amber. Drag to spin; it comes back to face home.</p>
+      <a class="pull" href="parts/terminator.html" aria-label="Pull Terminator: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
+    </div>
+  </section>
+
+  <section class="bay" id="scope" data-bay="7" data-slug="scope" data-holds="true" aria-labelledby="h-scope">
+    <div class="plate">
+      <h2 id="h-scope"><span class="n">07</span>Scope</h2>
+      <p class="lineage">Oscilloscope XY mode · Lissajous figures, Jules Antoine Lissajous, 1857</p>
+      <p class="note">What you hear is exactly what you see, and only while you hold it. Nothing on this row makes a sound unless you press it.</p>
+      <a class="pull" href="parts/scope.html" aria-label="Pull Scope: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
+    </div>
+  </section>
+
+  <section class="bay" id="mark" data-bay="8" data-slug="mark" aria-labelledby="h-mark">
+    <div class="plate">
+      <h2 id="h-mark"><span class="n">08</span>Mark</h2>
+      <p class="lineage">Glenz vectors · the Amiga scene, about 1989 to 1990</p>
+      <p class="note">The Desert Data Labs mark as a see-through solid, the same glyph that stood as every pylon on the way in. Drag to turn it.</p>
+      <a class="pull" href="parts/mark.html" aria-label="Pull Mark: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
+    </div>
+  </section>
+
+  <section class="bay bay--signoff" id="shelf" data-bay="9" data-slug="shelf" aria-labelledby="h-shelf">
+    <div class="signoff">
+      <h2 id="h-shelf">That is the row.</h2>
+      <p>Every screen you flew past is one plain file: a provenance header, a PARAMS block, one mount() call. The shelf holds all of them.</p>
+      <p class="small">Elevation: AWS Terrain Tiles (Mapzen Terrarium), compiled from SRTM, USGS 3DEP and others. Life zones after the 27 Miles grounding bible.</p>
+      <nav aria-label="Where next">
+        <a href="parts/index.html">The shelf: pull any part</a>
+        <a href="https://desertdatalabs.com/">Desert Data Labs</a>
+      </nav>
+    </div>
+  </section>
+</main>
+
+<div id="greetings" role="note" aria-label="Greetings to the people and years behind every trick on this row: Douglas Trumbull, slit-scan, 1968. NovaLogic, Voxel Space, 1992. David Braben and Ian Bell, Elite, 1984. Steve Rutt and Bill Etra, 1973. Harold Craft, CP 1919, 1970. Jules Antoine Lissajous, 1857. Atari: Asteroids 1979, Battlezone 1980, Tempest 1981. Vectrex 1982. Sega, Space Harrier, 1985. The Amiga scene, 1988 to 1994. Ground truth: AWS Terrain Tiles from SRTM and USGS 3DEP.">
+  <div class="greet__static">Greetings to · Douglas Trumbull 1968 · NovaLogic 1992 · David Braben and Ian Bell 1984 · Steve Rutt and Bill Etra 1973 · Harold Craft 1970 · Jules Antoine Lissajous 1857 · Atari 1979 to 1981 · Vectrex 1982 · Sega 1985 · the Amiga scene 1988 to 1994 · ground: AWS Terrain Tiles, SRTM, USGS 3DEP</div>
+</div>
+
+<div id="dev" aria-label="Developer tweak row"></div>

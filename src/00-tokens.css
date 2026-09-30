@@ -1,0 +1,68 @@
+/* ============================================================
+   BONEYARD · 00-tokens.css · PROVISIONAL tokens (legolas, 2026-09-29)
+   arwen replaces these. Every color and font sits behind a custom property so
+   nothing below this file names a hex. Color tokens are @property-registered
+   as <color>: the runtime reads them with getComputedStyle and hands modules a
+   RESOLVED rgb string (ctx.tokens), so arwen can move any of them to oklch()
+   and every canvas keeps working.
+   ============================================================ */
+
+@property --field          { syntax: "<color>"; inherits: true; initial-value: #030509; }
+@property --field-2        { syntax: "<color>"; inherits: true; initial-value: #070b16; }
+@property --phosphor       { syntax: "<color>"; inherits: true; initial-value: #8ef3ff; }
+@property --phosphor-core  { syntax: "<color>"; inherits: true; initial-value: #eafff8; }
+@property --phosphor-dim   { syntax: "<color>"; inherits: true; initial-value: #2c6b75; }
+@property --amber          { syntax: "<color>"; inherits: true; initial-value: #ffb347; }
+@property --ink            { syntax: "<color>"; inherits: true; initial-value: #d9f4f7; }
+@property --ink-dim        { syntax: "<color>"; inherits: true; initial-value: #93b8bd; }
+@property --line           { syntax: "<color>"; inherits: true; initial-value: #17313a; }
+@property --horizon-tint   { syntax: "<color>"; inherits: true; initial-value: #1a2a5a; }
+
+:root {
+  /* the field: black to blue-black */
+  --field: #030509;
+  --field-2: #070b16;
+
+  /* ONE phosphor, two temperatures: cyan-white stroke, warmer core */
+  --phosphor: #8ef3ff;
+  --phosphor-core: #eafff8;
+  --phosphor-dim: #2c6b75;
+
+  /* ONE accent: desert amber. Pull glyph, visited ticks, the Terminator's sunlit limb. */
+  --amber: #ffb347;
+
+  /* type ink */
+  --ink: #d9f4f7;
+  --ink-dim: #93b8bd;
+  --line: #17313a;
+
+  /* the horizon hour tint (22-sky.js writes the live value here for the CSS floor) */
+  --horizon-tint: #1a2a5a;
+
+  /* type: Eurostile-family display (Michroma is arwen's OFL stand-in; system fallbacks today,
+     no font request), humanist mono for the HUD and notes */
+  --font-display: "Michroma", "Eurostile", "Bank Gothic", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "Space Mono", ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+
+  /* the shared vanishing point (10-core.js keeps these in step with the canvas) */
+  --vp-x: 50%;
+  --vp-y: 38%;
+
+  /* chrome metrics */
+  --hud-pad: clamp(12px, 2vw, 22px);
+  --hud-h: 44px;              /* bottom HUD row */
+  --greet-h: 30px;            /* the greetings bar */
+  --plate-w: 36rem;
+  --bezel: 1px;
+  --radius: 6px;
+
+  /* z ladder */
+  --z-stage: 0;
+  --z-main: 10;
+  --z-hud: 20;
+  --z-skip: 30;
+
+  /* motion */
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --switch-on: 500ms;
+}

@@ -1,0 +1,223 @@
+/* ============================================================
+   BONEYARD · 01-tube.css · the chrome (legolas, 2026-09-29)
+   The stage (fixed canvases), the pure-CSS horizon (the no-JS floor and the
+   first paint), the HUD corners, the nameplates, the dial, the index strip,
+   the greetings bar, the sign-off. Two layouts from one DOM: html.js = the
+   ride (100svh bays, snap proximity); no .js = the designed index page.
+   Reduced motion: every animation here has its twin in the block at the end.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--field); color: var(--ink); -webkit-text-size-adjust: 100%; }
+html.js { scroll-snap-type: y proximity; }          /* proximity, never mandatory (brief 3.2) */
+html.js.autofly { scroll-snap-type: none; }         /* Auto-fly must not fight the snap */
+body { margin: 0; min-height: 100svh; font: 15px/1.5 var(--font-mono); overflow-x: clip; }
+a { color: var(--phosphor); text-underline-offset: .2em; }
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--amber); outline-offset: 3px; border-radius: 2px;
+}
+:focus:not(:focus-visible) { outline: none; }
+canvas { display: block; }
+
+/* ---------- skip link ---------- */
+.skip { position: fixed; top: var(--hud-pad); left: 50%; translate: -50% -200%; z-index: var(--z-skip);
+  padding: .5rem .9rem; background: var(--field-2); color: var(--ink); border: 1px solid var(--phosphor);
+  font: 500 13px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; text-decoration: none;
+  transition: translate 160ms var(--ease-out); }
+.skip:focus-visible { translate: -50% 0; outline-offset: 2px; }
+
+/* ---------- the stage: fixed, aria-hidden scenery under everything ---------- */
+#stage { position: fixed; inset: 0; z-index: var(--z-stage); overflow: hidden; background: var(--field);
+  pointer-events: none; contain: strict; }
+#field { position: absolute; inset: 0; transform-origin: 50% var(--vp-y);
+  background: linear-gradient(180deg, var(--field-2) 0, var(--field) var(--vp-y)); }   /* the sky's gradient, painted once */
+.layer { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* the pure-CSS perspective grid: the first paint and the whole floor without JS.
+   perspective-origin sits on the vanishing point, the plane hinges at the horizon (38%),
+   so the CSS lines and the canvas lines converge on the same point and the hand-off
+   at switch-on does not jump. Static: nothing here animates. */
+#horizon { position: absolute; inset: 0; perspective: 62svh; perspective-origin: var(--vp-x) var(--vp-y); }
+#horizon::before { content: ""; position: absolute; left: -120%; right: -120%; top: var(--vp-y); height: 260%;
+  transform-origin: 50% 0; transform: rotateX(72deg);
+  background:
+    repeating-linear-gradient(90deg, var(--phosphor-dim) 0 1px, transparent 1px 7.5vw),
+    repeating-linear-gradient(0deg, var(--phosphor-dim) 0 1px, transparent 1px 7svh);
+  opacity: .55; }
+#horizon::after { content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, var(--field) 0, var(--field) calc(var(--vp-y) - 8svh), transparent calc(var(--vp-y) - .5px), var(--field) var(--vp-y), transparent calc(var(--vp-y) + 9svh)),
+    linear-gradient(180deg, transparent 0, transparent calc(var(--vp-y) - 10svh), var(--horizon-tint) var(--vp-y), transparent calc(var(--vp-y) + 1px));
+  opacity: 1; }
+/* the horizon hairline itself */
+#horizon i { position: absolute; left: 0; right: 0; top: var(--vp-y); height: 1px; background: var(--phosphor); opacity: .5;
+  box-shadow: 0 0 8px var(--phosphor); }
+html.js.tube-on #horizon { opacity: 0; transition: opacity var(--switch-on) linear; }
+
+/* room wrappers: one per mounted bay. The OUTER wrapper carries the 1/z approach scale from the
+   vanishing point (10-core.js writes --room-s per frame, compositor-only); the INNER wrapper is
+   SWITCH's (30-switch.js animates it with WAAPI). The bezel is static box-shadow: rasterised once,
+   then only transformed (LESSONS 2026-07-05: never animate box-shadow). */
+.room { position: absolute; inset: 0; transform-origin: var(--vp-x) var(--vp-y);
+  transform: translate3d(0, 0, 0) scale(var(--room-s, 1)); opacity: var(--room-o, 1); will-change: transform; }
+.room__tube { position: absolute; inset: 0; background: var(--field); transform-origin: 50% 50%;
+  outline: var(--bezel) solid var(--phosphor-dim); outline-offset: calc(-1 * var(--bezel));
+  box-shadow: 0 0 0 1px var(--field), 0 0 18px -4px var(--phosphor-dim); }
+.room__tube > canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.room__flash { position: absolute; inset: 0; background: var(--phosphor-core); opacity: 0; pointer-events: none; }
+.room.is-far .room__tube { outline-color: var(--phosphor); }
+.room.is-hidden { visibility: hidden; }
+[data-pixel] { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+/* ---------- the HUD: four corners, real DOM, fixed, above the ride ---------- */
+#hud { position: fixed; inset: 0; z-index: var(--z-hud); pointer-events: none; font: 500 12px/1 var(--font-mono);
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); }
+#hud > * { position: absolute; pointer-events: auto; }
+.hud__clock { top: var(--hud-pad); left: var(--hud-pad); font-variant-numeric: tabular-nums; color: var(--ink); }
+.hud__clock .dev { color: var(--amber); margin-left: .8em; }
+.hud__readout { top: var(--hud-pad); right: var(--hud-pad); text-align: right; color: var(--ink); }
+.hud__readout .dot { color: var(--amber); }
+
+/* the motion dial: a real radiogroup; the radio itself is the visible tick (never opacity-hidden,
+   so keyboard focus lands on a control you can see) */
+.hud__bl { bottom: calc(var(--greet-h) + 10px); left: var(--hud-pad); display: flex; align-items: center; gap: 12px; }
+.dial { display: flex; align-items: center; gap: 2px; border: 0; margin: 0; padding: 0; }
+.dial legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.dial label { display: inline-flex; align-items: center; gap: 6px; padding: 9px 9px; min-width: 44px; min-height: 34px; cursor: pointer;
+  border: 1px solid var(--line); color: var(--ink-dim); background: color-mix(in srgb, var(--field) 70%, transparent);
+  transition: color 160ms, border-color 160ms; }
+.dial label:first-of-type { border-radius: var(--radius) 0 0 var(--radius); }
+.dial label:last-of-type { border-radius: 0 var(--radius) var(--radius) 0; }
+.dial input { appearance: none; -webkit-appearance: none; margin: 0; width: 8px; height: 8px; border-radius: 50%;
+  border: 1px solid var(--ink-dim); background: transparent; flex: none; }
+.dial input:checked { background: var(--phosphor); border-color: var(--phosphor); box-shadow: 0 0 6px var(--phosphor); }
+.dial label:has(input:checked) { color: var(--phosphor); border-color: var(--phosphor); }
+.dial input:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+
+/* Auto-fly: a visible button next to the dial */
+.autofly { min-height: 34px; padding: 0 12px;
+  font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink-dim); background: color-mix(in srgb, var(--field) 70%, transparent);
+  border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; }
+.autofly[aria-pressed="true"] { color: var(--amber); border-color: var(--amber); }
+.autofly:disabled { opacity: .45; cursor: default; }
+
+/* the index strip: eight ticks, real links, bottom right */
+.index { bottom: calc(var(--greet-h) + 10px); right: var(--hud-pad); margin: 0; padding: 0; list-style: none;
+  display: flex; gap: 4px; }
+.index a { display: block; width: 26px; height: 34px; line-height: 34px; text-align: center; text-decoration: none;
+  color: var(--ink-dim); border: 1px solid var(--line); border-radius: 3px; font-size: 11px;
+  background: color-mix(in srgb, var(--field) 70%, transparent); }
+.index a.is-visited { color: var(--amber); border-color: var(--amber); }
+.index a[aria-current="true"] { color: var(--field); background: var(--phosphor); border-color: var(--phosphor); }
+
+/* ---------- the greetings bar (L4): real DOM, fixed footer strip under the HUD corners ---------- */
+#greetings { position: fixed; left: 0; right: 0; bottom: 0; height: var(--greet-h); z-index: var(--z-hud);
+  overflow: hidden; contain: paint; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--field) 82%, transparent);
+  font: 500 12px/var(--greet-h) var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim);
+  white-space: nowrap; }
+#greetings .greet__static { padding: 0 var(--hud-pad); overflow: hidden; text-overflow: ellipsis; }
+#greetings .greet__track { display: inline-flex; margin-left: 100vw; will-change: transform; }
+#greetings .greet__copy { display: inline-block; padding-right: 6ch; }
+#greetings .greet__copy span { display: inline-block; min-width: .3ch; }
+html.js.greet-on #greetings .greet__track { animation: greet-slide var(--greet-cycle, 48s) linear infinite; }
+html.js.greet-on[data-dial="full"] #greetings .greet__copy span { animation: greet-sine 1.8s ease-in-out infinite alternate; animation-delay: var(--d, 0s); }
+#greetings:hover .greet__track, #greetings:focus-within .greet__track,
+#greetings:hover .greet__copy span, #greetings:focus-within .greet__copy span { animation-play-state: paused; }
+@keyframes greet-slide { to { transform: translate3d(-50%, 0, 0); } }
+@keyframes greet-sine { from { transform: translate3d(0, -5px, 0); } to { transform: translate3d(0, 5px, 0); } }
+
+/* ---------- the ride: main is the scroll document, bays are 100svh sections ---------- */
+main { position: relative; z-index: var(--z-main); }
+.bay { position: relative; min-height: 100svh; display: grid; align-content: end;
+  padding: 0 var(--hud-pad) calc(var(--greet-h) + var(--hud-h) + 22px); scroll-snap-align: center; scroll-snap-stop: normal; }
+html.js .bay { height: 100svh; }
+
+/* the yard: the title is the LCP. Real DOM, never opacity-gated, never animated. */
+.bay--yard { align-content: start; padding-top: 9svh; text-align: center; justify-items: center; }
+.yard__kicker { margin: 0 0 .9rem; font: 500 12px/1 var(--font-mono); letter-spacing: .22em; text-transform: uppercase; color: var(--ink-dim); }
+.yard__title { margin: 0; font: 600 clamp(2.6rem, 9vw, 6.4rem)/1 var(--font-display); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--phosphor); text-shadow: 0 0 22px color-mix(in srgb, var(--phosphor) 45%, transparent); }
+.yard__line { margin: 1.1rem auto 0; max-width: 34rem; font-size: 15px; color: var(--ink); }
+.yard__plate { margin: .5rem auto 0; max-width: 34rem; font-size: 12.5px; color: var(--ink-dim); letter-spacing: .02em; }
+.yard__cue { position: absolute; left: 50%; bottom: calc(var(--greet-h) + var(--hud-h) + 26px); translate: -50% 0;
+  width: 22px; height: 22px; border-right: 1px solid var(--phosphor); border-bottom: 1px solid var(--phosphor); rotate: 45deg; opacity: .7; }
+.yard__cue.pulse { animation: cue-pulse 1.1s ease-in-out 1; }
+@keyframes cue-pulse { 0%, 100% { translate: -50% 0; opacity: .7; } 50% { translate: -50% 8px; opacity: 1; } }
+
+/* the nameplate: still, readable, real DOM; the amber pull glyph in its corner */
+.plate { position: relative; max-width: var(--plate-w); padding: 12px 44px 12px 14px; border-left: 2px solid var(--phosphor);
+  background: color-mix(in srgb, var(--field) 72%, transparent); backdrop-filter: blur(2px); }
+.plate h2 { margin: 0; font: 600 clamp(1.05rem, 2.2vw, 1.45rem)/1.15 var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: var(--phosphor); }
+.plate h2 .n { color: var(--ink-dim); margin-right: .35em; }
+.plate .lineage { margin: .4rem 0 0; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-dim); }
+.plate .note { margin: .5rem 0 0; font-size: 13.5px; color: var(--ink); }
+.plate .note.small { font-size: 12px; color: var(--ink-dim); }
+.pull { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 28px; height: 28px; color: var(--amber);
+  text-decoration: none; border-radius: 3px; }
+.pull svg { width: 16px; height: 16px; display: block; }
+.pull:hover, .pull:focus-visible { background: color-mix(in srgb, var(--amber) 14%, transparent); }
+
+/* the sign-off */
+.bay--signoff { align-content: center; justify-items: center; text-align: center; }
+.signoff { max-width: 36rem; }
+.signoff h2 { margin: 0 0 .6rem; font: 600 clamp(1.2rem, 3vw, 1.8rem)/1.15 var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: var(--phosphor); }
+.signoff p { margin: .4rem 0; }
+.signoff nav { margin-top: 1.1rem; display: flex; gap: 1.4rem; justify-content: center; flex-wrap: wrap; letter-spacing: .06em; text-transform: uppercase; font-size: 12.5px; }
+.signoff nav a { padding: .7rem .4rem; }
+
+/* ?dev=1 tweak row on the ride (never the default) */
+#dev { position: fixed; left: var(--hud-pad); right: var(--hud-pad); bottom: calc(var(--greet-h) + var(--hud-h) + 16px); z-index: var(--z-hud);
+  display: none; gap: 10px 16px; flex-wrap: wrap; align-items: center; padding: 8px 10px; border: 1px dashed var(--amber); background: color-mix(in srgb, var(--field) 85%, transparent); font: 11px/1.3 var(--font-mono); }
+html.dev #dev { display: flex; }
+.tweak { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-dim); }
+.tweak input[type="range"] { width: 90px; accent-color: var(--amber); }
+.tweak output { min-width: 4ch; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* ---------- mobile: two bottom rows (index strip above, dial + Auto-fly below) ---------- */
+@media (max-width: 720px) {
+  :root { --hud-h: 82px; --greet-h: 26px; }
+  #hud { font-size: 11px; }
+  .dial label { min-width: 0; padding: 8px 8px; min-height: 32px; }
+  .hud__bl { gap: 8px; }
+  .autofly { min-height: 32px; padding: 0 9px; font-size: 10px; }
+  .index { bottom: calc(var(--greet-h) + 10px + 42px); gap: 3px; }
+  .index a { width: 24px; height: 30px; line-height: 30px; font-size: 10px; }
+  .plate { padding-right: 40px; }
+  .plate .note { font-size: 13px; }
+  .bay { padding-bottom: calc(var(--greet-h) + var(--hud-h) + 14px); }
+  .bay--yard { padding-top: 8svh; }
+  .yard__line { font-size: 14px; }
+  .yard__plate { font-size: 12px; line-height: 1.4; }
+  .yard__cue { bottom: calc(var(--greet-h) + var(--hud-h) + 30px); }
+}
+
+/* ---------- no-JS: the designed index page (brief 3.4). Same DOM, stacked in flow ---------- */
+html:not(.js) #hud .hud__js, html:not(.js) #dev { display: none; }
+html:not(.js) #hud > * { position: static; }
+html:not(.js) .room, html:not(.js) .layer { display: none; }
+html:not(.js) #greetings { position: static; height: auto; line-height: 1.5; white-space: normal; padding: 1rem var(--hud-pad); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); text-transform: none; letter-spacing: .02em; }
+html:not(.js) .bay { min-height: 0; height: auto; padding: 1.6rem var(--hud-pad); }
+html:not(.js) .bay--yard { min-height: 62svh; padding-top: 14svh; }
+html:not(.js) .bay--yard .yard__cue { display: none; }
+html:not(.js) .bay--signoff { padding: 3rem var(--hud-pad) 4rem; }
+html:not(.js) .index { position: static; justify-content: center; margin: 0 0 1rem; }
+html:not(.js) #hud { position: static; inset: auto; }
+html:not(.js) main { padding-bottom: 0; }
+
+/* ---------- reduced motion: the designed still (the dial's Still and the OS setting) ---------- */
+/* The dial writes html[data-dial]; before JS runs (or with JS off) the media query rules apply. */
+html[data-dial="still"] #greetings .greet__track,
+html[data-dial="still"] #greetings .greet__copy span,
+html[data-dial="calm"] #greetings .greet__copy span,
+html[data-dial="still"] .yard__cue { animation: none !important; }
+html[data-dial="still"] #horizon { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-dial="full"]):not([data-dial="calm"]) #greetings .greet__track,
+  html:not([data-dial="full"]) #greetings .greet__copy span,
+  html:not([data-dial="full"]):not([data-dial="calm"]) .yard__cue { animation: none !important; }
+  .skip { transition: none; }
+}
+@media (forced-colors: active) {
+  .room__tube { outline: 1px solid CanvasText; }
+  .index a[aria-current="true"] { forced-color-adjust: none; }
+}

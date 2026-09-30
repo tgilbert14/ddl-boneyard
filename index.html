@@ -1,0 +1,1761 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BONEYARD · a Desert Data Labs experience</title>
+<meta name="description" content="A boneyard of retired display machines, tubes still on, in a row on the desert floor. Fly the row; pull any part. A Desert Data Labs experience.">
+<meta property="og:title" content="BONEYARD · Desert Data Labs">
+<meta property="og:description" content="A boneyard of retired display machines, tubes still on, in a row on the desert floor. Fly the row; pull any part. A Desert Data Labs experience.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tgilbert14.github.io/ddl-boneyard/">
+<meta property="og:image" content="https://tgilbert14.github.io/ddl-boneyard/og-yard.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#030509">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect x='6' y='6' width='84' height='84' rx='22' fill='%23030509' stroke='%238ef3ff' stroke-width='4'/%3E%3Cg fill='none' stroke='%238ef3ff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M48 22V76'/%3E%3Cpath d='M48 31L59 41 48 51 37 41Z'/%3E%3Cpath d='M36 76H60'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+/* ============================================================
+   BONEYARD · 00-tokens.css · PROVISIONAL tokens (legolas, 2026-09-29)
+   arwen replaces these. Every color and font sits behind a custom property so
+   nothing below this file names a hex. Color tokens are @property-registered
+   as <color>: the runtime reads them with getComputedStyle and hands modules a
+   RESOLVED rgb string (ctx.tokens), so arwen can move any of them to oklch()
+   and every canvas keeps working.
+   ============================================================ */
+
+@property --field          { syntax: "<color>"; inherits: true; initial-value: #030509; }
+@property --field-2        { syntax: "<color>"; inherits: true; initial-value: #070b16; }
+@property --phosphor       { syntax: "<color>"; inherits: true; initial-value: #8ef3ff; }
+@property --phosphor-core  { syntax: "<color>"; inherits: true; initial-value: #eafff8; }
+@property --phosphor-dim   { syntax: "<color>"; inherits: true; initial-value: #2c6b75; }
+@property --amber          { syntax: "<color>"; inherits: true; initial-value: #ffb347; }
+@property --ink            { syntax: "<color>"; inherits: true; initial-value: #d9f4f7; }
+@property --ink-dim        { syntax: "<color>"; inherits: true; initial-value: #93b8bd; }
+@property --line           { syntax: "<color>"; inherits: true; initial-value: #17313a; }
+@property --horizon-tint   { syntax: "<color>"; inherits: true; initial-value: #1a2a5a; }
+
+:root {
+  /* the field: black to blue-black */
+  --field: #030509;
+  --field-2: #070b16;
+
+  /* ONE phosphor, two temperatures: cyan-white stroke, warmer core */
+  --phosphor: #8ef3ff;
+  --phosphor-core: #eafff8;
+  --phosphor-dim: #2c6b75;
+
+  /* ONE accent: desert amber. Pull glyph, visited ticks, the Terminator's sunlit limb. */
+  --amber: #ffb347;
+
+  /* type ink */
+  --ink: #d9f4f7;
+  --ink-dim: #93b8bd;
+  --line: #17313a;
+
+  /* the horizon hour tint (22-sky.js writes the live value here for the CSS floor) */
+  --horizon-tint: #1a2a5a;
+
+  /* type: Eurostile-family display (Michroma is arwen's OFL stand-in; system fallbacks today,
+     no font request), humanist mono for the HUD and notes */
+  --font-display: "Michroma", "Eurostile", "Bank Gothic", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "Space Mono", ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+
+  /* the shared vanishing point (10-core.js keeps these in step with the canvas) */
+  --vp-x: 50%;
+  --vp-y: 38%;
+
+  /* chrome metrics */
+  --hud-pad: clamp(12px, 2vw, 22px);
+  --hud-h: 44px;              /* bottom HUD row */
+  --greet-h: 30px;            /* the greetings bar */
+  --plate-w: 36rem;
+  --bezel: 1px;
+  --radius: 6px;
+
+  /* z ladder */
+  --z-stage: 0;
+  --z-main: 10;
+  --z-hud: 20;
+  --z-skip: 30;
+
+  /* motion */
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --switch-on: 500ms;
+}
+
+
+/* ============================================================
+   BONEYARD · 01-tube.css · the chrome (legolas, 2026-09-29)
+   The stage (fixed canvases), the pure-CSS horizon (the no-JS floor and the
+   first paint), the HUD corners, the nameplates, the dial, the index strip,
+   the greetings bar, the sign-off. Two layouts from one DOM: html.js = the
+   ride (100svh bays, snap proximity); no .js = the designed index page.
+   Reduced motion: every animation here has its twin in the block at the end.
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--field); color: var(--ink); -webkit-text-size-adjust: 100%; }
+html.js { scroll-snap-type: y proximity; }          /* proximity, never mandatory (brief 3.2) */
+html.js.autofly { scroll-snap-type: none; }         /* Auto-fly must not fight the snap */
+body { margin: 0; min-height: 100svh; font: 15px/1.5 var(--font-mono); overflow-x: clip; }
+a { color: var(--phosphor); text-underline-offset: .2em; }
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--amber); outline-offset: 3px; border-radius: 2px;
+}
+:focus:not(:focus-visible) { outline: none; }
+canvas { display: block; }
+
+/* ---------- skip link ---------- */
+.skip { position: fixed; top: var(--hud-pad); left: 50%; translate: -50% -200%; z-index: var(--z-skip);
+  padding: .5rem .9rem; background: var(--field-2); color: var(--ink); border: 1px solid var(--phosphor);
+  font: 500 13px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; text-decoration: none;
+  transition: translate 160ms var(--ease-out); }
+.skip:focus-visible { translate: -50% 0; outline-offset: 2px; }
+
+/* ---------- the stage: fixed, aria-hidden scenery under everything ---------- */
+#stage { position: fixed; inset: 0; z-index: var(--z-stage); overflow: hidden; background: var(--field);
+  pointer-events: none; contain: strict; }
+#field { position: absolute; inset: 0; transform-origin: 50% var(--vp-y);
+  background: linear-gradient(180deg, var(--field-2) 0, var(--field) var(--vp-y)); }   /* the sky's gradient, painted once */
+.layer { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* the pure-CSS perspective grid: the first paint and the whole floor without JS.
+   perspective-origin sits on the vanishing point, the plane hinges at the horizon (38%),
+   so the CSS lines and the canvas lines converge on the same point and the hand-off
+   at switch-on does not jump. Static: nothing here animates. */
+#horizon { position: absolute; inset: 0; perspective: 62svh; perspective-origin: var(--vp-x) var(--vp-y); }
+#horizon::before { content: ""; position: absolute; left: -120%; right: -120%; top: var(--vp-y); height: 260%;
+  transform-origin: 50% 0; transform: rotateX(72deg);
+  background:
+    repeating-linear-gradient(90deg, var(--phosphor-dim) 0 1px, transparent 1px 7.5vw),
+    repeating-linear-gradient(0deg, var(--phosphor-dim) 0 1px, transparent 1px 7svh);
+  opacity: .55; }
+#horizon::after { content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, var(--field) 0, var(--field) calc(var(--vp-y) - 8svh), transparent calc(var(--vp-y) - .5px), var(--field) var(--vp-y), transparent calc(var(--vp-y) + 9svh)),
+    linear-gradient(180deg, transparent 0, transparent calc(var(--vp-y) - 10svh), var(--horizon-tint) var(--vp-y), transparent calc(var(--vp-y) + 1px));
+  opacity: 1; }
+/* the horizon hairline itself */
+#horizon i { position: absolute; left: 0; right: 0; top: var(--vp-y); height: 1px; background: var(--phosphor); opacity: .5;
+  box-shadow: 0 0 8px var(--phosphor); }
+html.js.tube-on #horizon { opacity: 0; transition: opacity var(--switch-on) linear; }
+
+/* room wrappers: one per mounted bay. The OUTER wrapper carries the 1/z approach scale from the
+   vanishing point (10-core.js writes --room-s per frame, compositor-only); the INNER wrapper is
+   SWITCH's (30-switch.js animates it with WAAPI). The bezel is static box-shadow: rasterised once,
+   then only transformed (LESSONS 2026-07-05: never animate box-shadow). */
+.room { position: absolute; inset: 0; transform-origin: var(--vp-x) var(--vp-y);
+  transform: translate3d(0, 0, 0) scale(var(--room-s, 1)); opacity: var(--room-o, 1); will-change: transform; }
+.room__tube { position: absolute; inset: 0; background: var(--field); transform-origin: 50% 50%;
+  outline: var(--bezel) solid var(--phosphor-dim); outline-offset: calc(-1 * var(--bezel));
+  box-shadow: 0 0 0 1px var(--field), 0 0 18px -4px var(--phosphor-dim); }
+.room__tube > canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.room__flash { position: absolute; inset: 0; background: var(--phosphor-core); opacity: 0; pointer-events: none; }
+.room.is-far .room__tube { outline-color: var(--phosphor); }
+.room.is-hidden { visibility: hidden; }
+[data-pixel] { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+/* ---------- the HUD: four corners, real DOM, fixed, above the ride ---------- */
+#hud { position: fixed; inset: 0; z-index: var(--z-hud); pointer-events: none; font: 500 12px/1 var(--font-mono);
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); }
+#hud > * { position: absolute; pointer-events: auto; }
+.hud__clock { top: var(--hud-pad); left: var(--hud-pad); font-variant-numeric: tabular-nums; color: var(--ink); }
+.hud__clock .dev { color: var(--amber); margin-left: .8em; }
+.hud__readout { top: var(--hud-pad); right: var(--hud-pad); text-align: right; color: var(--ink); }
+.hud__readout .dot { color: var(--amber); }
+
+/* the motion dial: a real radiogroup; the radio itself is the visible tick (never opacity-hidden,
+   so keyboard focus lands on a control you can see) */
+.hud__bl { bottom: calc(var(--greet-h) + 10px); left: var(--hud-pad); display: flex; align-items: center; gap: 12px; }
+.dial { display: flex; align-items: center; gap: 2px; border: 0; margin: 0; padding: 0; }
+.dial legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.dial label { display: inline-flex; align-items: center; gap: 6px; padding: 9px 9px; min-width: 44px; min-height: 34px; cursor: pointer;
+  border: 1px solid var(--line); color: var(--ink-dim); background: color-mix(in srgb, var(--field) 70%, transparent);
+  transition: color 160ms, border-color 160ms; }
+.dial label:first-of-type { border-radius: var(--radius) 0 0 var(--radius); }
+.dial label:last-of-type { border-radius: 0 var(--radius) var(--radius) 0; }
+.dial input { appearance: none; -webkit-appearance: none; margin: 0; width: 8px; height: 8px; border-radius: 50%;
+  border: 1px solid var(--ink-dim); background: transparent; flex: none; }
+.dial input:checked { background: var(--phosphor); border-color: var(--phosphor); box-shadow: 0 0 6px var(--phosphor); }
+.dial label:has(input:checked) { color: var(--phosphor); border-color: var(--phosphor); }
+.dial input:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+
+/* Auto-fly: a visible button next to the dial */
+.autofly { min-height: 34px; padding: 0 12px;
+  font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink-dim); background: color-mix(in srgb, var(--field) 70%, transparent);
+  border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; }
+.autofly[aria-pressed="true"] { color: var(--amber); border-color: var(--amber); }
+.autofly:disabled { opacity: .45; cursor: default; }
+
+/* the index strip: eight ticks, real links, bottom right */
+.index { bottom: calc(var(--greet-h) + 10px); right: var(--hud-pad); margin: 0; padding: 0; list-style: none;
+  display: flex; gap: 4px; }
+.index a { display: block; width: 26px; height: 34px; line-height: 34px; text-align: center; text-decoration: none;
+  color: var(--ink-dim); border: 1px solid var(--line); border-radius: 3px; font-size: 11px;
+  background: color-mix(in srgb, var(--field) 70%, transparent); }
+.index a.is-visited { color: var(--amber); border-color: var(--amber); }
+.index a[aria-current="true"] { color: var(--field); background: var(--phosphor); border-color: var(--phosphor); }
+
+/* ---------- the greetings bar (L4): real DOM, fixed footer strip under the HUD corners ---------- */
+#greetings { position: fixed; left: 0; right: 0; bottom: 0; height: var(--greet-h); z-index: var(--z-hud);
+  overflow: hidden; contain: paint; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--field) 82%, transparent);
+  font: 500 12px/var(--greet-h) var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim);
+  white-space: nowrap; }
+#greetings .greet__static { padding: 0 var(--hud-pad); overflow: hidden; text-overflow: ellipsis; }
+#greetings .greet__track { display: inline-flex; margin-left: 100vw; will-change: transform; }
+#greetings .greet__copy { display: inline-block; padding-right: 6ch; }
+#greetings .greet__copy span { display: inline-block; min-width: .3ch; }
+html.js.greet-on #greetings .greet__track { animation: greet-slide var(--greet-cycle, 48s) linear infinite; }
+html.js.greet-on[data-dial="full"] #greetings .greet__copy span { animation: greet-sine 1.8s ease-in-out infinite alternate; animation-delay: var(--d, 0s); }
+#greetings:hover .greet__track, #greetings:focus-within .greet__track,
+#greetings:hover .greet__copy span, #greetings:focus-within .greet__copy span { animation-play-state: paused; }
+@keyframes greet-slide { to { transform: translate3d(-50%, 0, 0); } }
+@keyframes greet-sine { from { transform: translate3d(0, -5px, 0); } to { transform: translate3d(0, 5px, 0); } }
+
+/* ---------- the ride: main is the scroll document, bays are 100svh sections ---------- */
+main { position: relative; z-index: var(--z-main); }
+.bay { position: relative; min-height: 100svh; display: grid; align-content: end;
+  padding: 0 var(--hud-pad) calc(var(--greet-h) + var(--hud-h) + 22px); scroll-snap-align: center; scroll-snap-stop: normal; }
+html.js .bay { height: 100svh; }
+
+/* the yard: the title is the LCP. Real DOM, never opacity-gated, never animated. */
+.bay--yard { align-content: start; padding-top: 9svh; text-align: center; justify-items: center; }
+.yard__kicker { margin: 0 0 .9rem; font: 500 12px/1 var(--font-mono); letter-spacing: .22em; text-transform: uppercase; color: var(--ink-dim); }
+.yard__title { margin: 0; font: 600 clamp(2.6rem, 9vw, 6.4rem)/1 var(--font-display); letter-spacing: .12em; text-transform: uppercase;
+  color: var(--phosphor); text-shadow: 0 0 22px color-mix(in srgb, var(--phosphor) 45%, transparent); }
+.yard__line { margin: 1.1rem auto 0; max-width: 34rem; font-size: 15px; color: var(--ink); }
+.yard__plate { margin: .5rem auto 0; max-width: 34rem; font-size: 12.5px; color: var(--ink-dim); letter-spacing: .02em; }
+.yard__cue { position: absolute; left: 50%; bottom: calc(var(--greet-h) + var(--hud-h) + 26px); translate: -50% 0;
+  width: 22px; height: 22px; border-right: 1px solid var(--phosphor); border-bottom: 1px solid var(--phosphor); rotate: 45deg; opacity: .7; }
+.yard__cue.pulse { animation: cue-pulse 1.1s ease-in-out 1; }
+@keyframes cue-pulse { 0%, 100% { translate: -50% 0; opacity: .7; } 50% { translate: -50% 8px; opacity: 1; } }
+
+/* the nameplate: still, readable, real DOM; the amber pull glyph in its corner */
+.plate { position: relative; max-width: var(--plate-w); padding: 12px 44px 12px 14px; border-left: 2px solid var(--phosphor);
+  background: color-mix(in srgb, var(--field) 72%, transparent); backdrop-filter: blur(2px); }
+.plate h2 { margin: 0; font: 600 clamp(1.05rem, 2.2vw, 1.45rem)/1.15 var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: var(--phosphor); }
+.plate h2 .n { color: var(--ink-dim); margin-right: .35em; }
+.plate .lineage { margin: .4rem 0 0; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-dim); }
+.plate .note { margin: .5rem 0 0; font-size: 13.5px; color: var(--ink); }
+.plate .note.small { font-size: 12px; color: var(--ink-dim); }
+.pull { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 28px; height: 28px; color: var(--amber);
+  text-decoration: none; border-radius: 3px; }
+.pull svg { width: 16px; height: 16px; display: block; }
+.pull:hover, .pull:focus-visible { background: color-mix(in srgb, var(--amber) 14%, transparent); }
+
+/* the sign-off */
+.bay--signoff { align-content: center; justify-items: center; text-align: center; }
+.signoff { max-width: 36rem; }
+.signoff h2 { margin: 0 0 .6rem; font: 600 clamp(1.2rem, 3vw, 1.8rem)/1.15 var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: var(--phosphor); }
+.signoff p { margin: .4rem 0; }
+.signoff nav { margin-top: 1.1rem; display: flex; gap: 1.4rem; justify-content: center; flex-wrap: wrap; letter-spacing: .06em; text-transform: uppercase; font-size: 12.5px; }
+.signoff nav a { padding: .7rem .4rem; }
+
+/* ?dev=1 tweak row on the ride (never the default) */
+#dev { position: fixed; left: var(--hud-pad); right: var(--hud-pad); bottom: calc(var(--greet-h) + var(--hud-h) + 16px); z-index: var(--z-hud);
+  display: none; gap: 10px 16px; flex-wrap: wrap; align-items: center; padding: 8px 10px; border: 1px dashed var(--amber); background: color-mix(in srgb, var(--field) 85%, transparent); font: 11px/1.3 var(--font-mono); }
+html.dev #dev { display: flex; }
+.tweak { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-dim); }
+.tweak input[type="range"] { width: 90px; accent-color: var(--amber); }
+.tweak output { min-width: 4ch; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* ---------- mobile: two bottom rows (index strip above, dial + Auto-fly below) ---------- */
+@media (max-width: 720px) {
+  :root { --hud-h: 82px; --greet-h: 26px; }
+  #hud { font-size: 11px; }
+  .dial label { min-width: 0; padding: 8px 8px; min-height: 32px; }
+  .hud__bl { gap: 8px; }
+  .autofly { min-height: 32px; padding: 0 9px; font-size: 10px; }
+  .index { bottom: calc(var(--greet-h) + 10px + 42px); gap: 3px; }
+  .index a { width: 24px; height: 30px; line-height: 30px; font-size: 10px; }
+  .plate { padding-right: 40px; }
+  .plate .note { font-size: 13px; }
+  .bay { padding-bottom: calc(var(--greet-h) + var(--hud-h) + 14px); }
+  .bay--yard { padding-top: 8svh; }
+  .yard__line { font-size: 14px; }
+  .yard__plate { font-size: 12px; line-height: 1.4; }
+  .yard__cue { bottom: calc(var(--greet-h) + var(--hud-h) + 30px); }
+}
+
+/* ---------- no-JS: the designed index page (brief 3.4). Same DOM, stacked in flow ---------- */
+html:not(.js) #hud .hud__js, html:not(.js) #dev { display: none; }
+html:not(.js) #hud > * { position: static; }
+html:not(.js) .room, html:not(.js) .layer { display: none; }
+html:not(.js) #greetings { position: static; height: auto; line-height: 1.5; white-space: normal; padding: 1rem var(--hud-pad); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); text-transform: none; letter-spacing: .02em; }
+html:not(.js) .bay { min-height: 0; height: auto; padding: 1.6rem var(--hud-pad); }
+html:not(.js) .bay--yard { min-height: 62svh; padding-top: 14svh; }
+html:not(.js) .bay--yard .yard__cue { display: none; }
+html:not(.js) .bay--signoff { padding: 3rem var(--hud-pad) 4rem; }
+html:not(.js) .index { position: static; justify-content: center; margin: 0 0 1rem; }
+html:not(.js) #hud { position: static; inset: auto; }
+html:not(.js) main { padding-bottom: 0; }
+
+/* ---------- reduced motion: the designed still (the dial's Still and the OS setting) ---------- */
+/* The dial writes html[data-dial]; before JS runs (or with JS off) the media query rules apply. */
+html[data-dial="still"] #greetings .greet__track,
+html[data-dial="still"] #greetings .greet__copy span,
+html[data-dial="calm"] #greetings .greet__copy span,
+html[data-dial="still"] .yard__cue { animation: none !important; }
+html[data-dial="still"] #horizon { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-dial="full"]):not([data-dial="calm"]) #greetings .greet__track,
+  html:not([data-dial="full"]) #greetings .greet__copy span,
+  html:not([data-dial="full"]):not([data-dial="calm"]) .yard__cue { animation: none !important; }
+  .skip { transition: none; }
+}
+@media (forced-colors: active) {
+  .room__tube { outline: 1px solid CanvasText; }
+  .index a[aria-current="true"] { forced-color-adjust: none; }
+}
+
+</style>
+</head>
+<body>
+<!-- BONEYARD · 02-body.html · every bay in the DOM from byte one (legolas, 2026-09-29)
+     Copy is PROVISIONAL and factual: lineage lines come from vision-brief 4.3 and the verified
+     list 4.4 only. chaz writes the final lines; Grinch gates them. No em dashes anywhere. -->
+<a class="skip" href="#shelf">Skip to the shelf</a>
+
+<div id="stage" aria-hidden="true">
+  <div id="field">
+    <div id="horizon"><i></i></div>
+    <canvas class="layer" id="c-sky"></canvas>
+    <canvas class="layer" id="c-row"></canvas>
+    <canvas class="layer" id="c-corridor"></canvas>
+    <div id="rooms"></div>
+  </div>
+  <canvas class="layer" id="c-tube" hidden></canvas>
+</div>
+
+<header id="hud" aria-label="Heads-up display">
+  <div class="hud__clock hud__js"><time id="hud-clock" aria-label="Your local time"></time><span class="dev" id="hud-dev" hidden></span></div>
+  <div class="hud__readout hud__js" id="hud-readout" aria-live="polite">Bay 00 <span class="dot">/</span> 08 <span class="dot">·</span> The yard</div>
+  <div class="hud__bl hud__js">
+    <fieldset class="dial" id="dial">
+      <legend>Motion</legend>
+      <label><input type="radio" name="dial" id="dial-full" value="full"><span>Full</span></label>
+      <label><input type="radio" name="dial" id="dial-calm" value="calm"><span>Calm</span></label>
+      <label><input type="radio" name="dial" id="dial-still" value="still"><span>Still</span></label>
+    </fieldset>
+    <button type="button" class="autofly" id="autofly" aria-pressed="false">Auto-fly</button>
+  </div>
+  <ol class="index" id="index" aria-label="Bays">
+    <li><a href="#jump" data-bay="1">01</a></li>
+    <li><a href="#gate" data-bay="2">02</a></li>
+    <li><a href="#range" data-bay="3">03</a></li>
+    <li><a href="#wash" data-bay="4">04</a></li>
+    <li><a href="#relief" data-bay="5">05</a></li>
+    <li><a href="#terminator" data-bay="6">06</a></li>
+    <li><a href="#scope" data-bay="7">07</a></li>
+    <li><a href="#mark" data-bay="8">08</a></li>
+  </ol>
+</header>
+
+<main id="row-main">
+  <section class="bay bay--yard" id="yard" data-bay="0" data-slug="yard" aria-labelledby="title">
+    <p class="yard__kicker">A Desert Data Labs experience</p>
+    <h1 class="yard__title" id="title">Boneyard</h1>
+    <p class="yard__line">Eight retired display machines, tubes still on, in a row on the desert floor. Scroll to fly the row. Pull any part.</p>
+    <p class="yard__plate">A fiction of display machines, not the aircraft at Davis-Monthan. The clock in the corner is yours; the horizon takes its tint from your hour.</p>
+    <span class="yard__cue" id="cue"></span>
+  </section>
+
+  <section class="bay" id="jump" data-bay="1" data-slug="jump" data-holds="true" aria-labelledby="h-jump">
+    <div class="plate">
+      <h2 id="h-jump"><span class="n">01</span>Jump</h2>
+      <p class="lineage">Hyperspace starfield · Star Wars 1977 · the 1/z starfields of the early 1990s · Windows 3.1 Starfield Simulation 1992</p>
+      <p class="note">The stars you were resting under begin to streak. Hold the pointer, a finger or Space to raise warp; let go and it settles.</p>
+      <a class="pull" href="parts/jump.html" aria-label="Pull Jump: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
+    </div>
+  </section>
+
+  <section class="bay" id="gate" data-bay="2" data-slug="gate" aria-labelledby="h-gate">
+    <div class="plate">
+      <h2 id="h-gate"><span class="n">02</span>Gate</h2>
+      <p class="lineage">Slit-scan · Douglas Trumbull, 2001: A Space Odyssey, 1968</p>
+      <p class="note">One column of a real Sonoran sunset, stretched into a corridor. The photograph never ships; one column of it does.</p>
+      <a class="pull" href="parts/gate.html" aria-label="Pull Gate: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
+    </div>
+  </section>
+
+  <section class="bay" id="range" data-bay="3" data-slug="range" aria-labelledby="h-range">
+    <div class="plate">
+      <h2 id="h-range"><span class="n">03</span>Range</h2>
+      <p class="lineage">Voxel Space · NovaLogic, Comanche: Maximum Overkill, 1992</p>
+      <p class="note">A flight over the real Santa Catalinas: SRTM and USGS 3DEP elevation in 64 m cells, drawn with 2x vertical exaggeration.</p>
+      <a class="pull" href="parts/range.html" aria-label="Pull Range: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
+    </div>
+  </section>
+
+  <section class="bay" id="wash" data-bay="4" data-slug="wash" aria-labelledby="h-wash">
+    <div class="plate">
+      <h2 id="h-wash"><span class="n">04</span>Wash</h2>
+      <p class="lineage">Vector-field particle advection · scientific visualization, 1990s</p>
+      <p class="note">Rain finds the washes on the same mountains you just flew. Where water would run downhill, not where it does: a slope model, not hydrology.</p>
+      <a class="pull" href="parts/wash.html" aria-label="Pull Wash: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
+    </div>
+  </section>
+
+  <section class="bay" id="relief" data-bay="5" data-slug="relief" aria-labelledby="h-relief">
+    <div class="plate">
+      <h2 id="h-relief"><span class="n">05</span>Relief</h2>
+      <p class="lineage">Rutt/Etra scan processor · Steve Rutt and Bill Etra, 1973 · CP 1919 plot, Harold Craft, 1970</p>
+      <p class="note">The range you flew and watered, held as an object: scanlines bent by elevation, turning slowly until you drag it.</p>
+      <a class="pull" href="parts/relief.html" aria-label="Pull Relief: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
+    </div>
+  </section>
+
+  <section class="bay" id="terminator" data-bay="6" data-slug="terminator" aria-labelledby="h-terminator">
+    <div class="plate">
+      <h2 id="h-terminator"><span class="n">06</span>Terminator</h2>
+      <p class="lineage">Dotted planets · Elite, David Braben and Ian Bell, 1984</p>
+      <p class="note">A dotted globe with today's day line, computed from the date. Tucson in amber. Drag to spin; it comes back to face home.</p>
+      <a class="pull" href="parts/terminator.html" aria-label="Pull Terminator: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
+    </div>
+  </section>
+
+  <section class="bay" id="scope" data-bay="7" data-slug="scope" data-holds="true" aria-labelledby="h-scope">
+    <div class="plate">
+      <h2 id="h-scope"><span class="n">07</span>Scope</h2>
+      <p class="lineage">Oscilloscope XY mode · Lissajous figures, Jules Antoine Lissajous, 1857</p>
+      <p class="note">What you hear is exactly what you see, and only while you hold it. Nothing on this row makes a sound unless you press it.</p>
+      <a class="pull" href="parts/scope.html" aria-label="Pull Scope: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
+    </div>
+  </section>
+
+  <section class="bay" id="mark" data-bay="8" data-slug="mark" aria-labelledby="h-mark">
+    <div class="plate">
+      <h2 id="h-mark"><span class="n">08</span>Mark</h2>
+      <p class="lineage">Glenz vectors · the Amiga scene, about 1989 to 1990</p>
+      <p class="note">The Desert Data Labs mark as a see-through solid, the same glyph that stood as every pylon on the way in. Drag to turn it.</p>
+      <a class="pull" href="parts/mark.html" aria-label="Pull Mark: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
+    </div>
+  </section>
+
+  <section class="bay bay--signoff" id="shelf" data-bay="9" data-slug="shelf" aria-labelledby="h-shelf">
+    <div class="signoff">
+      <h2 id="h-shelf">That is the row.</h2>
+      <p>Every screen you flew past is one plain file: a provenance header, a PARAMS block, one mount() call. The shelf holds all of them.</p>
+      <p class="small">Elevation: AWS Terrain Tiles (Mapzen Terrarium), compiled from SRTM, USGS 3DEP and others. Life zones after the 27 Miles grounding bible.</p>
+      <nav aria-label="Where next">
+        <a href="parts/index.html">The shelf: pull any part</a>
+        <a href="https://desertdatalabs.com/">Desert Data Labs</a>
+      </nav>
+    </div>
+  </section>
+</main>
+
+<div id="greetings" role="note" aria-label="Greetings to the people and years behind every trick on this row: Douglas Trumbull, slit-scan, 1968. NovaLogic, Voxel Space, 1992. David Braben and Ian Bell, Elite, 1984. Steve Rutt and Bill Etra, 1973. Harold Craft, CP 1919, 1970. Jules Antoine Lissajous, 1857. Atari: Asteroids 1979, Battlezone 1980, Tempest 1981. Vectrex 1982. Sega, Space Harrier, 1985. The Amiga scene, 1988 to 1994. Ground truth: AWS Terrain Tiles from SRTM and USGS 3DEP.">
+  <div class="greet__static">Greetings to · Douglas Trumbull 1968 · NovaLogic 1992 · David Braben and Ian Bell 1984 · Steve Rutt and Bill Etra 1973 · Harold Craft 1970 · Jules Antoine Lissajous 1857 · Atari 1979 to 1981 · Vectrex 1982 · Sega 1985 · the Amiga scene 1988 to 1994 · ground: AWS Terrain Tiles, SRTM, USGS 3DEP</div>
+</div>
+
+<div id="dev" aria-label="Developer tweak row"></div>
+
+<script>
+/* ============================================================
+   BONEYARD · 09-runtime.js · the substrate (legolas, 2026-09-29)
+   Shared by the ride (10-core.js) and every parts page (90-parts-harness.html).
+   One rAF ticker with self-removing tasks that STOPS when the queue is empty
+   and while the tab is hidden (playbook 2.1, 2.2). The ctx factory every module
+   receives. The DEM decoder (Terrarium). Canvas sizing under the DPR cap and the
+   adaptive internal scale. The tweak-row builder the harness and ?dev=1 share.
+   No DOM assumptions beyond documentElement; no module knowledge.
+   ============================================================ */
+'use strict';
+window.BAYS = window.BAYS || [];
+
+const BONEYARD = (() => {
+  const html = document.documentElement;
+
+  /* ---------- storage that never throws (blocked cookies, sandboxed frames) ---------- */
+  const keep = {
+    get(k) { try { return localStorage.getItem(k); } catch (_) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (_) {} },
+  };
+
+  /* ---------- the ticker ---------- */
+  const Ticker = (() => {
+    const tasks = new Set();
+    let rafId = null, last = 0, fresh = true;
+    const stats = { dt: 16.7, work: 0, slow: 0, frames: 0 };
+    function frame(now) {
+      rafId = null;
+      if (document.hidden) { fresh = true; return; }      /* hidden tab: the loop dies here; visibilitychange restarts it */
+      let dt = fresh ? 16.7 : now - last;                  /* first frame after a wake: no monster dt */
+      fresh = false; last = now;
+      stats.dt = dt;
+      dt = Math.min(dt, 50);
+      const t0 = performance.now();
+      for (const task of tasks) {
+        let r;
+        try { r = task(dt / 1000, now / 1000); } catch (err) { console.error(err); r = false; }
+        if (r === false) tasks.delete(task);
+      }
+      stats.work = performance.now() - t0;
+      stats.frames++;
+      if (tasks.size) rafId = requestAnimationFrame(frame);
+    }
+    function add(fn) { tasks.add(fn); if (rafId === null && !document.hidden) { fresh = true; rafId = requestAnimationFrame(frame); } return fn; }
+    function remove(fn) { tasks.delete(fn); }
+    function has(fn) { return tasks.has(fn); }
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && tasks.size && rafId === null) { fresh = true; rafId = requestAnimationFrame(frame); } });
+    return { add, remove, has, stats, get size() { return tasks.size; } };
+  })();
+
+  /* ---------- tokens: resolved by the browser, handed to canvases as rgb strings ---------- */
+  const TOKEN_NAMES = ['field', 'field-2', 'phosphor', 'phosphor-core', 'phosphor-dim', 'amber', 'ink', 'ink-dim', 'line', 'horizon-tint'];
+  function readTokens() {
+    const cs = getComputedStyle(html);
+    const out = {};
+    for (const n of TOKEN_NAMES) out[n.replace(/-(\w)/g, (_, c) => c.toUpperCase())] = cs.getPropertyValue('--' + n).trim();
+    return out;
+  }
+  /* rgb()/rgba()/#hex token -> [r,g,b] */
+  function toRgb(c) {
+    if (!c) return [142, 243, 255];
+    const m = c.match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/);
+    if (m) return [Number(m[1]), Number(m[2]), Number(m[3])];
+    const h = c.replace('#', '');
+    if (h.length === 3) return [parseInt(h[0] + h[0], 16), parseInt(h[1] + h[1], 16), parseInt(h[2] + h[2], 16)];
+    if (h.length >= 6) return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+    return [142, 243, 255];
+  }
+  const rgba = (c, a) => { const [r, g, b] = toRgb(c); return `rgba(${r},${g},${b},${a})`; };
+
+  /* ---------- the DPR cap: 1.5 desktop, 1 mobile (brief, house constraints) ---------- */
+  const coarse = matchMedia('(pointer: coarse)');
+  function dprCap() {
+    const mobile = coarse.matches || Math.min(innerWidth, innerHeight) < 720;
+    return Math.min(devicePixelRatio || 1, mobile ? 1 : 1.5);
+  }
+
+  /* size a canvas's backing store: CSS box w x h, backing = w*dpr*scale, or a fixed low-res
+     width for ImageData rooms (upscaled pixelated by CSS). Returns the backing size. */
+  function sizeCanvas(canvas, cssW, cssH, dpr, scale, pixel) {
+    let bw, bh;
+    if (pixel) { bw = pixel; bh = Math.max(1, Math.round(pixel * cssH / Math.max(1, cssW))); canvas.dataset.pixel = '1'; }
+    else { bw = Math.max(1, Math.round(cssW * dpr * scale)); bh = Math.max(1, Math.round(cssH * dpr * scale)); }
+    if (canvas.width !== bw) canvas.width = bw;
+    if (canvas.height !== bh) canvas.height = bh;
+    return { w: bw, h: bh, dpr: pixel ? bw / cssW : dpr * scale };
+  }
+
+  /* ---------- the shared elevation grid (Terrarium): decoded once, shared by every DEM room ---------- */
+  function demLoader(url) {
+    let promise = null;
+    return () => promise || (promise = new Promise((resolve, reject) => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.onload = () => {
+        try {
+          const W = img.naturalWidth, H = img.naturalHeight;
+          const c = document.createElement('canvas'); c.width = W; c.height = H;
+          const g = c.getContext('2d', { willReadFrequently: true });
+          g.drawImage(img, 0, 0);
+          const d = g.getImageData(0, 0, W, H).data;
+          const elev = new Float32Array(W * H);
+          let min = Infinity, max = -Infinity;
+          for (let i = 0; i < W * H; i++) {
+            const e = d[i * 4] * 256 + d[i * 4 + 1] + d[i * 4 + 2] / 256 - 32768;   /* metres */
+            elev[i] = e; if (e < min) min = e; if (e > max) max = e;
+          }
+          resolve({ width: W, height: H, elev, min, max, url });
+        } catch (err) { promise = null; reject(err); }
+      };
+      img.onerror = () => { promise = null; reject(new Error('DEM failed to load: ' + url)); };
+      img.src = url;
+    }));
+  }
+
+  /* ---------- ctx: what every module is handed ---------- */
+  function makeCtx(opts) {
+    const ctx = {
+      vp: { x: 0.5, y: 0.38 },                 /* the shared vanishing point, normalised, parallax applied */
+      vpBase: { x: 0.5, y: 0.38 },
+      dpr: 1, scale: 1,                        /* effective backing dpr, adaptive internal scale */
+      pointer: { x: 0, y: 0, nx: 0.5, ny: 0.5, down: false, present: false, coarse: coarse.matches },
+      dial: 'full',                            /* full | calm | still */
+      get reduced() { return this.dial === 'still'; },
+      tokens: readTokens(),
+      rgba,
+      hour: new Date().getHours() + new Date().getMinutes() / 60,
+      camera: { z: 0, v: 0 },                  /* grid units along the row, units per second */
+      share: {},                               /* the shared bag (22-sky.js publishes stars here) */
+      dev: false,
+      wake() {},
+      dem: demLoader(opts && opts.demUrl || 'assets/catalinas-dem.png'),
+    };
+    return ctx;
+  }
+
+  /* ---------- the tweak row: PARAMS -> inputs; the harness and ?dev=1 share it ---------- */
+  function buildTweakRow(container, params, onChange) {
+    container.textContent = '';
+    const keys = Object.keys(params).filter((k) => ['number', 'boolean', 'string'].includes(typeof params[k]));
+    for (const k of keys) {
+      const v = params[k];
+      const wrap = document.createElement('label'); wrap.className = 'tweak';
+      const name = document.createElement('span'); name.textContent = k; wrap.appendChild(name);
+      let input;
+      if (typeof v === 'boolean') { input = document.createElement('input'); input.type = 'checkbox'; input.checked = v; }
+      else if (typeof v === 'number') {
+        input = document.createElement('input'); input.type = 'range';
+        const mag = Math.abs(v) || 1;
+        input.min = v < 0 ? String(-mag * 4) : '0'; input.max = String(mag * 4 || 4);
+        input.step = Number.isInteger(v) && mag >= 4 ? '1' : String(mag / 100);
+        input.value = String(v);
+      } else { input = document.createElement('input'); input.type = 'text'; input.value = v; input.size = Math.min(24, v.length + 2); }
+      const out = document.createElement('output'); out.textContent = typeof v === 'boolean' ? '' : String(v);
+      input.addEventListener('input', () => {
+        const nv = typeof v === 'boolean' ? input.checked : typeof v === 'number' ? Number(input.value) : input.value;
+        out.textContent = typeof v === 'number' ? String(nv) : '';
+        onChange(k, nv);
+      });
+      wrap.appendChild(input); wrap.appendChild(out); container.appendChild(wrap);
+    }
+    return keys.length;
+  }
+
+  return { Ticker, keep, readTokens, toRgb, rgba, dprCap, sizeCanvas, demLoader, makeCtx, buildTweakRow, coarse };
+})();
+
+
+/* ============================================================
+   BONEYARD · 10-core.js · the ride (legolas, 2026-09-29)
+   Scroll is the only clock. One viewport height = one bay length. Native scroll
+   only: no wheel handlers, no smooth-scroll library, no transform on body/html.
+   The core owns: scroll -> camera z, the shared vanishing point (+-4% pointer
+   parallax, off in Calm/Still), the bay lifecycle (mount current +-1, destroy the
+   rest), the room frames (1/z from the vanishing point, compositor-only), the
+   corridors, hash sync, the motion dial, Auto-fly, the HUD, keyboard parity,
+   the adaptive internal scale, and the audio-unlock stub SCOPE will use.
+   Modules never see the DOM; they see a canvas and ctx (docs/CONTRACT.md).
+   The core boots on DOMContentLoaded so every module file (20 to 49, after this
+   one in the manifest) has registered on BAYS before the registry is read.
+   ============================================================ */
+const bootBoneyardRide = () => {
+  'use strict';
+  const { Ticker, keep, readTokens, dprCap, sizeCanvas, makeCtx, buildTweakRow, coarse } = BONEYARD;
+  const html = document.documentElement;
+  html.classList.add('js');
+  const query = new URLSearchParams(location.search);
+  const DEV = query.get('dev') === '1';
+  if (DEV) html.classList.add('dev');
+
+  const CFG = {
+    unitsPerBay: 12,          /* grid units of camera travel per bay length */
+    cruise: 0.4,              /* idle drift, units per second, Full (Calm halves it) */
+    ease: 0.12,               /* seconds: scroll -> camera easing */
+    parallax: 0.04,           /* +-4% of the viewport, pointer -> vanishing point */
+    liveZone: 0.3,            /* |p| < liveZone: the room is switched on */
+    focal: 2.0,               /* units: far-frame scale = focal / (focal + d) */
+    slowFrame: 20, slowCount: 30, scaleSteps: [1, 0.75, 0.5],
+    autoflyBaysPerSecond: 1 / 9, autoflyDwell: 3,
+    greetingsAt: 4, chevronAt: 8,
+    /* which canvas corridor plays in the gap between two bays (SWITCH plays on every transition) */
+    corridors: { 'yard>jump': 'hyperspace', 'relief>terminator': 'hyperspace', 'terminator>scope': 'rings', 'scope>mark': 'rings' },
+  };
+
+  /* ---------- DOM ---------- */
+  const $ = (s) => document.querySelector(s);
+  const field = $('#field'), roomsEl = $('#rooms'), cue = $('#cue');
+  const canvases = { sky: $('#c-sky'), row: $('#c-row'), corridor: $('#c-corridor'), tube: $('#c-tube') };
+  const hud = { clock: $('#hud-clock'), dev: $('#hud-dev'), readout: $('#hud-readout'), dial: $('#dial'), autofly: $('#autofly'), index: $('#index'), devRow: $('#dev') };
+  const sections = [...document.querySelectorAll('main .bay')];
+  const bays = sections.map((el, i) => ({ i, el, slug: el.dataset.slug, holds: el.dataset.holds === 'true', title: (el.querySelector('h1,h2') || {}).textContent || '', m: null, visible: false }));
+  const LAST = bays.length - 1, BAY_COUNT = bays.filter((b) => b.i > 0 && b.i < LAST).length;
+  const readoutName = (b) => b.i === 0 ? 'The yard' : b.i === LAST ? 'The shelf' : b.title.replace(/^\s*\d+\s*/, '').trim();
+
+  /* ---------- ctx + registry ---------- */
+  const ctx = makeCtx({ demUrl: 'assets/catalinas-dem.png' });
+  ctx.dev = DEV;
+  const reg = { layers: [], corridors: {}, bays: {}, placeholder: null, post: null, dom: {} };
+  for (const m of window.BAYS) {
+    if (m.kind === 'post') reg.post = m;
+    else if (m.kind === 'dom') reg.dom[m.slug] = m;
+    else if (m.role === 'layer') reg.layers.push(m);
+    else if (m.role === 'corridor') reg.corridors[m.slug] = m;
+    else if (m.role === 'placeholder') reg.placeholder = m;
+    else if (m.role === 'bay') reg.bays[m.slug] = m;
+  }
+  reg.layers.sort((a, b) => a.order - b.order);
+
+  /* the dial attribute goes on early so the CSS stills apply before first paint; the full wiring is below */
+  const rmq = matchMedia('(prefers-reduced-motion: reduce)');
+  const storedDial = keep.get('boneyard_dial');
+  html.dataset.dial = ['full', 'calm', 'still'].includes(storedDial) ? storedDial : (rmq.matches ? 'still' : 'full');
+  ctx.dial = html.dataset.dial;
+
+  /* ---------- geometry ---------- */
+  let W = innerWidth, H = innerHeight, len = H, dpr = dprCap();
+  let scaleIdx = 0;
+  const cam = ctx.camera;
+  let cruise = 0, t = 0, scrollY = window.scrollY, lastScrollY = -1, scrollStill = 0, current = -1, running = false;
+  const visited = new Set();
+
+  /* ---------- layers (sky, row) + DOM modules (greetings, switch) ---------- */
+  const layers = [];
+  for (const m of reg.layers) {
+    const canvas = canvases[m.slug];
+    if (!canvas) continue;
+    const params = Object.assign({}, m.params);
+    const handle = m.mount(canvas, params, ctx);
+    layers.push({ m, canvas, params, handle });
+  }
+  const switcher = reg.dom.switch ? { m: reg.dom.switch, params: Object.assign({}, reg.dom.switch.params) } : null;
+  if (switcher) switcher.handle = switcher.m.mount(roomsEl, switcher.params, ctx);
+  const greetEl = $('#greetings');
+  const greetings = reg.dom.greetings && greetEl ? { m: reg.dom.greetings, params: Object.assign({}, reg.dom.greetings.params) } : null;
+  if (greetings) greetings.handle = greetings.m.mount(greetEl, greetings.params, ctx);
+  let post = null;
+  if (reg.post && canvases.tube) {
+    const params = Object.assign({}, reg.post.params);
+    const handle = reg.post.mount(canvases.tube, params, ctx);
+    if (handle && handle.enabled) { canvases.tube.hidden = false; post = { m: reg.post, handle, params }; } else if (handle && handle.destroy) handle.destroy();
+  }
+
+  /* ---------- sizing ---------- */
+  function resizeAll() {
+    W = innerWidth; H = innerHeight; dpr = dprCap();
+    len = bays[1] ? bays[1].el.offsetHeight || H : H;
+    ctx.scale = CFG.scaleSteps[scaleIdx];
+    ctx.dpr = dpr * ctx.scale;
+    for (const L of layers) { const s = sizeCanvas(L.canvas, W, H, dpr, ctx.scale, L.m.pixel); L.handle.resize(s.w, s.h, s.dpr); if (ctx.dial === 'still') L.handle.still(t); }
+    if (corridor) { const s = sizeCanvas(canvases.corridor, W, H, dpr, ctx.scale, corridor.m.pixel); corridor.handle.resize(s.w, s.h, s.dpr); }
+    for (const b of bays) if (b.m) { const s = sizeCanvas(b.m.canvas, W, H, dpr, ctx.scale, b.m.mod.pixel); b.m.handle.resize(s.w, s.h, s.dpr); if (b.m.state !== 'on' || ctx.dial === 'still') b.m.handle.still(t); }
+    if (post) { const s = sizeCanvas(canvases.tube, W, H, dpr, 1); post.handle.resize(s.w, s.h, s.dpr); }
+    computeGaps();
+    wake();
+  }
+  addEventListener('resize', resizeAll, { passive: true });
+
+  /* ---------- adaptive internal scale: 30 consecutive slow frames drop one step ----------
+     "slow" is measured against the display's own refresh interval (the median dt of the first 40 frames),
+     so a 30 Hz panel or iOS Low Power Mode (rAF capped at 30 fps) does not read as a struggling page. */
+  let slow = 0, refresh = 0; const dts = [];
+  function adapt() {
+    const dt = Ticker.stats.dt;
+    if (!refresh) { if (dt > 4 && dt < 60) dts.push(dt); if (dts.length >= 40) { dts.sort((a, b) => a - b); refresh = dts[20]; } return; }
+    if (dt > Math.max(CFG.slowFrame, refresh * 1.6)) { if (++slow >= CFG.slowCount && scaleIdx < CFG.scaleSteps.length - 1) { scaleIdx++; slow = 0; if (post) post.handle.bloom(false); resizeAll(); } }
+    else slow = 0;
+  }
+
+  /* ---------- rooms: one wrapper per mounted bay ---------- */
+  function mountBay(b) {
+    if (b.m || b.i === 0 || b.i === LAST) return;
+    const mod = reg.bays[b.slug] || reg.placeholder;
+    if (!mod) return;
+    const room = document.createElement('div'); room.className = 'room is-far'; room.dataset.slug = b.slug;
+    room.style.zIndex = String(100 - b.i);            /* nearer bays stack above farther ones: a room hides the frames behind it */
+    const tube = document.createElement('div'); tube.className = 'room__tube';
+    const canvas = document.createElement('canvas');
+    const flash = document.createElement('div'); flash.className = 'room__flash';
+    tube.append(canvas, flash); room.append(tube); roomsEl.append(room);
+    const params = Object.assign({}, mod.params);
+    const s = sizeCanvas(canvas, W, H, dpr, ctx.scale, mod.pixel);
+    const handle = mod.mount(canvas, params, ctx);
+    handle.resize(s.w, s.h, s.dpr);
+    handle.still(0);
+    b.m = { mod, room, tube, canvas, flash, params, handle, state: 'far', t0: t, anim: null };
+    if (mod.dem) ctx.dem().catch(() => {});
+    room.style.setProperty('--room-s', '0.02');
+    if (DEV && b.i === current) devRow(b);
+  }
+  function destroyBay(b) {
+    if (!b.m) return;
+    if (switcher) switcher.handle.cancel(b.m);
+    try { b.m.handle.destroy(); } catch (err) { console.error(err); }
+    b.m.room.remove(); b.m = null;
+  }
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      const b = bays[sections.indexOf(e.target)];
+      b.visible = e.isIntersecting;
+      if (e.isIntersecting) mountBay(b); else destroyBay(b);
+    }
+    wake();
+  }, { rootMargin: '95% 0px 95% 0px', threshold: 0 });
+  for (const b of bays) if (b.i > 0 && b.i < LAST) io.observe(b.el);
+
+  /* the switch: on (a line opens into the room) / off (line, dot, recede) */
+  let lastFlash = -1e9;
+  function switchOn(b) {
+    const m = b.m; m.state = 'on'; m.t0 = t;
+    m.room.classList.remove('is-far', 'is-hidden');
+    m.room.style.setProperty('--room-o', '1');
+    const from = Number(m.room.style.getPropertyValue('--room-s')) || 0.02;
+    m.room.style.setProperty('--room-s', '1');
+    if (switcher) switcher.handle.play(m, 'on', { still: ctx.dial === 'still', from });
+    if (ctx.dial === 'still') m.handle.still(t);
+    if (DEV) devRow(b);
+  }
+  function switchOff(b, dir) {
+    const m = b.m; m.state = 'off';
+    const flash = ctx.dial === 'full' && t - lastFlash > 0.5;
+    if (flash) lastFlash = t;
+    const p = switcher ? switcher.handle.play(m, 'off', { still: ctx.dial === 'still', flash, dir }) : Promise.resolve(true);
+    p.then((done) => { if (done && m.state === 'off') m.room.classList.add('is-hidden'); });
+  }
+  function updateBays(dt) {
+    for (const b of bays) {
+      const m = b.m; if (!m) continue;
+      const p = (scrollY - b.el.offsetTop) / len;          /* bay lengths from the hold; + = passed */
+      const d = -p * CFG.unitsPerBay;                      /* grid units ahead */
+      const live = Math.abs(p) < CFG.liveZone;
+      if (m.state === 'far') {
+        if (live) { switchOn(b); continue; }
+        if (p > 0) { m.state = 'off'; m.room.classList.add('is-hidden'); continue; }
+        const s = CFG.focal / (CFG.focal + d);
+        m.room.style.setProperty('--room-s', s.toFixed(4));
+        m.room.style.setProperty('--room-o', (0.25 + 0.75 * s).toFixed(3));
+      } else if (m.state === 'on') {
+        if (!live) { switchOff(b, p > 0 ? 'forward' : 'back'); continue; }
+        if (ctx.dial !== 'still') m.handle.tick(dt, t - m.t0, p, ctx.pointer);
+      } else if (m.state === 'off') {
+        if (live) { if (switcher) switcher.handle.cancel(m); switchOn(b); continue; }
+        if (p < 0 && !(switcher && switcher.handle.busy(m))) { m.state = 'far'; m.room.classList.add('is-far'); m.room.classList.remove('is-hidden'); }
+      }
+    }
+  }
+
+  /* ---------- canvas corridors in the gaps ---------- */
+  let gaps = [], corridor = null;
+  function computeGaps() {
+    gaps = [];
+    for (let i = 0; i < LAST; i++) {
+      const a = bays[i], b = bays[i + 1], slug = CFG.corridors[a.slug + '>' + b.slug];
+      if (!slug || !reg.corridors[slug]) continue;
+      gaps.push({ a, b, m: reg.corridors[slug], start: a.el.offsetTop + 0.02 * len, end: b.el.offsetTop - CFG.liveZone * len });
+    }
+  }
+  function updateCorridor(dt) {
+    const g = gaps.find((x) => scrollY > x.start && scrollY < x.end);   /* strictly inside the gap: at rest there is no corridor */
+    if (!g) { if (corridor) { corridor.handle.destroy(); corridor = null; ctx.share.warp = 0; canvases.corridor.getContext('2d').clearRect(0, 0, canvases.corridor.width, canvases.corridor.height); } return; }
+    if (!corridor || corridor.m !== g.m) {
+      if (corridor) corridor.handle.destroy();
+      const params = Object.assign({}, g.m.params);
+      const handle = g.m.mount(canvases.corridor, params, ctx);
+      const s = sizeCanvas(canvases.corridor, W, H, dpr, ctx.scale, g.m.pixel);
+      handle.resize(s.w, s.h, s.dpr);
+      corridor = { m: g.m, params, handle, t0: t };
+      if (ctx.dial === 'still') handle.still(t);
+    }
+    const prog = Math.max(0, Math.min(1, (scrollY - g.start) / Math.max(1, g.end - g.start)));
+    if (ctx.dial !== 'still') corridor.handle.tick(dt, t - corridor.t0, prog, ctx.pointer);
+  }
+
+  /* ---------- HUD: clock, readout, index, hash ---------- */
+  const fmt = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
+  function clock() {
+    const now = new Date();
+    hud.clock.textContent = fmt.format(now);
+    hud.clock.setAttribute('datetime', now.toTimeString().slice(0, 5));
+    ctx.hour = now.getHours() + now.getMinutes() / 60;
+    if (ctx.share.horizonTint) html.style.setProperty('--horizon-tint', ctx.share.horizonTint);
+    setTimeout(clock, 60000 - (now.getSeconds() * 1000 + now.getMilliseconds()) + 20);
+  }
+  clock();
+  const indexLinks = [...hud.index.querySelectorAll('a')];
+  function setCurrent(i) {
+    if (i === current) return;
+    if (current > 0 && current < LAST) visited.add(current);
+    current = i;
+    const b = bays[i];
+    hud.readout.innerHTML = `Bay ${String(Math.min(i, BAY_COUNT)).padStart(2, '0')} <span class="dot">/</span> ${String(BAY_COUNT).padStart(2, '0')} <span class="dot">·</span> ${readoutName(b)}`;
+    for (const a of indexLinks) {
+      const k = Number(a.dataset.bay);
+      a.classList.toggle('is-visited', visited.has(k) && k !== i);
+      if (k === i) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+    }
+    const hash = i === 0 ? '' : '#' + b.slug;
+    if (location.hash !== hash && !(i === 0 && !location.hash)) history.replaceState(null, '', location.pathname + location.search + hash);
+    if (DEV) devRow(b);
+  }
+
+  /* ---------- pointer: store only; the loop reads ---------- */
+  const ptr = ctx.pointer;
+  let ptrTx = 0.5, ptrTy = 0.5;
+  addEventListener('pointermove', (e) => { ptrTx = e.clientX / W; ptrTy = e.clientY / H; ptr.x = e.clientX; ptr.y = e.clientY; ptr.present = true; wake(); }, { passive: true });
+  addEventListener('pointerdown', (e) => { if (e.button !== 0 || e.target.closest('#hud, a, button, input, #dev')) return; ptr.down = true; ptr.x = e.clientX; ptr.y = e.clientY; ptrTx = e.clientX / W; ptrTy = e.clientY / H; wake(); }, { passive: true });
+  const up = () => { ptr.down = false; };
+  addEventListener('pointerup', up, { passive: true });
+  addEventListener('pointercancel', up, { passive: true });
+  addEventListener('blur', up);
+  document.addEventListener('pointerleave', () => { ptr.present = false; });
+
+  /* ---------- keyboard parity: a bay at a time; Space holds where a bay asks for it ---------- */
+  const scrollToBay = (i) => { i = Math.max(0, Math.min(LAST, i)); window.scrollTo({ top: bays[i].el.offsetTop, behavior: ctx.dial === 'still' ? 'auto' : 'smooth' }); };
+  addEventListener('keydown', (e) => {
+    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.target.closest('input, select, textarea, button')) return;
+    const b = bays[Math.max(0, current)];
+    if (e.key === ' ' && b && b.holds && ctx.dial !== 'still' && !e.repeat) { ptr.down = true; wake(); e.preventDefault(); return; }
+    if (e.key === ' ' && e.repeat && b && b.holds && ctx.dial !== 'still') { e.preventDefault(); return; }
+    if (e.key === 'ArrowDown' || e.key === 'PageDown') { setAutofly(false); scrollToBay(Math.round(scrollY / len) + 1); e.preventDefault(); }
+    else if (e.key === 'ArrowUp' || e.key === 'PageUp') { setAutofly(false); scrollToBay(Math.round(scrollY / len) - 1); e.preventDefault(); }
+  });
+  addEventListener('keyup', (e) => { if (e.key === ' ') ptr.down = false; });
+
+  /* ---------- Auto-fly: a visible button, reading pace, any input stops it ---------- */
+  let autofly = false, dwell = 0, dwellAt = -1;
+  function setAutofly(on) {
+    if (on === autofly) return;
+    if (on && ctx.dial === 'still') return;
+    autofly = on;
+    hud.autofly.setAttribute('aria-pressed', String(on));
+    hud.autofly.textContent = on ? 'Stop' : 'Auto-fly';
+    html.classList.toggle('autofly', on);
+    if (on) { dwell = 0; dwellAt = -1; if (scrollY >= bays[LAST].el.offsetTop - 2) window.scrollTo({ top: 0, behavior: 'auto' }); }
+    wake();
+  }
+  hud.autofly.addEventListener('click', () => setAutofly(!autofly));
+  for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown']) {
+    addEventListener(type, (e) => { if (autofly && !(type === 'pointerdown' && e.target && e.target.closest && e.target.closest('#autofly'))) setAutofly(false); }, { passive: true, capture: true });
+  }
+  function flyStep(dt) {
+    if (!autofly) return;
+    const near = Math.round(scrollY / len);
+    const p = (scrollY - bays[near].el.offsetTop) / len;
+    if (Math.abs(p) < 0.012 && dwellAt !== near) { dwell += dt; if (dwell < CFG.autoflyDwell) return; dwellAt = near; dwell = 0; }
+    const top = bays[LAST].el.offsetTop;
+    if (scrollY >= top - 1) { setAutofly(false); return; }
+    const next = Math.min(top, scrollY + len * CFG.autoflyBaysPerSecond * dt * (ctx.dial === 'calm' ? 0.5 : 1));
+    const target = bays[Math.min(LAST, near + 1)].el.offsetTop;
+    window.scrollTo({ top: (next > target - 0.5 && scrollY < target) ? target : next, behavior: 'auto' });
+  }
+
+  /* ---------- ?dev=1: the tweak row for the current bay's PARAMS ---------- */
+  function devRow(b) {
+    if (!DEV || !hud.devRow) return;
+    const m = b && b.m;
+    if (!m) { hud.devRow.textContent = ''; return; }
+    const n = buildTweakRow(hud.devRow, m.params, (k, v) => { m.params[k] = v; if (m.handle.params) m.handle.params(m.params); wake(); });
+    if (!n) hud.devRow.textContent = 'no tunables';
+  }
+
+  /* ---------- the audio-unlock stub (ACI 2.6): SCOPE will build on this ---------- */
+  ctx.audio = (() => {
+    let ac = null, wanted = false;
+    const ACtx = window.AudioContext || window.webkitAudioContext;
+    function unlock() {
+      if (!ACtx) return Promise.resolve(null);
+      if (!ac) ac = new ACtx();
+      wanted = true;
+      const p = ac.resume ? ac.resume() : Promise.resolve();
+      return Promise.resolve(p).then(() => (ac.state === 'running' ? ac : null)).catch(() => null);
+    }
+    document.addEventListener('visibilitychange', () => { if (ac && document.hidden && ac.state === 'running') ac.suspend(); else if (ac && !document.hidden && wanted) ac.resume(); });
+    return { unlock, get context() { return ac; }, get running() { return !!ac && ac.state === 'running'; } };
+  })();
+
+  /* ---------- the dial ---------- */
+  const radios = [...hud.dial.querySelectorAll('input')];
+  function applyDial(v, remember) {
+    ctx.dial = v;
+    html.dataset.dial = v;
+    for (const r of radios) r.checked = r.value === v;
+    if (remember) keep.set('boneyard_dial', v);
+    hud.autofly.disabled = v === 'still';
+    if (v === 'still' && autofly) setAutofly(false);
+    if (v !== 'full') { ctx.vp.x = ctx.vpBase.x; ctx.vp.y = ctx.vpBase.y; }
+    for (const b of bays) if (b.m) { if (v === 'still') { b.m.handle.still(t); } }
+    for (const L of layers) { if (v === 'still') L.handle.still(t); }
+    if (greetings) greetings.handle.setDial(v);
+    wake();
+  }
+  applyDial(html.dataset.dial, false);
+  rmq.addEventListener('change', () => { if (!keep.get('boneyard_dial')) applyDial(rmq.matches ? 'still' : 'full', false); });
+  hud.dial.addEventListener('change', (e) => { if (e.target.checked) applyDial(e.target.value, true); });
+
+  /* ---------- the world task ---------- */
+  let frameN = 0, devAcc = 0, devN = 0, devAt = 0;
+  function world(dt, now) {
+    t += dt; frameN++;
+    scrollY = window.scrollY;
+    if (scrollY !== lastScrollY) { scrollStill = 0; lastScrollY = scrollY; } else scrollStill += dt;
+    const still = ctx.dial === 'still';
+    flyStep(dt);
+
+    /* camera: scroll -> z, eased 120 ms; idle cruise is the powered-on hum */
+    if (!still) cruise += CFG.cruise * (ctx.dial === 'calm' ? 0.5 : 1) * dt;
+    const targetZ = scrollY / len * CFG.unitsPerBay + cruise;
+    const k = 1 - Math.exp(-dt / CFG.ease);
+    const prevZ = cam.z; cam.z += (targetZ - cam.z) * k; cam.v = (cam.z - prevZ) / Math.max(dt, 1e-3);
+
+    /* the shared vanishing point */
+    if (ctx.dial === 'full' && ptr.present && !ptr.coarse) {
+      const kx = 1 - Math.exp(-dt / 0.14);
+      ctx.vp.x += (ctx.vpBase.x + (ptrTx - 0.5) * 2 * CFG.parallax - ctx.vp.x) * kx;
+      ctx.vp.y += (ctx.vpBase.y + (ptrTy - 0.5) * 2 * CFG.parallax - ctx.vp.y) * kx;
+    } else { ctx.vp.x += (ctx.vpBase.x - ctx.vp.x) * 0.1; ctx.vp.y += (ctx.vpBase.y - ctx.vp.y) * 0.1; }
+    ptr.nx = ptrTx; ptr.ny = ptrTy;
+    if ((frameN & 1) === 0) { roomsEl.style.setProperty('--vp-x', (ctx.vp.x * 100).toFixed(2) + '%'); roomsEl.style.setProperty('--vp-y', (ctx.vp.y * 100).toFixed(2) + '%'); }
+
+    setCurrent(Math.max(0, Math.min(LAST, Math.round(scrollY / len))));
+    updateBays(dt);
+    updateCorridor(dt);
+    if (!still) {
+      const t0 = DEV ? performance.now() : 0;
+      for (const L of layers) L.handle.tick(dt, t, cam.z, ptr);
+      if (DEV) { devAcc += performance.now() - t0; devN++; }
+    }
+    if (post) post.handle.tick(dt, t, { sky: canvases.sky, row: canvases.row, corridor: canvases.corridor, rooms: roomsEl });
+    if (frameN > 10) adapt();
+    if (DEV && now - devAt > 0.5) {
+      devAt = now;
+      hud.dev.hidden = false;
+      hud.dev.textContent = `js ${Ticker.stats.work.toFixed(1)} ms/frame · scale ${ctx.scale} · layers js ${(devN ? devAcc / devN : 0).toFixed(2)} ms`;
+      devAcc = 0; devN = 0;
+    }
+    /* idle stop: in Still, with nothing in flight and the scroll settled, the loop dies (0 CPU at rest) */
+    if (still && !autofly && scrollStill > 0.4 && !(switcher && switcher.handle.anyBusy())) { running = false; return false; }
+  }
+  function wake() { if (!running) { running = true; Ticker.add(world); } else if (!Ticker.has(world)) { Ticker.add(world); } }
+  ctx.wake = wake;
+  addEventListener('scroll', wake, { passive: true });
+
+  /* ---------- boot: size, mount what is visible, switch the tube on (the only auto-start, 500 ms) ---------- */
+  resizeAll();
+  const boot = () => {
+    if (ctx.dial === 'still') { html.classList.add('tube-on'); }
+    else {
+      field.animate([{ transform: 'scaleY(0.004)' }, { transform: 'scaleY(1)' }], { duration: 500, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'none' });
+      html.classList.add('tube-on');
+    }
+    wake();
+  };
+  requestAnimationFrame(boot);
+  setTimeout(() => { html.classList.add('greet-on'); if (greetings) greetings.handle.start(); }, CFG.greetingsAt * 1000);
+  setTimeout(() => { if (window.scrollY < 4 && ctx.dial === 'full' && cue) { cue.classList.add('pulse'); } }, CFG.chevronAt * 1000);
+
+  /* dev surface: the measured numbers, never the HUD's business unless ?dev=1 */
+  window.BONEYARD_RIDE = { ctx, bays, layers, get corridor() { return corridor; }, stats: Ticker.stats, CFG, get current() { return current; } };
+};
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootBoneyardRide, { once: true });
+else bootBoneyardRide();
+
+
+/* BONEYARD PART · L1 · THE TUBE
+ * technique   WebGL1 phosphor post-pass over the composited 2D layers (persistence, bloom, slight barrel, vignette)
+ * lineage     the vector CRT: the oscilloscope; Asteroids (Atari, 1979); Battlezone (Atari, 1980); Tempest (Atari, 1981); Vectrex (1982)
+ * original    ARWEN'S MODULE. Today this file is the no-op hook the core calls so every room is built to look right
+ *             WITHOUT the tube (each room owns its own cheap double-stroke glow). When arwen lands the pass, this
+ *             file returns enabled:true and the core unhides #c-tube and feeds it the composited layers each frame.
+ * not         scanlines (vector tubes had none; scanlines are ACI's), a curvature gimmick, a blocking dependency
+ * deps        none · WebGL1 when present, absent otherwise · 2026-09
+ * budget      0.0 ms/frame (no-op hook), desktop Chromium, measured 2026-09-29; the real pass has its own line when it lands
+ * api         mount(canvas, params, ctx) -> { enabled, tick(dt, t, sources), resize, still, destroy, bloom(on) }
+ * license     MIT, Desert Data Labs LLC
+ */
+/* HOW IT WORKS
+ * The core composites the ride from stacked 2D canvases (sky, row, corridor, then one canvas per mounted room).
+ * The tube, when present, samples those as textures each frame: previous frame times a decay plus the current
+ * frame (persistence), a quarter-resolution two-pass blur added back (bloom), a very slight barrel (k about 0.04)
+ * and a vignette. It is the first thing the adaptive budget switches off (bloom(false)), and it is absent without
+ * WebGL. This hook draws nothing; it exists so the module contract and the core's call site are already in place.
+ */
+(() => {
+  'use strict';
+  const PARAMS = {
+    persistence: 0.82,     /* previous-frame weight */
+    bloom: 0.35,           /* bloom add-back */
+    barrel: 0.04,          /* barrel distortion k */
+    vignette: 0.25,
+  };
+  function mount(canvas, params, ctx) {
+    return {
+      enabled: false,
+      tick() {},
+      resize() {},
+      still() {},
+      destroy() {},
+      bloom() {},
+      params() {},
+    };
+  }
+  BAYS.push({ slug: 'tube', title: 'The tube', order: 1, role: 'layer', kind: 'post', params: PARAMS, mount });
+})();
+
+
+/* BONEYARD PART · L2 · THE ROW
+ * technique   1/z perspective light-grid with billboard vector pylons, all projected to one shared vanishing point
+ * lineage     the Tron light-grid (Disney, 1982); the Battlezone horizon (Atari, 1980); the per-scanline perspective
+ *             floor (Sega, Space Harrier, 1985; Super Nintendo Mode 7, 1990)
+ * original    the pylons are the Desert Data Labs saguaro-circuit mark (site/assets/ddl-cactus-mark.svg) drawn as a
+ *             1/z vector object at x = +-3 world units every 6 units; the grid's rate IS the ride's one clock
+ *             (camera z comes from scroll plus a 0.4 unit/s idle cruise); every stroke is double-stroked (wide dim
+ *             halo under a thin bright core) so the row glows without the tube post-pass
+ * not         a raster floor: no scanlines, no texture, no fog sprite; lines only. Not a texture-mapped Mode 7 plane.
+ * deps        none · Canvas 2D · 2026-09
+ * budget      see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD
+ * api         mount(canvas, params, ctx) -> { tick(dt, t, cameraZ, pointer), resize(w, h, dpr), still(t), destroy() }
+ * license     MIT, Desert Data Labs LLC
+ */
+/* HOW IT WORKS
+ * The camera sits camH world units above a ground plane and looks down the row. A ground point at lateral offset x
+ * and distance d projects to (vpX + f * x / d, vpY + f * camH / d) with f = focalK * canvas height: the same 1/z the
+ * whole site shares. Depth lines sit at every whole world unit; only their fractional offset from the camera changes
+ * each frame, so the floor scrolls without ever running out of lines. Lateral lines are rays from the vanishing point.
+ *
+ * Pylons stand at x = +-pylonX every pylonEvery units. Each is the DDL mark as a set of polylines in a 96x96 box,
+ * scaled by (f / d) * pylonH / 96 and planted at its projected foot. Everything fades with distance and the ground
+ * below the horizon is painted opaque so the sky's stars end where the desert begins.
+ */
+(() => {
+  'use strict';
+  const PARAMS = {
+    camH: 1.0,          /* camera height in world units */
+    focalK: 0.62,       /* focal length as a fraction of canvas height */
+    zLines: 44,         /* depth lines drawn ahead */
+    xLines: 7,          /* lateral lines each side of centre */
+    xSpacing: 1,        /* world units between lateral lines */
+    pylonX: 3,          /* pylons at +- this x */
+    pylonEvery: 6,      /* units between pylons */
+    pylonH: 1.7,        /* pylon height, world units */
+    haloWidth: 5,       /* px, the wide dim stroke */
+    coreWidth: 1.1,     /* px, the bright stroke */
+    haloAlpha: 0.16,
+    coreAlpha: 0.85,
+    nearBoost: 1.6,     /* alpha ~ nearBoost / d */
+  };
+  /* the mark: polylines in a 96-box, from site/assets/ddl-cactus-mark.svg (trunk, node-tipped arms, rail, chip) */
+  const GLYPH = (() => {
+    const chip = [];
+    const x0 = 5.5, y0 = 5.5, x1 = 90.5, y1 = 90.5, r = 22, N = 5;
+    const arc = (cx, cy, a0, a1) => { for (let i = 0; i <= N; i++) { const a = a0 + (a1 - a0) * i / N; chip.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); } };
+    arc(x1 - r, y0 + r, -Math.PI / 2, 0); arc(x1 - r, y1 - r, 0, Math.PI / 2); arc(x0 + r, y1 - r, Math.PI / 2, Math.PI); arc(x0 + r, y0 + r, Math.PI, Math.PI * 1.5);
+    chip.push(chip[0]);
+    return [chip, [[48, 22], [48, 76]], [[48, 31], [59, 41], [48, 51], [37, 41], [48, 31]], [[36, 76], [60, 76]]];
+  })();
+  const NODE = [48, 41, 3.8];
+
+  function mount(canvas, params, ctx) {
+    const g = canvas.getContext('2d', { alpha: true });
+    let w = canvas.width, h = canvas.height, f = h * params.focalK, px = 1;
+    function stroke(path, alpha, wide) {
+      g.lineWidth = wide ? params.haloWidth * px : params.coreWidth * px;
+      g.globalAlpha = alpha * (wide ? params.haloAlpha : params.coreAlpha);
+      g.stroke(path);
+    }
+    function draw(z) {
+      const T = ctx.tokens;
+      const vpX = ctx.vp.x * w, vpY = ctx.vp.y * h;
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.clearRect(0, 0, w, h);
+      /* the ground: opaque, so stars stop at the horizon */
+      g.globalAlpha = 1; g.fillStyle = T.field; g.fillRect(0, Math.floor(vpY), w, h - Math.floor(vpY) + 1);
+      g.lineCap = 'butt'; g.lineJoin = 'round';          /* butt caps on full-width lines: cheaper, invisible */
+      const frac = z - Math.floor(z);
+      /* depth lines, binned by alpha so each bin is one path */
+      const bins = [new Path2D(), new Path2D(), new Path2D(), new Path2D()];
+      const binA = [1, 0.55, 0.28, 0.12];
+      for (let i = 0; i < params.zLines; i++) {
+        const d = (1 - frac) + i;
+        const y = vpY + f * params.camH / d;
+        if (y > h + 2) continue;
+        const a = Math.min(1, params.nearBoost / d) * (1 - d / params.zLines);
+        const bi = a > 0.7 ? 0 : a > 0.4 ? 1 : a > 0.18 ? 2 : 3;
+        bins[bi].moveTo(0, y); bins[bi].lineTo(w, y);
+      }
+      /* lateral rays from the vanishing point to below the frame */
+      const rays = new Path2D();
+      for (let i = -params.xLines; i <= params.xLines; i++) {
+        const x = i * params.xSpacing;
+        const dFar = params.zLines, dNear = 0.22;
+        rays.moveTo(vpX + f * x / dFar, vpY + f * params.camH / dFar);
+        rays.lineTo(vpX + f * x / dNear, vpY + f * params.camH / dNear);
+      }
+      for (const wide of [true, false]) {
+        g.strokeStyle = wide ? T.phosphor : T.phosphorCore;
+        for (let b = 0; b < 4; b++) stroke(bins[b], binA[b], wide);
+        stroke(rays, 0.5, wide);
+      }
+      /* the horizon hairline */
+      g.globalAlpha = 0.9; g.strokeStyle = T.phosphor; g.lineWidth = 1 * px;
+      g.beginPath(); g.moveTo(0, vpY + 0.5); g.lineTo(w, vpY + 0.5); g.stroke();
+      /* pylons: the mark at x = +-pylonX every pylonEvery units, nearest first is fine (no overlap in x) */
+      g.lineCap = 'round';
+      const first = Math.ceil((z + 0.35) / params.pylonEvery) * params.pylonEvery;
+      const kBox = params.pylonH / 96;
+      for (let zp = first; zp - z < params.zLines; zp += params.pylonEvery) {
+        const d = zp - z;
+        const s = f / d, k = s * kBox;
+        const footY = vpY + f * params.camH / d;
+        const a = Math.min(1, params.nearBoost / d) * (1 - d / params.zLines);
+        if (a <= 0.02) continue;
+        for (const side of [-1, 1]) {
+          const footX = vpX + f * (side * params.pylonX) / d;
+          const path = new Path2D();
+          for (const poly of GLYPH) {
+            path.moveTo(footX + (poly[0][0] - 48) * k, footY + (poly[0][1] - 96) * k);
+            for (let i = 1; i < poly.length; i++) path.lineTo(footX + (poly[i][0] - 48) * k, footY + (poly[i][1] - 96) * k);
+          }
+          g.strokeStyle = T.phosphor; stroke(path, a, true);
+          g.strokeStyle = T.phosphorCore; stroke(path, a, false);
+          if (k * 96 > 14) { g.globalAlpha = a * params.coreAlpha; g.fillStyle = T.phosphorCore; g.beginPath(); g.arc(footX + (NODE[0] - 48) * k, footY + (NODE[1] - 96) * k, Math.max(0.6, NODE[2] * k), 0, Math.PI * 2); g.fill(); }
+        }
+      }
+      g.globalAlpha = 1;
+    }
+    return {
+      tick(dt, t, cameraZ) { draw(cameraZ); },
+      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); f = h * params.focalK; },
+      still() { draw(ctx.camera.z); },
+      destroy() { g.clearRect(0, 0, w, h); },
+      params(p) { params = p; f = h * params.focalK; },
+    };
+  }
+  BAYS.push({ slug: 'row', title: 'The row', order: 2, role: 'layer', params: PARAMS, mount });
+})();
+
+
+/* BONEYARD PART · L3 · THE SKY
+ * technique   two-plane 1/z starfield drifting with camera z, plus a 24-stop horizon band tinted by the visitor's local hour
+ * lineage     Star Raiders (Atari, 1979) and Galaga (Namco, 1981) multi-plane stars
+ * original    the stars share the row's vanishing point and camera, so they stream outward at cruise and are the SAME
+ *             points HYPERSPACE streaks (published on ctx.share.stars); the horizon band is a clock, not weather: 24
+ *             colour stops indexed by the real local hour (pre-dawn indigo, dawn amber, day pale, dusk orange, night
+ *             blue-black). The ground stays black at every hour and the band's alpha caps at bandAlpha, so daytime
+ *             reads as a pale grey-blue line on the horizon, never as daylight; the ramp is NOT clamped to dusk-night
+ *             (clampDay: false) because at this alpha the day stops read as "a bright horizon at noon", which is honest.
+ *             Flip clampDay if arwen's retune disagrees.
+ * not         twinkle (churn), a skybox, a moon, weather. No random flicker of any kind.
+ * deps        none · Canvas 2D · 2026-09
+ * budget      see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD
+ * api         mount(canvas, params, ctx) -> { tick(dt, t, cameraZ, pointer), resize(w, h, dpr), still(t), destroy() }
+ * license     MIT, Desert Data Labs LLC
+ */
+/* HOW IT WORKS
+ * Each star is a camera-space point (x, y, z) with y above the ground plane and z between zNear and zFar. It projects
+ * to (vpX + f * x / z, vpY - f * y / z), the same projection as the row. Each frame z decreases by the camera's
+ * travel times the plane's factor (far plane slow, near plane fast); a star that passes zNear respawns at zFar, so
+ * the field never thins. The buffers are published on ctx.share.stars so HYPERSPACE and JUMP can streak the very same
+ * points, and ctx.share.warp (written by them) dims the dots as the streaks take over.
+ *
+ * The horizon band is a vertical gradient from transparent down to the hour's tint at the horizon line. The tint is a
+ * linear blend between the two nearest of 24 stops (one per hour), so it drifts continuously through the evening.
+ * The core also mirrors the tint to --horizon-tint for the CSS floor.
+ */
+(() => {
+  'use strict';
+  const PARAMS = {
+    far: 300, near: 120,        /* stars per plane */
+    farFactor: 0.12, nearFactor: 0.45,
+    spread: 10,                 /* lateral half-width, world units */
+    yMin: 0.12, yMax: 7.5,      /* height above the ground, world units */
+    zNear: 1.2, zFar: 40,
+    focalK: 0.62,               /* the row's focal, so the two agree */
+    dotFar: 1.0, dotNear: 1.7,  /* px */
+    alphaFar: 0.55, alphaNear: 0.9,
+    band: 0.13,                 /* band height, fraction of canvas height */
+    bandAlpha: 0.5,
+    clampDay: false,
+  };
+  /* 24 hour stops, index = local hour (dim on purpose: the yard is a night place) */
+  const HOURS = ['#0b1030', '#0a0f2e', '#090e2c', '#0a1030', '#101538', '#2a1e4a', '#7a4a3a', '#9a6a3c', '#6f6a5a', '#55606a', '#4a5f75', '#4a6078',
+    '#4a6078', '#4a6078', '#4d5f74', '#5a5f6c', '#6e5a52', '#8a5a3c', '#a0522d', '#7a3550', '#3a2a5a', '#1a2050', '#0f1640', '#0c1236'];
+  const hex = (c) => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+
+  function mount(canvas, params, ctx) {
+    const g = canvas.getContext('2d', { alpha: true });
+    let w = canvas.width, h = canvas.height, f = h * params.focalK, px = 1;
+    const seed = (n) => { const a = new Float32Array(n * 3); for (let i = 0; i < n; i++) spawn(a, i, true); return a; };
+    function spawn(a, i, anyZ) {
+      a[i * 3] = (Math.random() * 2 - 1) * params.spread;
+      a[i * 3 + 1] = params.yMin + Math.random() * (params.yMax - params.yMin);
+      a[i * 3 + 2] = anyZ ? params.zNear + Math.random() * (params.zFar - params.zNear) : params.zFar;
+    }
+    const far = seed(params.far), near = seed(params.near);
+    ctx.share.stars = { far, near, get f() { return f; }, get w() { return w; }, get h() { return h; }, zNear: params.zNear, zFar: params.zFar };
+    function tint(hour) {
+      let hh = hour;
+      if (params.clampDay && hh > 8 && hh < 17) hh = hh < 12.5 ? 8 : 17;
+      const i0 = Math.floor(hh) % 24, i1 = (i0 + 1) % 24, k = hh - Math.floor(hh);
+      const a = hex(HOURS[i0]), b = hex(HOURS[i1]);
+      return [Math.round(a[0] + (b[0] - a[0]) * k), Math.round(a[1] + (b[1] - a[1]) * k), Math.round(a[2] + (b[2] - a[2]) * k)];
+    }
+    function advance(a, n, dz) {
+      const range = params.zFar - params.zNear;
+      for (let i = 0; i < n; i++) {
+        let z = a[i * 3 + 2] - dz;
+        if (z < params.zNear) { spawn(a, i, false); z = params.zFar - (params.zNear - z) % range; }
+        else if (z > params.zFar) z -= range;
+        a[i * 3 + 2] = z;
+      }
+    }
+    function drawPlane(a, n, dot, alpha, vpX, vpY) {
+      g.globalAlpha = alpha;
+      const s = dot * px;
+      for (let i = 0; i < n; i++) {
+        const z = a[i * 3 + 2];
+        const sx = vpX + f * a[i * 3] / z, sy = vpY - f * a[i * 3 + 1] / z;
+        if (sx < -2 || sx > w + 2 || sy < -2 || sy > vpY) continue;
+        g.fillRect(sx, sy, s, s);
+      }
+    }
+    function draw() {
+      const T = ctx.tokens;
+      const vpX = ctx.vp.x * w, vpY = ctx.vp.y * h;
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.globalAlpha = 1; g.clearRect(0, 0, w, h);          /* the field gradient is CSS on the stage: zero fill cost here */
+      const warp = ctx.share.warp || 0;
+      g.fillStyle = T.phosphorCore;
+      drawPlane(far, params.far, params.dotFar, params.alphaFar * (1 - warp * 0.85), vpX, vpY);
+      g.fillStyle = T.phosphor;
+      drawPlane(near, params.near, params.dotNear, params.alphaNear * (1 - warp * 0.85), vpX, vpY);
+      /* the hour band */
+      const c = tint(ctx.hour);
+      ctx.share.horizonTint = `rgb(${c[0]},${c[1]},${c[2]})`;
+      const bandH = params.band * h;
+      const gr = g.createLinearGradient(0, vpY - bandH, 0, vpY);
+      gr.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},0)`);
+      gr.addColorStop(1, `rgba(${c[0]},${c[1]},${c[2]},${params.bandAlpha})`);
+      g.globalAlpha = 1; g.fillStyle = gr; g.fillRect(0, vpY - bandH, w, bandH + 1);
+    }
+    return {
+      tick(dt) {
+        const dz = ctx.camera.v * dt;
+        if (dz !== 0) { advance(far, params.far, dz * params.farFactor); advance(near, params.near, dz * params.nearFactor); }
+        draw();
+      },
+      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); f = h * params.focalK; },
+      still() { draw(); },
+      destroy() { g.clearRect(0, 0, w, h); if (ctx.share.stars && ctx.share.stars.far === far) delete ctx.share.stars; },
+      params(p) { params = p; f = h * params.focalK; },
+    };
+  }
+  BAYS.push({ slug: 'sky', title: 'The sky', order: 0, role: 'layer', params: PARAMS, mount });
+})();
+
+
+/* BONEYARD PART · L4 · GREETINGS
+ * technique   real-DOM sine scroller: a duplicated track moved by transform, each glyph a span on a negative-delay
+ *             phased translateY (playbook 2.7), so the wave runs from t=0 with no per-frame JavaScript
+ * lineage     the C64 and Amiga cracktro sine scroller, about 1985 to 1992
+ * original    the demoscene "greetings to" list IS the provenance line: the people and years behind every trick on the
+ *             row plus the data sources for the ground (vision brief 4.4, verified). aria-label on the parent carries
+ *             the plain sentence; the glyph spans are aria-hidden; the track pauses on hover and focus-within; the
+ *             dial's Still shows the static line instead of the track. Never <marquee>.
+ * not         a news ticker, a fake terminal, a place for links. It names people and years and nothing else.
+ * deps        none · DOM + CSS animations (compositor) · 2026-09
+ * budget      0.0 ms/frame of JavaScript after start (CSS transform animations only); compositor cost measured in docs/BUILD-LOG.md, desktop Chromium, 2026-09-29; phone TBD
+ * api         mount(element, params, ctx) -> { start(), setDial(v), tick, resize, still, destroy }
+ * license     MIT, Desert Data Labs LLC
+ */
+/* HOW IT WORKS
+ * On mount the module reads the sentence already in the element (the static line that ships in the HTML and is what
+ * a visitor without JavaScript reads), splits it into one span per glyph, and builds a track holding two copies of
+ * that span run. The track slides by exactly one copy width per cycle (translateX to -50% of a two-copy track), so the
+ * loop is seamless; the cycle length is the copy width divided by pxPerSecond, measured once on start.
+ *
+ * Each glyph carries --d, a negative animation-delay of -(i mod phases) * period / phases, so one keyframe pair
+ * produces a standing wave across the line. All of it is CSS transform: no JavaScript runs per frame. Hover or focus
+ * pauses both animations with animation-play-state. Still hides the track and shows the static sentence.
+ */
+(() => {
+  'use strict';
+  const PARAMS = {
+    pxPerSecond: 58,       /* track speed */
+    phases: 12,            /* glyphs per wave */
+    period: 3.6,           /* seconds for one full sine (matches the 1.8 s alternate keyframe in 01-tube.css) */
+    text: 'Greetings to · Douglas Trumbull 1968 · NovaLogic 1992 · David Braben and Ian Bell 1984 · Steve Rutt and Bill Etra 1973 · Harold Craft 1970 · Jules Antoine Lissajous 1857 · Atari 1979 to 1981 · Vectrex 1982 · Sega 1985 · the Amiga scene 1988 to 1994 · ground: AWS Terrain Tiles, SRTM, USGS 3DEP',
+  };
+  /* the standalone skin, injected only when the host is not the ride's #greetings (the parts page) */
+  const CSS = `
+[data-greet-host]{position:relative;overflow:hidden;contain:paint;white-space:nowrap;height:30px;line-height:30px;font:500 12px/30px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+[data-greet-host] .greet__track{display:inline-flex;margin-left:100%;will-change:transform;animation:greet-slide var(--greet-cycle,48s) linear infinite}
+[data-greet-host] .greet__copy{display:inline-block;padding-right:6ch}
+[data-greet-host] .greet__copy span{display:inline-block;min-width:.3ch;animation:greet-sine 1.8s ease-in-out infinite alternate;animation-delay:var(--d,0s)}
+[data-greet-host]:hover .greet__track,[data-greet-host]:hover .greet__copy span{animation-play-state:paused}
+[data-greet-host][data-still] .greet__track{display:none}
+[data-greet-host]:not([data-still]) .greet__static{display:none}
+@keyframes greet-slide{to{transform:translate3d(-50%,0,0)}}
+@keyframes greet-sine{from{transform:translate3d(0,-5px,0)}to{transform:translate3d(0,5px,0)}}
+@media (prefers-reduced-motion: reduce){[data-greet-host] .greet__track,[data-greet-host] .greet__copy span{animation:none}}`;
+
+  function mount(el, params, ctx) {
+    const standalone = el.id !== 'greetings';
+    let staticEl = el.querySelector('.greet__static');
+    if (!staticEl) { staticEl = document.createElement('div'); staticEl.className = 'greet__static'; staticEl.textContent = el.getAttribute('aria-label') || params.text; el.appendChild(staticEl); }
+    const text = staticEl.textContent.trim() || params.text;
+    if (!el.hasAttribute('aria-label')) el.setAttribute('aria-label', text);
+    if (standalone) { el.dataset.greetHost = '1'; const st = document.createElement('style'); st.textContent = CSS; el.prepend(st); }
+    const track = document.createElement('div'); track.className = 'greet__track'; track.setAttribute('aria-hidden', 'true');
+    const step = params.period / params.phases;
+    for (let c = 0; c < 2; c++) {
+      const copy = document.createElement('span'); copy.className = 'greet__copy';
+      const glyphs = [...text];
+      for (let i = 0; i < glyphs.length; i++) {
+        const s = document.createElement('span');
+        s.textContent = glyphs[i] === ' ' ? ' ' : glyphs[i];
+        s.style.setProperty('--d', `-${((i % params.phases) * step).toFixed(2)}s`);
+        copy.appendChild(s);
+      }
+      track.appendChild(copy);
+    }
+    let started = false, dial = ctx.dial;
+    function apply() {
+      const still = dial === 'still';
+      if (still) { el.dataset.still = '1'; staticEl.hidden = false; if (track.parentNode) track.remove(); }
+      else { delete el.dataset.still; if (started) { staticEl.hidden = true; if (!track.parentNode) el.appendChild(track); measure(); } }
+    }
+    function measure() {
+      const copy = track.firstElementChild; if (!copy) return;
+      const cw = copy.getBoundingClientRect().width || 1200;
+      el.style.setProperty('--greet-cycle', (cw / params.pxPerSecond).toFixed(1) + 's');
+    }
+    return {
+      start() { started = true; apply(); },
+      setDial(v) { dial = v; apply(); },
+      tick() {}, resize() { if (started && dial !== 'still') measure(); }, still() { dial = 'still'; apply(); },
+      destroy() { track.remove(); staticEl.hidden = false; delete el.dataset.still; },
+      params(p) { params = p; },
+    };
+  }
+  BAYS.push({ slug: 'greetings', title: 'Greetings', order: 3, role: 'layer', kind: 'dom', params: PARAMS, mount });
+})();
+
+
+/* BONEYARD PART · C1 · SWITCH
+ * technique   the CRT switch-off as compositor-only transforms on a room's wrapper: scaleY to a 2 px line (200 ms),
+ *             scaleX to a dot (150 ms), the dot recedes to the vanishing point (600 ms); switch-on is the reverse
+ * lineage     every CRT television's power-off, formalised by 1980s title sequences
+ * original    driven by the Web Animations API on the room's inner wrapper (no per-frame JavaScript, no layout,
+ *             no paint); the recede targets the SAME vanishing point every room shares; one flash frame at most and
+ *             only in Full, rate-limited by the core to one per bay and never more than two a second; Still is a
+ *             200 ms opacity crossfade
+ * not         a shader, a fade-to-black cut, a flicker
+ * deps        none · WAAPI (element.animate) · 2026-09
+ * budget      0.0 ms/frame of JavaScript during the transition (compositor animations); measured in docs/BUILD-LOG.md, desktop Chromium, 2026-09-29
+ * api         mount(container, params, ctx) -> { play(room, 'on'|'off', opts) -> Promise<boolean>, cancel(room), busy(room), anyBusy(), tick, resize, still, destroy }
+ * license     MIT, Desert Data Labs LLC
+ */
+/* HOW IT WORKS
+ * A room is two nested wrappers around its canvas. The outer carries the 1/z approach scale the core writes each
+ * frame (anchored on the vanishing point). This module animates the inner one. Switching off: three keyframe
+ * segments on one transform animation, so the browser composites the whole thing without touching the main thread:
+ * scale(1, 1) -> scale(1, .004) (the line) -> scale(.004, .004) (the dot) -> translate to the vanishing point at
+ * scale 0. Switching on runs the same shape backward while the outer scale eases from the far-frame size to 1, so
+ * the small frame on the horizon rushes up, flattens into a bright line, and opens. Under Still both directions
+ * are a 200 ms opacity crossfade. play() resolves true on finish and false if cancelled by a faster scroll.
+ */
+(() => {
+  'use strict';
+  const PARAMS = {
+    lineMs: 200,      /* scaleY to the line */
+    dotMs: 150,       /* scaleX to the dot */
+    recedeMs: 600,    /* the dot to the vanishing point */
+    onMs: 380,        /* switch-on total */
+    stillMs: 200,     /* the crossfade under Still */
+    flashMs: 34,      /* two frames of afterglow at most */
+    lineScale: 0.004,
+  };
+  function mount(container, params, ctx) {
+    const live = new Map();   /* room -> Animation[] */
+    const done = (room) => { live.delete(room); };
+    function cancel(room) {
+      const list = live.get(room); if (!list) return;
+      for (const a of list) { try { a.cancel(); } catch (_) {} }
+      live.delete(room);
+    }
+    function play(room, dir, opts) {
+      opts = opts || {};
+      cancel(room);
+      const tube = room.tube, outer = room.room, flash = room.flash;
+      const list = [];
+      let main;
+      if (opts.still) {
+        main = tube.animate([{ opacity: dir === 'on' ? 0 : 1 }, { opacity: dir === 'on' ? 1 : 0 }], { duration: params.stillMs, easing: 'linear', fill: dir === 'off' ? 'forwards' : 'none' });
+        list.push(main);
+      } else if (dir === 'on') {
+        const from = Math.max(0.02, Math.min(1, opts.from || 0.02));
+        list.push(outer.animate([{ transform: `translate3d(0,0,0) scale(${from})` }, { transform: 'translate3d(0,0,0) scale(1)' }], { duration: params.onMs, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'none' }));
+        main = tube.animate([
+          { transform: `scale(0.6, ${params.lineScale})`, easing: 'cubic-bezier(.3,.7,.4,1)' },
+          { transform: `scale(1, ${params.lineScale})`, offset: 0.4, easing: 'cubic-bezier(.2,.8,.2,1)' },
+          { transform: 'scale(1, 1)' },
+        ], { duration: params.onMs, fill: 'none' });
+        list.push(main);
+      } else {
+        const total = params.lineMs + params.dotMs + params.recedeMs;
+        const dx = (ctx.vp.x - 0.5) * innerWidth, dy = (ctx.vp.y - 0.5) * innerHeight;
+        main = tube.animate([
+          { transform: 'translate(0px, 0px) scale(1, 1)', easing: 'cubic-bezier(.4,0,.6,1)' },
+          { transform: `translate(0px, 0px) scale(1, ${params.lineScale})`, offset: params.lineMs / total, easing: 'cubic-bezier(.4,0,.8,1)' },
+          { transform: `translate(0px, 0px) scale(${params.lineScale}, ${params.lineScale})`, offset: (params.lineMs + params.dotMs) / total, easing: 'cubic-bezier(.3,0,.7,1)' },
+          { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(0.0001, 0.0001)` },
+        ], { duration: total, fill: 'forwards' });
+        list.push(main);
+        if (opts.flash && flash) list.push(flash.animate([{ opacity: 0.85 }, { opacity: 0 }], { duration: params.flashMs, easing: 'ease-out', fill: 'none' }));
+      }
+      live.set(room, list);
+      return main.finished.then(() => { done(room); return true; }, () => { done(room); return false; });
+    }
+    return {
+      play, cancel,
+      busy(room) { return live.has(room); },
+      anyBusy() { return live.size > 0; },
+      tick() {}, resize() {}, still() {},
+      destroy() { for (const room of [...live.keys()]) cancel(room); },
+      params(p) { params = p; },
+    };
+  }
+  BAYS.push({ slug: 'switch', title: 'Switch', order: 0, role: 'corridor', kind: 'dom', params: PARAMS, mount });
+})();
+
+
+/* BONEYARD PART · C2 · HYPERSPACE
+ * technique   the sky's own stars streaked along their 1/z rays: each star drawn as a line from its projection at z to
+ *             its projection at z + warp * streakLen, scrubbed by scroll position through the gap between two bays
+ * lineage     the Star Wars jump (1977); the demoscene 1/z starfields (early 1990s); Windows 3.1 Starfield Simulation (1992)
+ * original    it draws the SAME points THE SKY publishes on ctx.share.stars, so the jump is continuous with the sky you
+ *             were resting under; warp is a function of scroll progress through the corridor (scroll is the only clock,
+ *             and warp is exactly zero at rest and at the room's threshold),
+ *             eased 350 ms so a stopped scroll holds a designed mid-warp instead of freezing mid-frame; writes
+ *             ctx.share.warp so the sky dims its dots as the streaks take over; clipped above the horizon
+ * not         a random speed loop, a tunnel, a lens flare. It never moves unless you do.
+ * deps        none · Canvas 2D · 2026-09
+ * budget      see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD
+ * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
+ * license     MIT, Desert Data Labs LLC
+ */
+/* HOW IT WORKS
+ * Progress runs 0 to 1 across the gap between the bay you are leaving and the one you are entering. Warp follows a
+ * raised sine over that range (quiet at both ends, full in the middle) with a floor so the first scroll already
+ * stretches the stars. For each star (x, y, z) the head is (vpX + f x / z, vpY - f y / z) and the tail is the same
+ * projection at z + warp * streakLen: the tail sits closer to the vanishing point, so every streak points at it.
+ * Two passes per plane, a wide dim halo under a thin bright core, batched into one Path2D each. If no sky has
+ * published stars (the parts page), the module seeds its own field with the same distribution.
+ */
+(() => {
+  'use strict';
+  const PARAMS = {
+    streakLen: 5.5,     /* world units at full warp */
+    warpFloor: 0.12,
+    warpPeak: 1.0,
+    rampIn: 0.1,        /* fraction of the gap over which warp rises from zero (and falls back to zero) */
+    settle: 0.35,       /* seconds to ease toward the scroll-driven warp */
+    haloWidth: 3.2, coreWidth: 1.1,
+    haloAlpha: 0.22, coreAlpha: 0.9,
+    focalK: 0.62,
+    stillWarp: 0.45,
+    ownStars: 360,      /* only when no sky is present (parts page) */
+  };
+  function seedOwn(n) {
+    const a = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { a[i * 3] = (Math.random() * 2 - 1) * 10; a[i * 3 + 1] = (Math.random() * 2 - 1) * 7; a[i * 3 + 2] = 1.2 + Math.random() * 38; }
+    return a;
+  }
+  function mount(canvas, params, ctx) {
+    const g = canvas.getContext('2d', { alpha: true });
+    let w = canvas.width, h = canvas.height, f = h * params.focalK, px = 1, warp = 0, own = null;
+    function planes() {
+      const s = ctx.share.stars;
+      if (s) return [[s.far, s.far.length / 3, 0.6], [s.near, s.near.length / 3, 1]];
+      if (!own) own = seedOwn(params.ownStars);
+      return [[own, params.ownStars, 1]];
+    }
+    function draw(wv) {
+      const T = ctx.tokens;
+      const vpX = ctx.vp.x * w, vpY = ctx.vp.y * h;
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.clearRect(0, 0, w, h);
+      if (wv <= 0.001) return;
+      g.save();
+      if (ctx.share.stars) { g.beginPath(); g.rect(0, 0, w, Math.ceil(vpY)); g.clip(); }
+      g.lineCap = 'round';
+      for (const [a, n, k] of planes()) {
+        const path = new Path2D();
+        const L = wv * params.streakLen * k;
+        for (let i = 0; i < n; i++) {
+          const x = a[i * 3], y = a[i * 3 + 1], z = a[i * 3 + 2];
+          const hx = vpX + f * x / z, hy = vpY - f * y / z;
+          if (hx < -4 || hx > w + 4 || hy < -4 || hy > h + 4) continue;
+          const z2 = z + L;
+          path.moveTo(vpX + f * x / z2, vpY - f * y / z2); path.lineTo(hx, hy);
+        }
+        g.strokeStyle = T.phosphor; g.globalAlpha = params.haloAlpha * k; g.lineWidth = params.haloWidth * px; g.stroke(path);
+        g.strokeStyle = T.phosphorCore; g.globalAlpha = params.coreAlpha * k; g.lineWidth = params.coreWidth * px; g.stroke(path);
+      }
+      g.restore();
+      g.globalAlpha = 1;
+    }
+    return {
+      tick(dt, t, progress) {
+        const p = Math.max(0, Math.min(1, progress));
+        const ends = Math.min(1, p / params.rampIn) * Math.min(1, (1 - p) / params.rampIn);   /* zero at rest and at the threshold */
+        const target = ends * (params.warpFloor + (params.warpPeak - params.warpFloor) * Math.pow(Math.sin(Math.PI * p), 0.8));
+        warp += (target - warp) * (1 - Math.exp(-dt / Math.max(0.02, params.settle)));
+        ctx.share.warp = warp;
+        draw(warp);
+      },
+      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); f = h * params.focalK; },
+      still() { warp = params.stillWarp; ctx.share.warp = warp; draw(warp); },
+      destroy() { ctx.share.warp = 0; g.clearRect(0, 0, w, h); },
+      params(p) { params = p; f = h * params.focalK; },
+    };
+  }
+  BAYS.push({ slug: 'hyperspace', title: 'Hyperspace', order: 1, role: 'corridor', params: PARAMS, mount });
+})();
+
+
+/* BONEYARD PART · 01 · JUMP
+ * technique   1/z starfield in warp: stars flow toward the camera along rays from the vanishing point and are drawn as
+ *             streaks whose length is the warp; press-and-hold raises warp, release settles to cruise
+ * lineage     the Star Wars jump (1977); the demoscene 1/z starfields (early 1990s); Windows 3.1 Starfield Simulation (1992)
+ * original    the hold room for HYPERSPACE: the same projection and the same vanishing point as the corridor and the row
+ *             (pointer parallax on the point is the core's, so the whole world shifts together); warp is a time
+ *             constant, not a keyframe, so a tap flickers and a hold builds; a translucent field fill gives cheap
+ *             persistence without the tube; the still is mid-warp with short streaks, the frame that reads as
+ *             "hyperspace" in a screenshot
+ * not         random speed changes, a tunnel, a lens flare, autoplay warp. Cruise is quiet; only a hold raises it.
+ * deps        none · Canvas 2D · 2026-09
+ * budget      see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD
+ * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
+ * license     MIT, Desert Data Labs LLC
+ */
+/* HOW IT WORKS
+ * count stars live in camera space with x and y spread around the line of flight and z between zNear and zFar. Each
+ * frame every z decreases by (drift + warp * warpDrift) * dt; a star that passes zNear respawns at zFar with new x, y.
+ * A star projects to (vpX + f x / z, vpY + f y / z) with f = focalK * height; its streak runs from that head back to
+ * the projection at z + warp * streakLen, so all streaks point at the vanishing point and lengthen with warp.
+ *
+ * Warp eases toward holdWarp while the pointer, a finger or Space is held and toward cruiseWarp otherwise, each with
+ * its own time constant (riseTime up, settleTime down). Instead of clearing, the frame is washed with the field colour
+ * at trailAlpha, which leaves a short persistence trail. still() clears and draws one frame at stillWarp.
+ */
+(() => {
+  'use strict';
+  const PARAMS = {
+    count: 420,
+    spread: 9, ySpread: 6.5,
+    zNear: 0.9, zFar: 42,
+    focalK: 0.62,
+    drift: 1.6,          /* units per second at cruise */
+    warpDrift: 14,       /* extra units per second at warp 1 */
+    cruiseWarp: 0.16,
+    holdWarp: 1.0,
+    riseTime: 1.2,       /* seconds to ~95% of hold */
+    settleTime: 0.9,
+    streakLen: 6,
+    trailAlpha: 0.5,     /* field wash per frame: lower = longer trails */
+    haloWidth: 3.4, coreWidth: 1.15,
+    haloAlpha: 0.2, coreAlpha: 0.92,
+    stillWarp: 0.42,
+  };
+  function mount(canvas, params, ctx) {
+    const g = canvas.getContext('2d', { alpha: true });
+    let w = canvas.width, h = canvas.height, f = h * params.focalK, px = 1, warp = params.cruiseWarp;
+    const n = params.count, a = new Float32Array(n * 3);
+    const spawn = (i, anyZ) => { a[i * 3] = (Math.random() * 2 - 1) * params.spread; a[i * 3 + 1] = (Math.random() * 2 - 1) * params.ySpread; a[i * 3 + 2] = anyZ ? params.zNear + Math.random() * (params.zFar - params.zNear) : params.zFar; };
+    for (let i = 0; i < n; i++) spawn(i, true);
+    function draw(clear) {
+      const T = ctx.tokens;
+      const vpX = ctx.vp.x * w, vpY = ctx.vp.y * h;
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      if (clear) g.clearRect(0, 0, w, h);
+      else { g.globalAlpha = params.trailAlpha; g.fillStyle = T.field; g.fillRect(0, 0, w, h); }
+      g.lineCap = 'round';
+      const path = new Path2D();
+      const L = warp * params.streakLen;
+      for (let i = 0; i < n; i++) {
+        const x = a[i * 3], y = a[i * 3 + 1], z = a[i * 3 + 2];
+        const hx = vpX + f * x / z, hy = vpY + f * y / z;
+        if (hx < -4 || hx > w + 4 || hy < -4 || hy > h + 4) continue;
+        const z2 = z + L + 0.15;
+        path.moveTo(vpX + f * x / z2, vpY + f * y / z2); path.lineTo(hx, hy);
+      }
+      g.strokeStyle = T.phosphor; g.globalAlpha = params.haloAlpha; g.lineWidth = params.haloWidth * px; g.stroke(path);
+      g.strokeStyle = T.phosphorCore; g.globalAlpha = params.coreAlpha; g.lineWidth = params.coreWidth * px; g.stroke(path);
+      g.globalAlpha = 1;
+    }
+    return {
+      tick(dt, t, progress, pointer) {
+        const target = pointer && pointer.down ? params.holdWarp : params.cruiseWarp;
+        const tau = (target > warp ? params.riseTime : params.settleTime) / 3;
+        warp += (target - warp) * (1 - Math.exp(-dt / tau));
+        const dz = (params.drift + warp * params.warpDrift) * dt;
+        for (let i = 0; i < n; i++) { let z = a[i * 3 + 2] - dz; if (z < params.zNear) { spawn(i, false); z = params.zFar - (params.zNear - z); } a[i * 3 + 2] = z; }
+        draw(false);
+      },
+      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); f = h * params.focalK; },
+      still() { warp = params.stillWarp; draw(true); },
+      destroy() { g.clearRect(0, 0, w, h); },
+      params(p) { params = p; f = h * params.focalK; },
+    };
+  }
+  BAYS.push({ slug: 'jump', title: 'Jump', order: 1, role: 'bay', params: PARAMS, mount });
+})();
+
+
+/* BONEYARD PART · 00 · TUBE IDLE (PLACEHOLDER)
+ * technique   the designed idle of a switched-on vector tube: a centre bloom on the vanishing point, one horizontal
+ *             hairline that breathes, an inset bezel; nothing else
+ * lineage     the idle screen of a vector CRT with no program loaded (the oscilloscope at rest; Vectrex, 1982, between games)
+ * original    THIS IS THE PLACEHOLDER the core mounts for any bay whose module has not landed yet (02 to 08 today), so
+ *             the ride works end to end and a bay with no module still reads as a machine on the row. Builders replace
+ *             it by registering role 'bay' with the bay's slug (docs/CONTRACT.md); the core prefers a real module.
+ * not         a loading spinner, a "coming soon" card, text of any kind. Its nameplate below is the bay's real copy.
+ * deps        none · Canvas 2D · 2026-09
+ * budget      see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD
+ * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
+ * license     MIT, Desert Data Labs LLC
+ */
+/* HOW IT WORKS
+ * A radial gradient in the phosphor colour sits on the shared vanishing point and breathes by breathe around its
+ * base alpha over period seconds. A hairline crosses the frame at the vanishing point's height, double-stroked. A
+ * bezel rectangle is inset by bezel of the shorter side. still() draws the same frame at mid-breath.
+ */
+(() => {
+  'use strict';
+  const PARAMS = {
+    bloomR: 0.42,        /* radius as a fraction of the shorter side */
+    bloomAlpha: 0.22,
+    breathe: 0.07,
+    period: 4.2,
+    bezel: 0.035,
+    hairlineAlpha: 0.7,
+  };
+  function mount(canvas, params, ctx) {
+    const g = canvas.getContext('2d', { alpha: true });
+    let w = canvas.width, h = canvas.height, px = 1;
+    function draw(phase) {
+      const T = ctx.tokens;
+      const vpX = ctx.vp.x * w, vpY = ctx.vp.y * h, m = Math.min(w, h);
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.clearRect(0, 0, w, h);
+      const r = params.bloomR * m;
+      const gr = g.createRadialGradient(vpX, vpY, 0, vpX, vpY, r);
+      gr.addColorStop(0, ctx.rgba(T.phosphor, params.bloomAlpha + params.breathe * phase));
+      gr.addColorStop(0.5, ctx.rgba(T.phosphor, (params.bloomAlpha + params.breathe * phase) * 0.35));
+      gr.addColorStop(1, ctx.rgba(T.phosphor, 0));
+      g.globalAlpha = 1; g.fillStyle = gr; g.fillRect(vpX - r, vpY - r, r * 2, r * 2);
+      /* the hairline */
+      g.lineCap = 'round';
+      g.strokeStyle = T.phosphor; g.globalAlpha = params.hairlineAlpha * 0.3; g.lineWidth = 4 * px;
+      g.beginPath(); g.moveTo(w * 0.08, vpY); g.lineTo(w * 0.92, vpY); g.stroke();
+      g.strokeStyle = T.phosphorCore; g.globalAlpha = params.hairlineAlpha; g.lineWidth = 1 * px; g.stroke();
+      /* the dot on the point */
+      g.fillStyle = T.phosphorCore; g.globalAlpha = 0.9; g.beginPath(); g.arc(vpX, vpY, 1.6 * px, 0, Math.PI * 2); g.fill();
+      /* the bezel */
+      const b = params.bezel * m;
+      g.strokeStyle = T.phosphorDim; g.globalAlpha = 1; g.lineWidth = 1 * px;
+      g.strokeRect(b + 0.5, b + 0.5, w - 2 * b - 1, h - 2 * b - 1);
+      g.globalAlpha = 1;
+    }
+    return {
+      tick(dt, t) { draw(Math.sin(t / params.period * Math.PI * 2)); },
+      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); },
+      still() { draw(0); },
+      destroy() { g.clearRect(0, 0, w, h); },
+      params(p) { params = p; },
+    };
+  }
+  BAYS.push({ slug: 'placeholder', title: 'Tube idle (placeholder)', order: 99, role: 'placeholder', params: PARAMS, mount });
+})();
+
+</script>
+</body>
+</html>
