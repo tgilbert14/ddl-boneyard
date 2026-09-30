@@ -1,5 +1,5 @@
 /* BONEYARD PART · L1 · THE TUBE
- * technique   WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a quarter-res two-pass bloom added back, a very slight barrel, a vignette
+ * technique   WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a two-scale bloom (quarter-res tight, eighth-res wide) added back, overdriven white-hot cores, a very slight barrel, a vignette, and a light chromatic fringe only at peak warp or a punch
  * lineage     the vector CRT: the oscilloscope; Asteroids (Atari, 1979); Battlezone (Atari, 1980); Tempest (Atari, 1981); Vectrex (1982)
  * original    one skin over the whole row that no room depends on: it takes the sky, the row and the corridor canvases as textures, and the rooms stay crisp DOM above it with a static CSS halo on their frames
  * not         scanlines (vector tubes drew lines, not rasters, so they had none), a curvature gimmick, a blocking dependency; it does not skin the rooms (see HOW IT WORKS)
@@ -32,9 +32,12 @@
   'use strict';
   const PARAMS = {
     persistence: 0.72,     /* last-frame weight at 60 fps (frame-rate corrected) */
-    bloom: 0.9,            /* bloom add-back gain */
-    knee: 0.22,            /* bloom starts above this luma, per 2x2 tap */
-    radius: 1.4,           /* blur step in quarter-res texels */
+    bloom: 1.3,            /* tight bloom add-back gain (quarter res): the arcade glow */
+    wide: 0.85,            /* wide halo add-back gain (eighth res) */
+    knee: 0.17,            /* bloom starts above this luma, per 2x2 tap */
+    radius: 1.8,           /* blur step in quarter-res texels */
+    hot: 0.55,             /* overdrive: how far the brightest strokes whiten toward a white-hot core */
+    fringe: 0.006,         /* chromatic split at the far corner (uv) at full warp or punch; 0 at the vanishing point */
     barrel: 0.04,          /* barrel distortion k */
     vignette: 0.30,        /* corner darkening */
   };
@@ -62,14 +65,34 @@
   /* E: barrel CENTERED ON THE VANISHING POINT (so the one vanishing point never moves and the DOM rooms still
      converge on it), normalized so the farthest corner samples its own corner: no black rim, nothing sampled
      off the edge. Then the bloom add-back and a vignette about the screen center. */
-  const FS_OUT = 'precision mediump float;varying vec2 v;uniform sampler2D s,b;uniform float k,gain,vig,aspect;uniform vec2 vp;' +
+  /* Hot cores: the brightest strokes are pushed toward their own max channel (a white-hot core inside a cyan
+     stroke, the overdriven vector beam), then the tight and wide blooms are added. Fringe: R and B are sampled
+     a hair apart ALONG the ray from the vanishing point, so the split is 0 at the vanishing point and grows
+     outward; the uniform is 0 unless warp is near peak or a punch lands (Full only). */
+  const FS_OUT = 'precision mediump float;varying vec2 v;uniform sampler2D s,b,w;uniform float k,gain,wgain,hot,fr,vig,aspect;uniform vec2 vp;' +
     'void main(){vec2 d=v-vp;vec2 da=vec2(d.x*aspect,d.y);vec2 fc=vec2(max(vp.x,1.-vp.x)*aspect,max(vp.y,1.-vp.y));' +
     'float r2=dot(da,da)/dot(fc,fc);vec2 u=vp+d*(1.+k*r2)/(1.+k);' +
-    'vec3 c=texture2D(s,u).rgb+texture2D(b,u).rgb*gain;' +
+    'vec3 c=texture2D(s,u).rgb;if(fr>0.){vec2 o=d*fr;c.r=texture2D(s,u+o).r;c.b=texture2D(s,u-o).b;}' +
+    'float l=dot(c,vec3(.2126,.7152,.0722));c=mix(c,vec3(max(c.r,max(c.g,c.b))),hot*smoothstep(.55,.95,l));' +
+    'c+=texture2D(b,u).rgb*gain+texture2D(w,u).rgb*wgain;' +
     'vec2 q=(v*2.-1.)*vec2(aspect,1.);float rv=dot(q,q)/(1.+aspect*aspect);' +
     'c*=1.-vig*pow(rv,1.6);gl_FragColor=vec4(c,1.);}';
 
+  /* The yard's ignition is CSS (01-tube.css, keyed on html.tube-on, which the core adds at boot). This latch is
+     its only JavaScript: once it has played (about 1.2 s) html.ignited retires it, so a later dial change never
+     replays the flash; on a deep link (the ride did not start at the yard) it is retired at once. It runs before
+     the WebGL check on purpose: the ignition does not need the tube. Ride only (the parts page has no #title). */
+  function latchIgnition(canvas) {
+    const html = document.documentElement;
+    if (canvas.id !== 'c-tube' || !document.getElementById('title') || html.classList.contains('ignited')) return;
+    const hash = location.hash.split('?')[0];
+    const deep = (hash && hash !== '#' && hash !== '#yard') || window.scrollY > window.innerHeight * 0.3;
+    if (deep) { html.classList.add('ignited'); return; }
+    setTimeout(() => html.classList.add('ignited'), 1500);
+  }
+
   function mount(canvas, params, ctx) {
+    latchIgnition(canvas);
     const OFF = { enabled: false, tick() {}, resize() {}, still() {}, destroy() {}, bloom() {}, params() {} };
     let gl = null;
     try {
@@ -94,7 +117,7 @@
         comp: prog(FS_COMP, ['s0', 's1', 's2', 'sp', 'top', 'bot', 'vpY', 'decay', 'n']),
         down: prog(FS_DOWN, ['s', 'px', 'knee']),
         blur: prog(FS_BLUR, ['s', 'd']),
-        out: prog(FS_OUT, ['s', 'b', 'k', 'gain', 'vig', 'aspect', 'vp']),
+        out: prog(FS_OUT, ['s', 'b', 'w', 'k', 'gain', 'wgain', 'hot', 'fr', 'vig', 'aspect', 'vp']),
       };
     } catch (e) { return OFF; }
 
@@ -120,7 +143,7 @@
     function free(T) { if (T) { gl.deleteTexture(T.t); gl.deleteFramebuffer(T.f); } }
 
     const src = [tex(), tex(), tex()];
-    let acc = [null, null], q = [null, null], iw = 0, ih = 0, cur = 0;
+    let acc = [null, null], q = [null, null], e = [null, null], iw = 0, ih = 0, cur = 0;
     let bloomOn = true, lost = false, shown = false, fresh = true, age = 0, W = canvas.width, H = canvas.height;
     let col = { top: [0, 0, 0], bot: [0, 0, 0] };
     const stats = { ms: 0, n: 0, avg: 0, w: 0, h: 0 };
@@ -136,10 +159,12 @@
     function ensure(w, h) {
       if (w === iw && h === ih && acc[0]) return;
       iw = w; ih = h;
-      free(acc[0]); free(acc[1]); free(q[0]); free(q[1]);
+      free(acc[0]); free(acc[1]); free(q[0]); free(q[1]); free(e[0]); free(e[1]);
       acc = [target(w, h), target(w, h)];
       const qw = Math.max(1, Math.ceil(w / 4)), qh = Math.max(1, Math.ceil(h / 4));
       q = [target(qw, qh), target(qw, qh)];
+      const ew = Math.max(1, Math.ceil(qw / 2)), eh = Math.max(1, Math.ceil(qh / 2));
+      e = [target(ew, eh), target(ew, eh)];
       fresh = true;
     }
 
@@ -179,7 +204,8 @@
     function bindTex(unit, t) { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t); }
     function draw() { gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); }
 
-    function render(list, decay, useBloom) {
+    function render(list, decay, useBloom, fx) {
+      fx = fx || { gain: 1, fr: 0 };
       const base = list[0];
       ensure(base.width, base.height);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -203,12 +229,17 @@
         gl.useProgram(P.blur.p); gl.uniform1i(P.blur.u.s, 0);
         gl.bindFramebuffer(gl.FRAMEBUFFER, q[1].f); bindTex(0, q[0].t); gl.uniform2f(P.blur.u.d, params.radius / q[0].w, 0); draw();
         gl.bindFramebuffer(gl.FRAMEBUFFER, q[0].f); bindTex(0, q[1].t); gl.uniform2f(P.blur.u.d, 0, params.radius / q[0].h); draw();
+        /* the wide halo: the blurred quarter-res bloom, halved again (bilinear) and blurred at eighth res */
+        gl.viewport(0, 0, e[0].w, e[0].h);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, e[1].f); bindTex(0, q[0].t); gl.uniform2f(P.blur.u.d, params.radius * 1.5 / e[0].w, 0); draw();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, e[0].f); bindTex(0, e[1].t); gl.uniform2f(P.blur.u.d, 0, params.radius * 1.5 / e[0].h); draw();
       }
       /* E */
       gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, W, H);
       gl.useProgram(P.out.p); const o = P.out.u;
-      gl.uniform1i(o.s, 0); gl.uniform1i(o.b, 1); bindTex(0, next.t); bindTex(1, q[0].t);
-      gl.uniform1f(o.k, params.barrel); gl.uniform1f(o.gain, useBloom ? params.bloom : 0); gl.uniform1f(o.vig, params.vignette);
+      gl.uniform1i(o.s, 0); gl.uniform1i(o.b, 1); gl.uniform1i(o.w, 2); bindTex(0, next.t); bindTex(1, q[0].t); bindTex(2, e[0].t);
+      gl.uniform1f(o.k, params.barrel); gl.uniform1f(o.gain, useBloom ? params.bloom * fx.gain : 0); gl.uniform1f(o.wgain, useBloom ? params.wide * fx.gain : 0);
+      gl.uniform1f(o.hot, params.hot); gl.uniform1f(o.fr, fx.fr); gl.uniform1f(o.vig, params.vignette);
       gl.uniform1f(o.aspect, W / Math.max(1, H)); gl.uniform2f(o.vp, ctx.vp.x, 1 - ctx.vp.y);
       draw();
     }
@@ -245,8 +276,13 @@
         age += dt;
         if (age < 0.6 && onRide) { fresh = true; return; }     /* hold until the 500 ms switch-on is done, then warm up */
         readColorsMaybe();
-        const decay = Math.pow(params.persistence, Math.max(0, dt) * 60) * (ctx.dial === 'calm' ? 0.85 : 1);
-        timed(() => render(list, decay, bloomOn && ctx.scale >= 1));
+        const calm = ctx.dial === 'calm';
+        const decay = Math.pow(params.persistence, Math.max(0, dt) * 60) * (calm ? 0.85 : 1);
+        /* the fringe: only in Full, only near peak warp (above 0.6) or on a punch; share.punch is optional (0 when absent) */
+        const S = ctx.share || {};
+        const heat = calm ? 0 : Math.min(1, Math.max(0, ((+S.warp || 0) - 0.6) / 0.4) * 0.7 + Math.max(0, Math.min(1, +S.punch || 0)));
+        const fx = { gain: calm ? 0.7 : 1, fr: params.fringe * heat };
+        timed(() => render(list, decay, bloomOn && ctx.scale >= 1, fx));
         show(true);
       },
       resize(w, h) { W = w; H = h; fresh = true; readColors(); },
@@ -260,7 +296,7 @@
       destroy() {
         canvas.removeEventListener('webglcontextlost', onLost);
         show(false);
-        free(acc[0]); free(acc[1]); free(q[0]); free(q[1]);
+        free(acc[0]); free(acc[1]); free(q[0]); free(q[1]); free(e[0]); free(e[1]);
         for (const t of src) gl.deleteTexture(t);
         for (const k in P) gl.deleteProgram(P[k].p);
         gl.deleteBuffer(quad);

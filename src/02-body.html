@@ -12,6 +12,7 @@
     <div id="rooms"></div>
   </div>
   <canvas class="layer" id="c-tube" hidden></canvas>
+  <div id="ignite"><i class="ig-cover"></i><i class="ig-line"></i><i class="ig-flash"></i></div>
 </div>
 
 <header id="hud" aria-label="Heads-up display">
@@ -25,6 +26,7 @@
       <label><input type="radio" name="dial" id="dial-still" value="still"><span>Still</span></label>
     </fieldset>
     <button type="button" class="autofly" id="autofly" aria-pressed="false">Auto-fly</button>
+    <button type="button" class="sound" id="sound" aria-pressed="false">Sound</button>
   </div>
   <ol class="index" id="index" aria-label="Bays">
     <li><a href="#jump" data-bay="1">01</a></li>
@@ -41,7 +43,7 @@
 <main id="row-main">
   <section class="bay bay--yard" id="yard" data-bay="0" data-slug="yard" aria-labelledby="title">
     <p class="yard__kicker">A Desert Data Labs experience</p>
-    <h1 class="yard__title" id="title">Boneyard</h1>
+    <h1 class="yard__title" id="title" aria-label="Boneyard"><span class="g" aria-hidden="true" style="--i:0">B</span><span class="g" aria-hidden="true" style="--i:1">o</span><span class="g" aria-hidden="true" style="--i:2">n</span><span class="g" aria-hidden="true" style="--i:3">e</span><span class="g" aria-hidden="true" style="--i:4">y</span><span class="g" aria-hidden="true" style="--i:5">a</span><span class="g" aria-hidden="true" style="--i:6">r</span><span class="g" aria-hidden="true" style="--i:7">d</span></h1>
     <p class="yard__line">Eight retired display machines, tubes still on, in a row on the desert floor. Scroll to fly the row. Pull any part.</p>
     <p class="yard__plate">A fiction of display machines, not the aircraft at Davis-Monthan. The clock in the corner shows your local time, and the horizon colour follows your hour.</p>
     <span class="yard__cue" id="cue"></span>

@@ -68,6 +68,62 @@ canvas { display: block; }
   box-shadow: 0 0 3px var(--phosphor), 0 0 14px var(--glow-far); }
 html.js.tube-on #horizon { opacity: 0; transition: opacity var(--switch-on) linear; }
 
+/* ---------- IGNITION (arwen, the bad-ass pass): the first second is an event, under 1.2 s ----------
+   Three states, all keyed on classes the page already has (html.js + data-dial are set in <head> before the
+   first paint; the core adds .tube-on at boot, in the same frame it opens #field from the hairline):
+     OFF   html.js, dial Full or Calm, before boot: the tube is off. A standby dot on the horizon, the floor
+           black, the title a DIM filament (phosphor-dim, 3.4:1: visible and legible as large text, never
+           opacity 0, so the h1 is still painted at first paint and stays the LCP). A 5 s step-end failsafe
+           lights the title even if the core never boots.
+     IGNITE .tube-on: 0 to 110 ms the dot draws out into the hairline; the core opens the field from it
+           (0 to 500 ms); ONE white-hot flash peaks at about 270 ms (Full only; one flash, WCAG 2.3.1 allows 3/s);
+           380 to 740 ms the floor snaps in from the horizon toward you behind a bright scan front;
+           480 to 1165 ms the title ignites letter by letter: dim, one overdriven instant, lit.
+     LIT   the resting title. 20-tube.js adds .ignited about 1.5 s after boot (at once on a deep link), so a
+           later dial change never replays the ignition.
+   Only opacity and transform animate on the overlay; the glyphs animate color and text-shadow on eight inline
+   spans for 0.3 s each (paint, once). Still, reduced motion and no-JS match none of this: the lit title. */
+/* the cold filament keeps the lit halo's GEOMETRY (same four blur radii, faint colors): LCP measures the text's
+   visual rect, shadows included, so a shadowless dim title would shrink and hand LCP to a paragraph at 390 px */
+.yard__title { --ig-cold: 0 0 1px var(--phosphor-dim), 0 0 8px transparent, 0 0 24px transparent, 0 0 70px color-mix(in srgb, var(--phosphor-dim) 22%, transparent); }
+#ignite { position: absolute; inset: 0; z-index: 3; display: none; pointer-events: none; }
+#ignite i { position: absolute; left: 0; right: 0; display: block; }
+#ignite .ig-cover { top: var(--vp-y); bottom: 0; background: var(--field); transform: translate3d(0, 101%, 0); }
+#ignite .ig-cover::before { content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 2px; background: var(--phosphor-core);
+  box-shadow: 0 0 6px var(--phosphor), 0 0 26px 3px var(--glow), 0 0 80px 10px var(--glow-far); }
+#ignite .ig-line { top: calc(var(--vp-y) - 1px); height: 2px; background: var(--white-hot); opacity: 0; transform-origin: var(--vp-x) 50%;
+  box-shadow: 0 0 4px var(--phosphor-core), 0 0 18px 2px var(--phosphor), 0 0 60px 8px var(--glow); }
+#ignite .ig-flash { top: 0; bottom: 0; opacity: 0;
+  background: radial-gradient(120% 70% at var(--vp-x) var(--vp-y), var(--white-hot) 0, var(--phosphor-core) 16%, var(--glow) 44%, var(--glow-far) 66%, transparent 86%); }
+
+/* OFF (before boot) */
+html.js:is([data-dial="full"], [data-dial="calm"]):not(.tube-on):not(.ignited) #ignite { display: block; }
+html.js:is([data-dial="full"], [data-dial="calm"]):not(.tube-on):not(.ignited) #ignite .ig-cover { transform: none; }
+html.js:is([data-dial="full"], [data-dial="calm"]):not(.tube-on):not(.ignited) #ignite .ig-line { opacity: .85; transform: scaleX(.012); }
+html.js:is([data-dial="full"], [data-dial="calm"]):not(.tube-on):not(.ignited) .yard__title .g { animation: ig-off 5s step-end both; }
+@keyframes ig-off { 0% { color: var(--phosphor-dim); text-shadow: var(--ig-cold); } }
+
+/* IGNITE (Full) */
+html.js.tube-on[data-dial="full"]:not(.ignited) #ignite,
+html.js.tube-on[data-dial="calm"]:not(.ignited) #ignite { display: block; }
+html.js.tube-on[data-dial="full"]:not(.ignited) #ignite .ig-line { animation: ig-line 780ms var(--ease-out) backwards; }
+html.js.tube-on[data-dial="full"]:not(.ignited) #ignite .ig-flash { animation: ig-flash 600ms cubic-bezier(.3, 0, .2, 1) 120ms backwards; }
+html.js.tube-on[data-dial="full"]:not(.ignited) #ignite .ig-cover { animation: ig-floor 360ms cubic-bezier(.55, 0, .85, .4) 380ms backwards; }
+html.js.tube-on[data-dial="full"]:not(.ignited) .yard__title .g { animation: ig-glyph 300ms ease-out calc(480ms + var(--i, 0) * 55ms) backwards; }
+/* IGNITE (Calm): the same order at a gentler pace, no flash and no overdriven instant */
+html.js.tube-on[data-dial="calm"]:not(.ignited) #ignite .ig-line { animation: ig-line 900ms var(--ease-out) backwards; }
+html.js.tube-on[data-dial="calm"]:not(.ignited) #ignite .ig-cover { animation: ig-floor 480ms cubic-bezier(.45, 0, .7, .5) 400ms backwards; }
+html.js.tube-on[data-dial="calm"]:not(.ignited) .yard__title .g { animation: ig-glyph-calm 360ms ease-out calc(520ms + var(--i, 0) * 40ms) backwards; }
+
+@keyframes ig-line { 0% { opacity: .9; transform: scaleX(.012); } 14% { opacity: 1; transform: scaleX(1); } 55% { opacity: 1; transform: scaleX(1); } 100% { opacity: 0; transform: scaleX(1); } }
+@keyframes ig-flash { 0% { opacity: 0; } 25% { opacity: .92; } 100% { opacity: 0; } }
+@keyframes ig-floor { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(0, 101%, 0); } }
+@keyframes ig-glyph {
+  0% { color: var(--phosphor-dim); text-shadow: var(--ig-cold); }
+  28% { color: var(--white-hot); text-shadow: 0 0 2px var(--phosphor-core), 0 0 14px var(--phosphor), 0 0 40px var(--glow), 0 0 110px var(--glow); }
+}
+@keyframes ig-glyph-calm { 0% { color: var(--phosphor-dim); text-shadow: var(--ig-cold); } }
+
 /* room wrappers: one per mounted bay. The OUTER wrapper carries the 1/z approach scale from the
    vanishing point (10-core.js writes --room-s per frame, compositor-only); the INNER wrapper is
    SWITCH's (30-switch.js animates it with WAAPI). The bezel and its halo are static box-shadow:
@@ -92,9 +148,13 @@ html.js .bay:is([data-slug="range"], [data-slug="relief"], [data-slug="terminato
 #hud { position: fixed; inset: 0; z-index: var(--z-hud); pointer-events: none; font: 500 12px/1 var(--font-mono);
   letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); text-shadow: var(--halo-text); }
 #hud > * { position: absolute; pointer-events: auto; }
-.hud__clock { top: var(--hud-pad); left: var(--hud-pad); font-variant-numeric: tabular-nums; color: var(--ink); }
+.hud__clock { top: var(--hud-pad); left: var(--hud-pad); font-variant-numeric: tabular-nums; color: var(--ink);
+  background: var(--scrim); padding: 5px 9px; border-radius: var(--radius); }
 .hud__clock .dev { color: var(--amber); margin-left: .8em; }
-.hud__readout { top: var(--hud-pad); right: var(--hud-pad); max-width: min(62vw, 46rem); text-align: right; line-height: 1.45; color: var(--ink); }
+/* the readout rides over live bays (GATE's white-pink core, WASH's cyan): a scrim chip, not a bare halo.
+   86% field over pure white leaves ink 12.0:1, ink-dim 6.7:1, amber 7.7:1 (Smaug W3: was about 1.3:1). */
+.hud__readout { top: var(--hud-pad); right: var(--hud-pad); max-width: min(62vw, 46rem); text-align: right; line-height: 1.45; color: var(--ink);
+  background: var(--scrim); padding: 5px 10px; border-radius: var(--radius); }
 .hud__readout .dot { color: var(--amber); }
 .hud__live { color: var(--ink-dim); font-variant-numeric: tabular-nums; }
 .part-overlay span { position: absolute; left: 0; top: 0; font: 500 11px/1.2 var(--font-mono); letter-spacing: .06em; color: var(--ink);
@@ -118,13 +178,13 @@ html.js .bay:is([data-slug="range"], [data-slug="relief"], [data-slug="terminato
 .dial label:has(input:checked) { position: relative; color: var(--phosphor); border-color: var(--phosphor-dim); }
 .dial input:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 
-/* Auto-fly: a visible button next to the dial */
-.autofly { min-height: 34px; padding: 0 12px;
+/* Auto-fly and Sound: visible buttons next to the dial (24-sound.js wires #sound's click, pressed state and label) */
+.autofly, .sound { min-height: 34px; padding: 0 12px;
   font: inherit; letter-spacing: inherit; text-transform: inherit; text-shadow: none; color: var(--ink-dim); background: var(--scrim);
   border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; transition: color 160ms, border-color 160ms; }
-.autofly:hover:not(:disabled) { color: var(--ink); border-color: var(--phosphor-dim); }
-.autofly[aria-pressed="true"] { color: var(--amber); border-color: var(--amber); }
-.autofly:disabled { color: color-mix(in srgb, var(--ink-dim) 70%, var(--field)); cursor: default; }
+.autofly:hover:not(:disabled), .sound:hover:not(:disabled) { color: var(--ink); border-color: var(--phosphor-dim); }
+.autofly[aria-pressed="true"], .sound[aria-pressed="true"] { color: var(--amber-hot); border-color: var(--amber); box-shadow: 0 0 10px -2px var(--amber-glow); }
+.autofly:disabled, .sound:disabled { color: color-mix(in srgb, var(--ink-dim) 70%, var(--field)); cursor: default; }
 
 /* the index strip: eight ticks, real links, bottom right. Amber = visited (yours), phosphor = here. */
 .index { bottom: calc(var(--greet-h) + 10px); right: var(--hud-pad); margin: 0; padding: 0; list-style: none;
@@ -133,7 +193,7 @@ html.js .bay:is([data-slug="range"], [data-slug="relief"], [data-slug="terminato
   color: var(--ink-dim); border: 1px solid var(--line); border-radius: 3px; font-size: 11px;
   background: var(--scrim); transition: color 160ms, border-color 160ms; }
 .index a:hover { color: var(--ink); border-color: var(--phosphor-dim); }
-.index a.is-visited { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 55%, var(--field)); }
+.index a.is-visited { color: var(--amber-hot); border-color: color-mix(in srgb, var(--amber) 70%, var(--field)); box-shadow: 0 0 8px -2px var(--amber-glow); }
 .index a[aria-current="true"] { color: var(--field); background: var(--phosphor); border-color: var(--phosphor);
   box-shadow: 0 0 10px -2px var(--glow); }
 
@@ -166,7 +226,8 @@ html.js .bay { height: 100svh; }
 .yard__kicker { margin: 0 0 1.1rem; font: 500 12px/1 var(--font-mono); letter-spacing: .24em; text-transform: uppercase; color: var(--ink-dim); }
 .yard__title { margin: 0; font: 400 clamp(2.1rem, 7.6vw, 5.6rem)/1.05 var(--font-display); letter-spacing: .1em; margin-right: -.1em; text-transform: uppercase;
   color: var(--phosphor-core);
-  text-shadow: 0 0 1px var(--phosphor), 0 0 12px var(--glow), 0 0 44px var(--glow-far); }
+  text-shadow: 0 0 1px var(--phosphor), 0 0 8px var(--glow), 0 0 24px var(--glow), 0 0 70px var(--glow-far); }
+.yard__title .g { display: inline; }   /* inline, never inline-block: the h1 stays ONE text block, so it stays the LCP element */
 .yard__line { margin: 1.3rem auto 0; max-width: 34rem; font-size: 15px; color: var(--ink); text-shadow: var(--halo-text); }
 .yard__plate { margin: .6rem auto 0; max-width: 34rem; font-size: 12.5px; line-height: 1.5; color: var(--ink-dim); letter-spacing: .02em; text-shadow: var(--halo-text); }
 .yard__cue { position: absolute; left: 50%; bottom: calc(var(--greet-h) + var(--hud-h) + 26px); translate: -50% 0;
@@ -183,10 +244,15 @@ html.js .bay { height: 100svh; }
 .plate .lineage { margin: .5rem 0 0; font-size: 11.5px; line-height: 1.5; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-dim); }
 .plate .note { margin: .55rem 0 0; font-size: 13.5px; line-height: 1.55; color: var(--ink); }
 .plate .note.small { font-size: 12px; color: var(--ink-dim); }
-.pull { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 28px; height: 28px; color: var(--amber);
-  text-decoration: none; border-radius: 3px; transition: background-color 160ms; }
-.pull svg { width: 16px; height: 16px; display: block; }
-.pull:hover, .pull:focus-visible { background: var(--amber-wash); }
+/* the pull glyph is a LOUD moment: a lit amber key (hot glyph, amber ring, a static amber halo; painted once).
+   Hover inverts it to a solid amber key with a field glyph (10.8:1). */
+.pull { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 28px; height: 28px; color: var(--amber-hot);
+  text-decoration: none; border-radius: 3px; background: var(--amber-wash);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 60%, transparent), 0 0 12px -2px var(--amber-glow);
+  transition: background-color 160ms, color 160ms; }
+.pull svg { width: 16px; height: 16px; display: block; filter: drop-shadow(0 0 2px var(--amber-glow)); }
+.pull:hover, .pull:focus-visible { background: var(--amber); color: var(--field); }
+.pull:hover svg, .pull:focus-visible svg { filter: none; }
 
 /* the sign-off */
 .bay--signoff { align-content: center; justify-items: center; text-align: center; }
@@ -210,11 +276,11 @@ html.dev #dev { display: flex; }
 @media (max-width: 720px) {
   :root { --hud-h: 82px; --greet-h: 26px; }
   #hud { font-size: 11px; }
-  .hud__readout { top: calc(var(--hud-pad) + 19px); left: var(--hud-pad); right: var(--hud-pad); max-width: none; text-align: left; line-height: 1.5; }
+  .hud__readout { top: calc(var(--hud-pad) + 27px); left: var(--hud-pad); right: var(--hud-pad); max-width: none; text-align: left; line-height: 1.5; }
   .hud__live { display: block; white-space: normal; }
   .dial label { min-width: 0; padding: 8px 8px; min-height: 32px; }
   .hud__bl { gap: 8px; }
-  .autofly { min-height: 32px; padding: 0 9px; font-size: 10px; }
+  .autofly, .sound { min-height: 32px; padding: 0 9px; font-size: 10px; }
   .index { bottom: calc(var(--greet-h) + 10px + 42px); gap: 3px; }
   .index a { width: 24px; height: 30px; line-height: 30px; font-size: 10px; }
   .plate { padding-right: 42px; }
