@@ -310,7 +310,7 @@ its own title and description.
   GREETINGS: a static line; SWITCH: a 200 ms opacity crossfade instead of the collapse.
 - JUMP: mid-warp with short streaks (the frame that reads as "hyperspace" in a screenshot).
 - GATE: mid-corridor, the sunset streaks fully drawn.
-- RANGE: `t=22`, over Windy Point facing the summit (the standalone already does this; arrow keys
+- RANGE: `t=22`, just past the summit heading southwest for Mount Kimball (corrected 2026-09-30: the pose the Labs page also shows at t=22; arrow keys
   step the view).
 - WASH: the frame after twenty seconds of accumulation, precomputed on mount so the washes are
   already drawn.
@@ -414,7 +414,7 @@ downtown) runs as the hold and any input takes the stick; the HUD shows the real
 the camera and the 2x vertical exaggeration; `#range?t=22` deep-links. Folded in as a module with
 the §6 contract (see Q2). The 427 KB DEM lazy-loads one bay ahead and is shared with 04 and 05.
 Effort: built; refactor to the contract, medium. Role: hero bay (the hero of place). Still: t=22
-over Windy Point.
+past the summit, heading for Mount Kimball.
 
 **04 · WASH** (RANGE -> C1 -> WASH) · lineage: vector-field particle advection (1990s scientific
 visualization; the catalog's flow field). 1,500 to 3,000 particles advected by the DEM's downslope
