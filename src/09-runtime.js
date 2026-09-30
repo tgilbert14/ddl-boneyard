@@ -130,6 +130,26 @@ const BONEYARD = (() => {
       dev: false,
       wake() {},
       dem: demLoader(opts && opts.demUrl || 'assets/catalinas-dem.png'),
+      /* keys: held keys a bay may read. The ride routes only keys it does not use itself
+         (ArrowLeft, ArrowRight and single lowercase letters); Space arrives as pointer.down on holding bays. */
+      keys: new Set(),
+      /* readout(slug, text): a bay's one live line of real numbers, shown by the ride in the HUD while that
+         bay is current, and by the parts harness under the canvas. Plain text only, never invented values. */
+      readouts: {},
+      readout(slug, text) { this.readouts[slug] = String(text || ''); if (this.onReadout) this.onReadout(slug); },
+      /* overlayFor(canvas): an aria-hidden, pointer-transparent layer exactly over the bay's canvas, for
+         decorative labels that track the scene (landmark tags). Anything a reader needs goes in the nameplate
+         or the readout, never only here. Created on demand; removed with the room. */
+      overlayFor(canvas) {
+        const host = canvas.parentElement;
+        let o = host.querySelector(':scope > .part-overlay');
+        if (!o) {
+          o = document.createElement('div'); o.className = 'part-overlay'; o.setAttribute('aria-hidden', 'true');
+          o.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden;';
+          host.appendChild(o);
+        }
+        return o;
+      },
     };
     return ctx;
   }

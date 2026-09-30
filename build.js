@@ -28,9 +28,17 @@ const parts = [
   '23-greetings.js',
   '30-switch.js',
   '31-hyperspace.js',
+  '32-rings.js',
   '40-jump.js',
+  '41-gate.js',
+  '42-range.js',
+  '43-wash.js',
+  '44-relief.js',
+  '45-terminator.js',
+  '46-scope.js',
+  '47-mark.js',
   '49-placeholder.js',
-];
+].filter((f) => fs.existsSync(path.join(SRC, f)));   /* planned modules join the build the moment their file lands */
 const HARNESS = '90-parts-harness.html';
 
 const read = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n?/g, '\n');   /* CRLF-proof: a Windows editor must not break the header parser */

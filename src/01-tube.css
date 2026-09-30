@@ -77,6 +77,8 @@ html.js.tube-on #horizon { opacity: 0; transition: opacity var(--switch-on) line
 .hud__clock .dev { color: var(--amber); margin-left: .8em; }
 .hud__readout { top: var(--hud-pad); right: var(--hud-pad); text-align: right; color: var(--ink); }
 .hud__readout .dot { color: var(--amber); }
+.hud__live { color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+.part-overlay span { position: absolute; left: 0; top: 0; font: 11px/1.2 var(--font-mono); color: var(--ink); text-shadow: 0 0 6px var(--field); white-space: nowrap; will-change: transform; }
 
 /* the motion dial: a real radiogroup; the radio itself is the visible tick (never opacity-hidden,
    so keyboard focus lands on a control you can see) */

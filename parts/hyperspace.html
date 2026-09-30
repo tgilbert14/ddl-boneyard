@@ -138,6 +138,7 @@ nav.back { margin-top: 1rem; font-size: 12px; letter-spacing: .06em; text-transf
       <label><input type="checkbox" id="still"> Still (the reduced-motion frame)</label>
       <span id="live" aria-live="off"></span>
     </div>
+    <p class="readout" id="part-readout" aria-live="off"></p>
     <h2>How it works</h2>
     <div class="note"><p>Progress runs 0 to 1 across the gap between the bay you are leaving and the one you are entering. Warp follows a raised sine over that range (quiet at both ends, full in the middle) with a floor so the first scroll already stretches the stars. For each star (x, y, z) the head is (vpX + f x / z, vpY - f y / z) and the tail is the same projection at z + warp * streakLen: the tail sits closer to the vanishing point, so every streak points at it. Two passes per plane, a wide dim halo under a thin bright core, batched into one Path2D each. If no sky has published stars (the parts page), the module seeds its own field with the same distribution.</p></div>
     <h2>Provenance</h2>
@@ -283,6 +284,26 @@ const BONEYARD = (() => {
       dev: false,
       wake() {},
       dem: demLoader(opts && opts.demUrl || 'assets/catalinas-dem.png'),
+      /* keys: held keys a bay may read. The ride routes only keys it does not use itself
+         (ArrowLeft, ArrowRight and single lowercase letters); Space arrives as pointer.down on holding bays. */
+      keys: new Set(),
+      /* readout(slug, text): a bay's one live line of real numbers, shown by the ride in the HUD while that
+         bay is current, and by the parts harness under the canvas. Plain text only, never invented values. */
+      readouts: {},
+      readout(slug, text) { this.readouts[slug] = String(text || ''); if (this.onReadout) this.onReadout(slug); },
+      /* overlayFor(canvas): an aria-hidden, pointer-transparent layer exactly over the bay's canvas, for
+         decorative labels that track the scene (landmark tags). Anything a reader needs goes in the nameplate
+         or the readout, never only here. Created on demand; removed with the room. */
+      overlayFor(canvas) {
+        const host = canvas.parentElement;
+        let o = host.querySelector(':scope > .part-overlay');
+        if (!o) {
+          o = document.createElement('div'); o.className = 'part-overlay'; o.setAttribute('aria-hidden', 'true');
+          o.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden;';
+          host.appendChild(o);
+        }
+        return o;
+      },
     };
     return ctx;
   }
@@ -438,7 +459,17 @@ const BONEYARD = (() => {
   addEventListener('pointerup', () => { ptr.down = false; }, { passive: true });
   addEventListener('pointercancel', () => { ptr.down = false; }, { passive: true });
   addEventListener('keydown', (e) => { if (e.key === ' ' && !e.target.closest('input, button, a')) { ptr.down = true; e.preventDefault(); } });
-  addEventListener('keyup', (e) => { if (e.key === ' ') ptr.down = false; });
+  addEventListener('keyup', (e) => { if (e.key === ' ') ptr.down = false; ctx.keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key); });
+  /* the same keys the ride routes to a bay: ArrowLeft / ArrowRight and letters */
+  addEventListener('keydown', (e) => {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.target.closest('input, select, textarea')) return;
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (k === 'ArrowLeft' || k === 'ArrowRight' || /^[a-z]$/.test(k)) ctx.keys.add(k);
+  });
+  addEventListener('blur', () => ctx.keys.clear());
+  const readoutEl = document.getElementById('part-readout');
+  let readAt = 0;
+  ctx.onReadout = (slug) => { const n = performance.now(); if (n - readAt < 150) return; readAt = n; readoutEl.textContent = ctx.readouts[slug] || ''; };
 
   function size() {
     W = innerWidth; H = innerHeight; const dpr = dprCap(); ctx.dpr = dpr * ctx.scale;

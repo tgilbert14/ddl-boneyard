@@ -70,6 +70,7 @@ nav.back { margin-top: 1rem; font-size: 12px; letter-spacing: .06em; text-transf
       <label><input type="checkbox" id="still"> Still (the reduced-motion frame)</label>
       <span id="live" aria-live="off"></span>
     </div>
+    <p class="readout" id="part-readout" aria-live="off"></p>
     <h2>How it works</h2>
     <div class="note">__NOTE__</div>
     <h2>Provenance</h2>
@@ -111,7 +112,17 @@ __MODULE__
   addEventListener('pointerup', () => { ptr.down = false; }, { passive: true });
   addEventListener('pointercancel', () => { ptr.down = false; }, { passive: true });
   addEventListener('keydown', (e) => { if (e.key === ' ' && !e.target.closest('input, button, a')) { ptr.down = true; e.preventDefault(); } });
-  addEventListener('keyup', (e) => { if (e.key === ' ') ptr.down = false; });
+  addEventListener('keyup', (e) => { if (e.key === ' ') ptr.down = false; ctx.keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key); });
+  /* the same keys the ride routes to a bay: ArrowLeft / ArrowRight and letters */
+  addEventListener('keydown', (e) => {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.target.closest('input, select, textarea')) return;
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (k === 'ArrowLeft' || k === 'ArrowRight' || /^[a-z]$/.test(k)) ctx.keys.add(k);
+  });
+  addEventListener('blur', () => ctx.keys.clear());
+  const readoutEl = document.getElementById('part-readout');
+  let readAt = 0;
+  ctx.onReadout = (slug) => { const n = performance.now(); if (n - readAt < 150) return; readAt = n; readoutEl.textContent = ctx.readouts[slug] || ''; };
 
   function size() {
     W = innerWidth; H = innerHeight; const dpr = dprCap(); ctx.dpr = dpr * ctx.scale;

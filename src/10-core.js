@@ -239,7 +239,8 @@ const bootBoneyardRide = () => {
     if (current > 0 && current < LAST) visited.add(current);
     current = i;
     const b = bays[i];
-    hud.readout.innerHTML = `Bay ${String(Math.min(i, BAY_COUNT)).padStart(2, '0')} <span class="dot">/</span> ${String(BAY_COUNT).padStart(2, '0')} <span class="dot">·</span> ${readoutName(b)}`;
+    hud.readout.innerHTML = `Bay ${String(Math.min(i, BAY_COUNT)).padStart(2, '0')} <span class="dot">/</span> ${String(BAY_COUNT).padStart(2, '0')} <span class="dot">·</span> ${readoutName(b)}<span class="hud__live" id="hud-live"></span>`;
+    paintLive();
     for (const a of indexLinks) {
       const k = Number(a.dataset.bay);
       a.classList.toggle('is-visited', visited.has(k) && k !== i);
@@ -272,7 +273,26 @@ const bootBoneyardRide = () => {
     if (e.key === 'ArrowDown' || e.key === 'PageDown') { setAutofly(false); scrollToBay(Math.round(scrollY / len) + 1); e.preventDefault(); }
     else if (e.key === 'ArrowUp' || e.key === 'PageUp') { setAutofly(false); scrollToBay(Math.round(scrollY / len) - 1); e.preventDefault(); }
   });
-  addEventListener('keyup', (e) => { if (e.key === ' ') ptr.down = false; });
+  addEventListener('keyup', (e) => { if (e.key === ' ') ptr.down = false; ctx.keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key); });
+  /* keys a bay may read: the ride itself never uses ArrowLeft / ArrowRight or letters */
+  addEventListener('keydown', (e) => {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.target.closest('input, select, textarea')) return;
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (k === 'ArrowLeft' || k === 'ArrowRight' || /^[a-z]$/.test(k)) { ctx.keys.add(k); wake(); }
+  });
+  addEventListener('blur', () => ctx.keys.clear());
+
+  /* ---------- the live readout: the current bay's one line of real numbers, in the HUD ---------- */
+  let liveAt = 0;
+  function paintLive() {
+    const el = document.getElementById('hud-live'); if (!el) return;
+    const b = bays[Math.max(0, current)], text = b && ctx.readouts[b.slug];
+    el.textContent = text ? ' · ' + text : '';
+  }
+  ctx.onReadout = (slug) => {
+    const b = bays[Math.max(0, current)]; if (!b || b.slug !== slug) return;
+    const n = performance.now(); if (n - liveAt < 150) return; liveAt = n; paintLive();
+  };
 
   /* ---------- Auto-fly: a visible button, reading pace, any input stops it ---------- */
   let autofly = false, dwell = 0, dwellAt = -1;
