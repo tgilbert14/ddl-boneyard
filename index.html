@@ -154,7 +154,7 @@ h.dataset.dial=(d==='full'||d==='calm'||d==='still')?d:(matchMedia('(prefers-red
 
 *, *::before, *::after { box-sizing: border-box; }
 html { background: var(--field); color: var(--ink); -webkit-text-size-adjust: 100%; }
-html.js { scroll-snap-type: y proximity; }          /* proximity, never mandatory (brief 3.2) */
+html.js { scroll-snap-type: none; }                 /* no snap: proximity on 100svh bays sprang slow wheel scrolls back (Smaug KILL 1) */
 html.js.autofly { scroll-snap-type: none; }         /* Auto-fly must not fight the snap */
 body { margin: 0; min-height: 100svh; font: 400 15px/1.55 var(--font-mono); overflow-x: clip;
   -webkit-font-smoothing: antialiased; font-kerning: normal; }
@@ -298,7 +298,7 @@ html.js.greet-on[data-dial="full"] #greetings .greet__copy span { animation: gre
 /* ---------- the ride: main is the scroll document, bays are 100svh sections ---------- */
 main { position: relative; z-index: var(--z-main); }
 .bay { position: relative; min-height: 100svh; display: grid; align-content: end;
-  padding: 0 var(--hud-pad) calc(var(--greet-h) + var(--hud-h) + 22px); scroll-snap-align: center; scroll-snap-stop: normal; }
+  padding: 0 var(--hud-pad) calc(var(--greet-h) + var(--hud-h) + 22px); }
 html.js .bay { height: 100svh; }
 
 /* the yard: the title is the LCP. Real DOM, never opacity-gated, never animated.
@@ -995,8 +995,18 @@ const bootBoneyardRide = () => {
   const ptr = ctx.pointer;
   let ptrTx = 0.5, ptrTy = 0.5;
   addEventListener('pointermove', (e) => { ptrTx = e.clientX / W; ptrTy = e.clientY / H; ptr.x = e.clientX; ptr.y = e.clientY; ptr.present = true; wake(); }, { passive: true });
-  addEventListener('pointerdown', (e) => { if (e.button !== 0 || e.target.closest('#hud, a, button, input, #dev')) return; ptr.down = true; ptr.x = e.clientX; ptr.y = e.clientY; ptrTx = e.clientX / W; ptrTy = e.clientY / H; wake(); }, { passive: true });
-  const up = () => { ptr.down = false; };
+  /* touch: a hold only counts after 180 ms, so a scroll swipe (pointercancel lands at 132 to 151 ms) never
+     starts SCOPE's voice or JUMP's warp. Mouse and pen hold at once. */
+  let holdT = 0;
+  addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || e.target.closest('#hud, a, button, input, #dev')) return;
+    ptr.x = e.clientX; ptr.y = e.clientY; ptrTx = e.clientX / W; ptrTy = e.clientY / H;
+    clearTimeout(holdT);
+    if (e.pointerType === 'touch') holdT = setTimeout(() => { ptr.down = true; wake(); }, 180);
+    else ptr.down = true;
+    wake();
+  }, { passive: true });
+  const up = () => { clearTimeout(holdT); ptr.down = false; };
   addEventListener('pointerup', up, { passive: true });
   addEventListener('pointercancel', up, { passive: true });
   addEventListener('blur', up);

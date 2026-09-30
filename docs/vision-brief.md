@@ -252,6 +252,8 @@ and the next rectangle is already growing on the horizon. The grid never cuts. T
 
 ### 3.2 How a visitor moves
 
+> Amended 2026-09-30: no scroll snap at all. `y proximity` on 100svh bays sprang slow wheel scrolls back to the bay and made corridors unscrubbable (Smaug KILL 1, measured on three Chromium builds). The hold is a zone, not a snap point.
+
 Native scroll down one long page. One viewport height of scroll = one bay length. Each bay is a
 `100svh` `<section>` with `scroll-snap-align: center` under `y proximity`, so a lazy scroll lands
 on a hold without ever fighting a deliberate one. Within a bay the scroll offset from center is

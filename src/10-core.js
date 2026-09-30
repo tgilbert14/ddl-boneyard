@@ -255,8 +255,18 @@ const bootBoneyardRide = () => {
   const ptr = ctx.pointer;
   let ptrTx = 0.5, ptrTy = 0.5;
   addEventListener('pointermove', (e) => { ptrTx = e.clientX / W; ptrTy = e.clientY / H; ptr.x = e.clientX; ptr.y = e.clientY; ptr.present = true; wake(); }, { passive: true });
-  addEventListener('pointerdown', (e) => { if (e.button !== 0 || e.target.closest('#hud, a, button, input, #dev')) return; ptr.down = true; ptr.x = e.clientX; ptr.y = e.clientY; ptrTx = e.clientX / W; ptrTy = e.clientY / H; wake(); }, { passive: true });
-  const up = () => { ptr.down = false; };
+  /* touch: a hold only counts after 180 ms, so a scroll swipe (pointercancel lands at 132 to 151 ms) never
+     starts SCOPE's voice or JUMP's warp. Mouse and pen hold at once. */
+  let holdT = 0;
+  addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || e.target.closest('#hud, a, button, input, #dev')) return;
+    ptr.x = e.clientX; ptr.y = e.clientY; ptrTx = e.clientX / W; ptrTy = e.clientY / H;
+    clearTimeout(holdT);
+    if (e.pointerType === 'touch') holdT = setTimeout(() => { ptr.down = true; wake(); }, 180);
+    else ptr.down = true;
+    wake();
+  }, { passive: true });
+  const up = () => { clearTimeout(holdT); ptr.down = false; };
   addEventListener('pointerup', up, { passive: true });
   addEventListener('pointercancel', up, { passive: true });
   addEventListener('blur', up);

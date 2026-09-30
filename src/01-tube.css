@@ -12,7 +12,7 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 html { background: var(--field); color: var(--ink); -webkit-text-size-adjust: 100%; }
-html.js { scroll-snap-type: y proximity; }          /* proximity, never mandatory (brief 3.2) */
+html.js { scroll-snap-type: none; }                 /* no snap: proximity on 100svh bays sprang slow wheel scrolls back (Smaug KILL 1) */
 html.js.autofly { scroll-snap-type: none; }         /* Auto-fly must not fight the snap */
 body { margin: 0; min-height: 100svh; font: 400 15px/1.55 var(--font-mono); overflow-x: clip;
   -webkit-font-smoothing: antialiased; font-kerning: normal; }
@@ -156,7 +156,7 @@ html.js.greet-on[data-dial="full"] #greetings .greet__copy span { animation: gre
 /* ---------- the ride: main is the scroll document, bays are 100svh sections ---------- */
 main { position: relative; z-index: var(--z-main); }
 .bay { position: relative; min-height: 100svh; display: grid; align-content: end;
-  padding: 0 var(--hud-pad) calc(var(--greet-h) + var(--hud-h) + 22px); scroll-snap-align: center; scroll-snap-stop: normal; }
+  padding: 0 var(--hud-pad) calc(var(--greet-h) + var(--hud-h) + 22px); }
 html.js .bay { height: 100svh; }
 
 /* the yard: the title is the LCP. Real DOM, never opacity-gated, never animated.
