@@ -28,6 +28,7 @@ const parts = [
   '21-row.js',
   '22-sky.js',
   '23-greetings.js',
+  '24-sound.js',
   '30-switch.js',
   '31-hyperspace.js',
   '32-rings.js',
