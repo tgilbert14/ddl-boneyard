@@ -79,7 +79,11 @@ const BONEYARD = (() => {
      width for ImageData rooms (upscaled pixelated by CSS). Returns the backing size. */
   function sizeCanvas(canvas, cssW, cssH, dpr, scale, pixel) {
     let bw, bh;
-    if (pixel) { bw = pixel; bh = Math.max(1, Math.round(pixel * cssH / Math.max(1, cssW))); canvas.dataset.pixel = '1'; }
+    if (pixel) {   /* cap the AREA, not the width: a portrait phone would otherwise get 3.5x the pixels */
+      const aspect = cssH / Math.max(1, cssW), area = pixel * pixel * 0.5625 * 1.5;
+      bw = aspect > 0.5625 * 1.5 ? Math.max(1, Math.round(Math.sqrt(area / aspect))) : pixel;
+      bh = Math.max(1, Math.round(bw * aspect)); canvas.dataset.pixel = '1';
+    }
     else { bw = Math.max(1, Math.round(cssW * dpr * scale)); bh = Math.max(1, Math.round(cssH * dpr * scale)); }
     if (canvas.width !== bw) canvas.width = bw;
     if (canvas.height !== bh) canvas.height = bh;

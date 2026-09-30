@@ -1,0 +1,55 @@
+# BONEYARD: deploy the COMMITTED build to GitHub Pages on push to main (gimli, 2026-09-29).
+# The site is built locally (`node build.js`, `node tools/capture.mjs`) and committed. CI does not
+# rebuild what ships; it re-runs the build only as a CHECK: if `node build.js` changes any committed
+# output, the commit forgot to rebuild and the deploy stops. The build has no dependencies (node only).
+name: pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build check (committed output must match the source)
+        run: |
+          node build.js
+          git diff --exit-code -- index.html parts sitemap.xml || {
+            echo "::error::index.html / parts/ / sitemap.xml are stale. Run node build.js and commit."; exit 1; }
+
+      - name: Stage the site (only what ships)
+        run: |
+          mkdir -p _site
+          cp index.html og-yard.png sitemap.xml _site/
+          cp -r parts assets _site/
+          touch _site/.nojekyll
+          du -sh _site && find _site -type f | sort
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -73,7 +73,7 @@
     const OFF = { enabled: false, tick() {}, resize() {}, still() {}, destroy() {}, bloom() {}, params() {} };
     let gl = null;
     try {
-      gl = canvas.getContext('webgl', { alpha: false, antialias: false, depth: false, stencil: false, premultipliedAlpha: false, preserveDrawingBuffer: false });
+      gl = canvas.getContext('webgl', { alpha: false, antialias: false, depth: false, stencil: false, premultipliedAlpha: false, preserveDrawingBuffer: false, failIfMajorPerformanceCaveat: true });   /* software GL: the tube declines (measured 30 to 41 ms/frame on SwiftShader) */
     } catch (_) { gl = null; }
     if (!gl || /[?&]tube=0(&|$)/.test(location.search)) return OFF;   /* ?tube=0: the A/B switch for measuring */
     const R = typeof BONEYARD !== 'undefined' ? BONEYARD : {};   /* a top-level const, not a window property */

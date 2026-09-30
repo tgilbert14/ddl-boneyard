@@ -110,10 +110,10 @@ const bootBoneyardRide = () => {
   /* ---------- adaptive internal scale: 30 consecutive slow frames drop one step ----------
      "slow" is measured against the display's own refresh interval (the median dt of the first 40 frames),
      so a 30 Hz panel or iOS Low Power Mode (rAF capped at 30 fps) does not read as a struggling page. */
-  let slow = 0, refresh = 0; const dts = [];
+  let slow = 0, refresh = 0, calT = 0; const dts = [];
   function adapt() {
     const dt = Ticker.stats.dt;
-    if (!refresh) { if (dt > 4 && dt < 60) dts.push(dt); if (dts.length >= 40) { dts.sort((a, b) => a - b); refresh = dts[20]; } return; }
+    if (!refresh) { calT += dt; if (dt > 4 && dt < 60 && Ticker.stats.work < dt * 0.5) dts.push(dt); if (dts.length >= 40) { dts.sort((a, b) => a - b); refresh = dts[20]; } else if (calT > 3000) refresh = 16.7; if (!refresh) return; }
     if (dt > Math.max(CFG.slowFrame, refresh * 1.6)) { if (++slow >= CFG.slowCount && scaleIdx < CFG.scaleSteps.length - 1) { scaleIdx++; slow = 0; if (post) post.handle.bloom(false); resizeAll(); } }
     else slow = 0;
   }
@@ -410,7 +410,8 @@ const bootBoneyardRide = () => {
       devAcc = 0; devN = 0;
     }
     /* idle stop: in Still, with nothing in flight and the scroll settled, the loop dies (0 CPU at rest) */
-    if (still && !autofly && scrollStill > 0.4 && !(switcher && switcher.handle.anyBusy())) { running = false; return false; }
+    const resting = still || (current === LAST && !corridor);   /* the sign-off is for reading: stop the world there too */
+    if (resting && !autofly && scrollStill > 0.4 && !(switcher && switcher.handle.anyBusy())) { running = false; return false; }
   }
   function wake() { if (!running) { running = true; Ticker.add(world); } else if (!Ticker.has(world)) { Ticker.add(world); } }
   ctx.wake = wake;

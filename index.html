@@ -13,54 +13,108 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="BONEYARD · Desert Data Labs">
+<meta name="twitter:description" content="A boneyard of retired display machines, tubes still on, in a row on the desert floor. Fly the row; pull any part. A Desert Data Labs experience.">
+<meta name="twitter:image" content="https://tgilbert14.github.io/ddl-boneyard/og-yard.png">
+<link rel="canonical" href="https://tgilbert14.github.io/ddl-boneyard/">
 <meta name="theme-color" content="#030509">
+<script>/* before first paint (gimli): the ride layout and the dial are decided here, not at DOMContentLoaded.
+   The page is one ~240 KB file; its first paint lands long before the core boots, and flipping html.js then
+   moved the whole main (measured CLS 1.0 at 4x CPU / slow 4G). JS off never runs this: the index layout. */
+(function(h){h.classList.add('js');var d=null;try{d=localStorage.getItem('boneyard_dial')}catch(_){}
+h.dataset.dial=(d==='full'||d==='calm'||d==='still')?d:(matchMedia('(prefers-reduced-motion: reduce)').matches?'still':'full');})(document.documentElement);</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect x='6' y='6' width='84' height='84' rx='22' fill='%23030509' stroke='%238ef3ff' stroke-width='4'/%3E%3Cg fill='none' stroke='%238ef3ff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M48 22V76'/%3E%3Cpath d='M48 31L59 41 48 51 37 41Z'/%3E%3Cpath d='M36 76H60'/%3E%3C/g%3E%3C/svg%3E">
 <style>
 /* ============================================================
-   BONEYARD · 00-tokens.css · PROVISIONAL tokens (legolas, 2026-09-29)
-   arwen replaces these. Every color and font sits behind a custom property so
-   nothing below this file names a hex. Color tokens are @property-registered
-   as <color>: the runtime reads them with getComputedStyle and hands modules a
-   RESOLVED rgb string (ctx.tokens), so arwen can move any of them to oklch()
-   and every canvas keeps working.
+   BONEYARD · 00-tokens.css · the light (arwen, 2026-09-29)
+   ONE source for every color and face. Nothing below this file names a hex.
+
+   Color law (read before adding a color):
+     field / field-2   the ground and the sky's top: black to blue-black. Never tinted by a room.
+     phosphor          THE stroke. Cyan-white, cool. Lines, links, the title's halo, the current tick.
+     phosphor-core     the same stroke's hot center, a touch warmer (the long-persistence tube's
+                       yellow-green decay, borrowed as a temperature, not a P7 chart). Title face,
+                       brightest stars, the switch flash.
+     phosphor-dim      the stroke at rest: grid, bezels, far frames. Decoration only, never text.
+     amber             the ONE accent, and it means "yours / pull / sun": the pull glyph, visited
+                       ticks, focus rings, the Terminator's sunlit limb and Tucson's dot. Nowhere else.
+     ink / ink-dim     type. ink-dim is the quietest text allowed (>= 6.6:1 on every scrim below).
+     line              hairline chrome borders. Not text.
+     horizon-tint      the hour band; 22-sky.js writes the live value onto :root.
+   The six life-zone colors live only inside RANGE, as data.
+
+   The design values are OKLCH (written next to each token). The CONTRACT tokens are stored as
+   their exact sRGB hex because the runtime's toRgb() parses rgb()/hex only: a registered <color>
+   holding oklch() computes to "oklch(...)" (measured, Chromium 149), which toRgb() cannot read, and
+   every canvas would fall back to one cyan. docs/HANDOFF-arwen.md has the runtime change that would
+   let the oklch() values live here directly. Converted with the OKLab matrices (Ottosson 2020); none clip.
+
+   Contrast (WCAG, measured on the hexes; the table is in docs/HANDOFF-arwen.md):
+     ink 16.9:1 / ink-dim 9.4:1 / phosphor 15.4:1 / amber 10.8:1 on field;
+     worst case, ink-dim on the plate scrim over a full-bright phosphor room: 6.6:1.
    ============================================================ */
 
-@property --field          { syntax: "<color>"; inherits: true; initial-value: #030509; }
-@property --field-2        { syntax: "<color>"; inherits: true; initial-value: #070b16; }
-@property --phosphor       { syntax: "<color>"; inherits: true; initial-value: #8ef3ff; }
-@property --phosphor-core  { syntax: "<color>"; inherits: true; initial-value: #eafff8; }
-@property --phosphor-dim   { syntax: "<color>"; inherits: true; initial-value: #2c6b75; }
-@property --amber          { syntax: "<color>"; inherits: true; initial-value: #ffb347; }
-@property --ink            { syntax: "<color>"; inherits: true; initial-value: #d9f4f7; }
-@property --ink-dim        { syntax: "<color>"; inherits: true; initial-value: #93b8bd; }
-@property --line           { syntax: "<color>"; inherits: true; initial-value: #17313a; }
-@property --horizon-tint   { syntax: "<color>"; inherits: true; initial-value: #1a2a5a; }
+/* ---------- faces: embedded Basic Latin subsets, no font request (the build inlines this file) ----------
+   Michroma 400 (OFL 1.1, Vernon Adams): the Eurostile-family stand-in. It ships ONE weight, so the face
+   is declared across 100 to 900: a rule asking 600 maps to it instead of a synthesized fake bold.
+   IBM Plex Mono 400 + 500 (OFL 1.1, IBM Corp.): HUD and notes. 600 and up map to the 500 file. */
+@font-face { font-family: "Michroma"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url(data:font/woff2;base64,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) format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 100 449; font-display: swap;
+  src: url(data:font/woff2;base64,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) format("woff2"); }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 450 900; font-display: swap;
+  src: url(data:font/woff2;base64,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) format("woff2"); }
+
+/* ---------- registered tokens ----------
+   Colors are <color> so the runtime reads a resolved rgb() and a theme can transition them.
+   --room-s / --room-o are written per frame by 10-core.js on each .room and read only there:
+   registering them non-inheriting keeps a per-frame write from invalidating the room's subtree. */
+@property --field          { syntax: "<color>"; inherits: true; initial-value: #06080e; }
+@property --field-2        { syntax: "<color>"; inherits: true; initial-value: #0c1323; }
+@property --phosphor       { syntax: "<color>"; inherits: true; initial-value: #81f3fe; }
+@property --phosphor-core  { syntax: "<color>"; inherits: true; initial-value: #e4ffef; }
+@property --phosphor-dim   { syntax: "<color>"; inherits: true; initial-value: #236e7d; }
+@property --amber          { syntax: "<color>"; inherits: true; initial-value: #fab048; }
+@property --ink            { syntax: "<color>"; inherits: true; initial-value: #dbf0f3; }
+@property --ink-dim        { syntax: "<color>"; inherits: true; initial-value: #99b7bf; }
+@property --line           { syntax: "<color>"; inherits: true; initial-value: #193a47; }
+@property --horizon-tint   { syntax: "<color>"; inherits: true; initial-value: #1b2850; }
+@property --room-s         { syntax: "<number>"; inherits: false; initial-value: 1; }
+@property --room-o         { syntax: "<number>"; inherits: false; initial-value: 1; }
 
 :root {
   /* the field: black to blue-black */
-  --field: #030509;
-  --field-2: #070b16;
+  --field: #06080e;          /* oklch(0.135 0.014 262) */
+  --field-2: #0c1323;        /* oklch(0.19 0.035 266) */
 
-  /* ONE phosphor, two temperatures: cyan-white stroke, warmer core */
-  --phosphor: #8ef3ff;
-  --phosphor-core: #eafff8;
-  --phosphor-dim: #2c6b75;
+  /* ONE phosphor, two temperatures */
+  --phosphor: #81f3fe;       /* oklch(0.90 0.105 204)  the stroke, cyan-white */
+  --phosphor-core: #e4ffef;  /* oklch(0.975 0.035 160) the hot core, a touch warmer */
+  --phosphor-dim: #236e7d;   /* oklch(0.50 0.075 214)  the stroke at rest */
 
-  /* ONE accent: desert amber. Pull glyph, visited ticks, the Terminator's sunlit limb. */
-  --amber: #ffb347;
+  /* ONE accent: desert amber */
+  --amber: #fab048;          /* oklch(0.81 0.145 72) */
 
   /* type ink */
-  --ink: #d9f4f7;
-  --ink-dim: #93b8bd;
-  --line: #17313a;
+  --ink: #dbf0f3;            /* oklch(0.94 0.022 208) */
+  --ink-dim: #99b7bf;        /* oklch(0.76 0.035 214) */
+  --line: #193a47;           /* oklch(0.33 0.045 226) */
 
   /* the horizon hour tint (22-sky.js writes the live value here for the CSS floor) */
-  --horizon-tint: #1a2a5a;
+  --horizon-tint: #1b2850;   /* oklch(0.29 0.075 268) */
 
-  /* type: Eurostile-family display (Michroma is arwen's OFL stand-in; system fallbacks today,
-     no font request), humanist mono for the HUD and notes */
+  /* derived material tokens (all from the ten above; add here, never a new hex) */
+  --scrim: color-mix(in srgb, var(--field) 86%, transparent);        /* plates, dial, index: ink-dim holds 6.6:1 over a white room */
+  --scrim-deep: color-mix(in srgb, var(--field) 92%, transparent);   /* greetings bar */
+  --glow: color-mix(in srgb, var(--phosphor) 42%, transparent);      /* near halo */
+  --glow-far: color-mix(in srgb, var(--phosphor) 14%, transparent);  /* far halo */
+  --amber-wash: color-mix(in srgb, var(--amber) 14%, transparent);   /* pull glyph hover */
+  --halo-text: 0 0 1px var(--field), 0 0 3px var(--field), 0 0 10px var(--field);          /* HUD text over live scenery */
+
+  /* type: Eurostile-family display, humanist mono */
   --font-display: "Michroma", "Eurostile", "Bank Gothic", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", "Space Mono", ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+  font-synthesis: none;      /* never a fake bold or oblique of an embedded face */
 
   /* the shared vanishing point (10-core.js keeps these in step with the canvas) */
   --vp-x: 50%;
@@ -72,7 +126,7 @@
   --greet-h: 30px;            /* the greetings bar */
   --plate-w: 36rem;
   --bezel: 1px;
-  --radius: 6px;
+  --radius: 4px;
 
   /* z ladder */
   --z-stage: 0;
@@ -87,30 +141,36 @@
 
 
 /* ============================================================
-   BONEYARD · 01-tube.css · the chrome (legolas, 2026-09-29)
+   BONEYARD · 01-tube.css · the chrome (legolas, 2026-09-29; the light by arwen, 2026-09-29)
    The stage (fixed canvases), the pure-CSS horizon (the no-JS floor and the
    first paint), the HUD corners, the nameplates, the dial, the index strip,
    the greetings bar, the sign-off. Two layouts from one DOM: html.js = the
    ride (100svh bays, snap proximity); no .js = the designed index page.
-   Reduced motion: every animation here has its twin in the block at the end.
+   Material law: every glow here is a STATIC text-shadow or box-shadow (painted once);
+   nothing animates a shadow, a filter or a blur radius. The one backdrop-filter is
+   the nameplate (small). Every text/scrim pair clears 4.5:1 (the table is in
+   docs/HANDOFF-arwen.md). Reduced motion: every animation here has its twin at the end.
    ============================================================ */
 
 *, *::before, *::after { box-sizing: border-box; }
 html { background: var(--field); color: var(--ink); -webkit-text-size-adjust: 100%; }
 html.js { scroll-snap-type: y proximity; }          /* proximity, never mandatory (brief 3.2) */
 html.js.autofly { scroll-snap-type: none; }         /* Auto-fly must not fight the snap */
-body { margin: 0; min-height: 100svh; font: 15px/1.5 var(--font-mono); overflow-x: clip; }
-a { color: var(--phosphor); text-underline-offset: .2em; }
+body { margin: 0; min-height: 100svh; font: 400 15px/1.55 var(--font-mono); overflow-x: clip;
+  -webkit-font-smoothing: antialiased; font-kerning: normal; }
+a { color: var(--phosphor); text-underline-offset: .22em; text-decoration-thickness: 1px; }
+a:hover { color: var(--phosphor-core); }
 a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
   outline: 2px solid var(--amber); outline-offset: 3px; border-radius: 2px;
 }
 :focus:not(:focus-visible) { outline: none; }
 canvas { display: block; }
+::selection { background: var(--phosphor-dim); color: var(--phosphor-core); }
 
 /* ---------- skip link ---------- */
 .skip { position: fixed; top: var(--hud-pad); left: 50%; translate: -50% -200%; z-index: var(--z-skip);
-  padding: .5rem .9rem; background: var(--field-2); color: var(--ink); border: 1px solid var(--phosphor);
-  font: 500 13px/1 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; text-decoration: none;
+  padding: .55rem .95rem; background: var(--field-2); color: var(--ink); border: 1px solid var(--phosphor);
+  font: 500 13px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; text-decoration: none;
   transition: translate 160ms var(--ease-out); }
 .skip:focus-visible { translate: -50% 0; outline-offset: 2px; }
 
@@ -120,6 +180,14 @@ canvas { display: block; }
 #field { position: absolute; inset: 0; transform-origin: 50% var(--vp-y);
   background: linear-gradient(180deg, var(--field-2) 0, var(--field) var(--vp-y)); }   /* the sky's gradient, painted once */
 .layer { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* THE TUBE (20-tube.js) sits over the three layer canvases and UNDER the rooms: #rooms is lifted
+   into #stage's stacking context (#field makes none, except during the 500 ms switch-on, when the
+   tube is still dark). The tube fades in once, after the switch-on, and fades out for Still. */
+#rooms { position: absolute; inset: 0; z-index: 2; }
+#c-tube { z-index: 1; opacity: 0; transition: opacity 420ms linear; }
+#c-tube.is-live { opacity: 1; }
+#c-tube[hidden] { display: none; }
 
 /* the pure-CSS perspective grid: the first paint and the whole floor without JS.
    perspective-origin sits on the vanishing point, the plane hinges at the horizon (38%),
@@ -131,27 +199,32 @@ canvas { display: block; }
   background:
     repeating-linear-gradient(90deg, var(--phosphor-dim) 0 1px, transparent 1px 7.5vw),
     repeating-linear-gradient(0deg, var(--phosphor-dim) 0 1px, transparent 1px 7svh);
-  opacity: .55; }
+  opacity: .6; }
 #horizon::after { content: ""; position: absolute; inset: 0;
   background:
     linear-gradient(180deg, var(--field) 0, var(--field) calc(var(--vp-y) - 8svh), transparent calc(var(--vp-y) - .5px), var(--field) var(--vp-y), transparent calc(var(--vp-y) + 9svh)),
     linear-gradient(180deg, transparent 0, transparent calc(var(--vp-y) - 10svh), var(--horizon-tint) var(--vp-y), transparent calc(var(--vp-y) + 1px));
   opacity: 1; }
-/* the horizon hairline itself */
-#horizon i { position: absolute; left: 0; right: 0; top: var(--vp-y); height: 1px; background: var(--phosphor); opacity: .5;
-  box-shadow: 0 0 8px var(--phosphor); }
+/* the horizon hairline itself: the stroke with its two temperatures (hot core, cyan halo) */
+#horizon i { position: absolute; left: 0; right: 0; top: var(--vp-y); height: 1px; background: var(--phosphor-core); opacity: .6;
+  box-shadow: 0 0 3px var(--phosphor), 0 0 14px var(--glow-far); }
 html.js.tube-on #horizon { opacity: 0; transition: opacity var(--switch-on) linear; }
 
 /* room wrappers: one per mounted bay. The OUTER wrapper carries the 1/z approach scale from the
    vanishing point (10-core.js writes --room-s per frame, compositor-only); the INNER wrapper is
-   SWITCH's (30-switch.js animates it with WAAPI). The bezel is static box-shadow: rasterised once,
-   then only transformed (LESSONS 2026-07-05: never animate box-shadow). */
+   SWITCH's (30-switch.js animates it with WAAPI). The bezel and its halo are static box-shadow:
+   rasterised once, then only transformed (LESSONS 2026-07-05: never animate box-shadow). The halo is
+   the rooms' share of the tube's bloom: the tube cannot skin a DOM room at 4 ms (20-tube.js says why). */
 .room { position: absolute; inset: 0; transform-origin: var(--vp-x) var(--vp-y);
   transform: translate3d(0, 0, 0) scale(var(--room-s, 1)); opacity: var(--room-o, 1); will-change: transform; }
 .room__tube { position: absolute; inset: 0; background: var(--field); transform-origin: 50% 50%;
   outline: var(--bezel) solid var(--phosphor-dim); outline-offset: calc(-1 * var(--bezel));
-  box-shadow: 0 0 0 1px var(--field), 0 0 18px -4px var(--phosphor-dim); }
-.room__tube > canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  box-shadow: 0 0 0 1px var(--field), 0 0 14px -2px var(--glow), 0 0 48px 4px var(--glow-far); }
+.room__tube > canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: pan-y pinch-zoom; }
+/* sideways drags (RELIEF, TERMINATOR, RANGE, MARK) must reach the room on phones while vertical scroll stays
+   native. The canvases sit under #stage's pointer-events:none, so the touch is hit-tested on the bay section:
+   the same rule goes there too. pinch-zoom stays allowed (zoom is an accessibility feature, not ours to take). */
+html.js .bay:is([data-slug="range"], [data-slug="relief"], [data-slug="terminator"], [data-slug="mark"]) { touch-action: pan-y pinch-zoom; }
 .room__flash { position: absolute; inset: 0; background: var(--phosphor-core); opacity: 0; pointer-events: none; }
 .room.is-far .room__tube { outline-color: var(--phosphor); }
 .room.is-hidden { visibility: hidden; }
@@ -159,50 +232,56 @@ html.js.tube-on #horizon { opacity: 0; transition: opacity var(--switch-on) line
 
 /* ---------- the HUD: four corners, real DOM, fixed, above the ride ---------- */
 #hud { position: fixed; inset: 0; z-index: var(--z-hud); pointer-events: none; font: 500 12px/1 var(--font-mono);
-  letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); }
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); text-shadow: var(--halo-text); }
 #hud > * { position: absolute; pointer-events: auto; }
 .hud__clock { top: var(--hud-pad); left: var(--hud-pad); font-variant-numeric: tabular-nums; color: var(--ink); }
 .hud__clock .dev { color: var(--amber); margin-left: .8em; }
-.hud__readout { top: var(--hud-pad); right: var(--hud-pad); text-align: right; color: var(--ink); }
+.hud__readout { top: var(--hud-pad); right: var(--hud-pad); max-width: min(62vw, 46rem); text-align: right; line-height: 1.45; color: var(--ink); }
 .hud__readout .dot { color: var(--amber); }
 .hud__live { color: var(--ink-dim); font-variant-numeric: tabular-nums; }
-.part-overlay span { position: absolute; left: 0; top: 0; font: 11px/1.2 var(--font-mono); color: var(--ink); text-shadow: 0 0 6px var(--field); white-space: nowrap; will-change: transform; }
+.part-overlay span { position: absolute; left: 0; top: 0; font: 500 11px/1.2 var(--font-mono); letter-spacing: .06em; color: var(--ink);
+  text-shadow: 0 0 2px var(--field), 0 0 6px var(--field); white-space: nowrap; will-change: transform; }
 
 /* the motion dial: a real radiogroup; the radio itself is the visible tick (never opacity-hidden,
    so keyboard focus lands on a control you can see) */
 .hud__bl { bottom: calc(var(--greet-h) + 10px); left: var(--hud-pad); display: flex; align-items: center; gap: 12px; }
-.dial { display: flex; align-items: center; gap: 2px; border: 0; margin: 0; padding: 0; }
+.dial { display: flex; align-items: center; gap: 0; border: 0; margin: 0; padding: 0; }
 .dial legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.dial label { display: inline-flex; align-items: center; gap: 6px; padding: 9px 9px; min-width: 44px; min-height: 34px; cursor: pointer;
-  border: 1px solid var(--line); color: var(--ink-dim); background: color-mix(in srgb, var(--field) 70%, transparent);
+.dial label { display: inline-flex; align-items: center; gap: 7px; padding: 9px 10px; min-width: 44px; min-height: 34px; cursor: pointer;
+  border: 1px solid var(--line); color: var(--ink-dim); background: var(--scrim);
   transition: color 160ms, border-color 160ms; }
+.dial label + label { margin-left: -1px; }
+.dial label:hover { color: var(--ink); }
 .dial label:first-of-type { border-radius: var(--radius) 0 0 var(--radius); }
 .dial label:last-of-type { border-radius: 0 var(--radius) var(--radius) 0; }
 .dial input { appearance: none; -webkit-appearance: none; margin: 0; width: 8px; height: 8px; border-radius: 50%;
   border: 1px solid var(--ink-dim); background: transparent; flex: none; }
-.dial input:checked { background: var(--phosphor); border-color: var(--phosphor); box-shadow: 0 0 6px var(--phosphor); }
-.dial label:has(input:checked) { color: var(--phosphor); border-color: var(--phosphor); }
+.dial input:checked { background: var(--phosphor-core); border-color: var(--phosphor); box-shadow: 0 0 5px var(--glow); }
+.dial label:has(input:checked) { position: relative; color: var(--phosphor); border-color: var(--phosphor-dim); }
 .dial input:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 
 /* Auto-fly: a visible button next to the dial */
 .autofly { min-height: 34px; padding: 0 12px;
-  font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink-dim); background: color-mix(in srgb, var(--field) 70%, transparent);
-  border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; }
+  font: inherit; letter-spacing: inherit; text-transform: inherit; text-shadow: none; color: var(--ink-dim); background: var(--scrim);
+  border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; transition: color 160ms, border-color 160ms; }
+.autofly:hover:not(:disabled) { color: var(--ink); border-color: var(--phosphor-dim); }
 .autofly[aria-pressed="true"] { color: var(--amber); border-color: var(--amber); }
-.autofly:disabled { opacity: .45; cursor: default; }
+.autofly:disabled { color: color-mix(in srgb, var(--ink-dim) 70%, var(--field)); cursor: default; }
 
-/* the index strip: eight ticks, real links, bottom right */
+/* the index strip: eight ticks, real links, bottom right. Amber = visited (yours), phosphor = here. */
 .index { bottom: calc(var(--greet-h) + 10px); right: var(--hud-pad); margin: 0; padding: 0; list-style: none;
   display: flex; gap: 4px; }
-.index a { display: block; width: 26px; height: 34px; line-height: 34px; text-align: center; text-decoration: none;
+.index a { display: block; width: 26px; height: 34px; line-height: 34px; text-align: center; text-decoration: none; text-shadow: none;
   color: var(--ink-dim); border: 1px solid var(--line); border-radius: 3px; font-size: 11px;
-  background: color-mix(in srgb, var(--field) 70%, transparent); }
-.index a.is-visited { color: var(--amber); border-color: var(--amber); }
-.index a[aria-current="true"] { color: var(--field); background: var(--phosphor); border-color: var(--phosphor); }
+  background: var(--scrim); transition: color 160ms, border-color 160ms; }
+.index a:hover { color: var(--ink); border-color: var(--phosphor-dim); }
+.index a.is-visited { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 55%, var(--field)); }
+.index a[aria-current="true"] { color: var(--field); background: var(--phosphor); border-color: var(--phosphor);
+  box-shadow: 0 0 10px -2px var(--glow); }
 
 /* ---------- the greetings bar (L4): real DOM, fixed footer strip under the HUD corners ---------- */
 #greetings { position: fixed; left: 0; right: 0; bottom: 0; height: var(--greet-h); z-index: var(--z-hud);
-  overflow: hidden; contain: paint; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--field) 82%, transparent);
+  overflow: hidden; contain: paint; border-top: 1px solid var(--line); background: var(--scrim-deep);
   font: 500 12px/var(--greet-h) var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-dim);
   white-space: nowrap; }
 #greetings .greet__static { padding: 0 var(--hud-pad); overflow: hidden; text-overflow: ellipsis; }
@@ -222,62 +301,70 @@ main { position: relative; z-index: var(--z-main); }
   padding: 0 var(--hud-pad) calc(var(--greet-h) + var(--hud-h) + 22px); scroll-snap-align: center; scroll-snap-stop: normal; }
 html.js .bay { height: 100svh; }
 
-/* the yard: the title is the LCP. Real DOM, never opacity-gated, never animated. */
+/* the yard: the title is the LCP. Real DOM, never opacity-gated, never animated.
+   Michroma ships one weight (400); the stroke reads as a vector tube: a hot, slightly warm core
+   (phosphor-core) inside a cyan halo (phosphor), two static shadows. */
 .bay--yard { align-content: start; padding-top: 9svh; text-align: center; justify-items: center; }
-.yard__kicker { margin: 0 0 .9rem; font: 500 12px/1 var(--font-mono); letter-spacing: .22em; text-transform: uppercase; color: var(--ink-dim); }
-.yard__title { margin: 0; font: 600 clamp(2.6rem, 9vw, 6.4rem)/1 var(--font-display); letter-spacing: .12em; text-transform: uppercase;
-  color: var(--phosphor); text-shadow: 0 0 22px color-mix(in srgb, var(--phosphor) 45%, transparent); }
-.yard__line { margin: 1.1rem auto 0; max-width: 34rem; font-size: 15px; color: var(--ink); }
-.yard__plate { margin: .5rem auto 0; max-width: 34rem; font-size: 12.5px; color: var(--ink-dim); letter-spacing: .02em; }
+.yard__kicker { margin: 0 0 1.1rem; font: 500 12px/1 var(--font-mono); letter-spacing: .24em; text-transform: uppercase; color: var(--ink-dim); }
+.yard__title { margin: 0; font: 400 clamp(2.1rem, 7.6vw, 5.6rem)/1.05 var(--font-display); letter-spacing: .1em; margin-right: -.1em; text-transform: uppercase;
+  color: var(--phosphor-core);
+  text-shadow: 0 0 1px var(--phosphor), 0 0 12px var(--glow), 0 0 44px var(--glow-far); }
+.yard__line { margin: 1.3rem auto 0; max-width: 34rem; font-size: 15px; color: var(--ink); text-shadow: var(--halo-text); }
+.yard__plate { margin: .6rem auto 0; max-width: 34rem; font-size: 12.5px; line-height: 1.5; color: var(--ink-dim); letter-spacing: .02em; text-shadow: var(--halo-text); }
 .yard__cue { position: absolute; left: 50%; bottom: calc(var(--greet-h) + var(--hud-h) + 26px); translate: -50% 0;
   width: 22px; height: 22px; border-right: 1px solid var(--phosphor); border-bottom: 1px solid var(--phosphor); rotate: 45deg; opacity: .7; }
 .yard__cue.pulse { animation: cue-pulse 1.1s ease-in-out 1; }
 @keyframes cue-pulse { 0%, 100% { translate: -50% 0; opacity: .7; } 50% { translate: -50% 8px; opacity: 1; } }
 
-/* the nameplate: still, readable, real DOM; the amber pull glyph in its corner */
-.plate { position: relative; max-width: var(--plate-w); padding: 12px 44px 12px 14px; border-left: 2px solid var(--phosphor);
-  background: color-mix(in srgb, var(--field) 72%, transparent); backdrop-filter: blur(2px); }
-.plate h2 { margin: 0; font: 600 clamp(1.05rem, 2.2vw, 1.45rem)/1.15 var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: var(--phosphor); }
-.plate h2 .n { color: var(--ink-dim); margin-right: .35em; }
-.plate .lineage { margin: .4rem 0 0; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-dim); }
-.plate .note { margin: .5rem 0 0; font-size: 13.5px; color: var(--ink); }
+/* the nameplate: still, readable, real DOM; the amber pull glyph in its corner.
+   The scrim is 86% field, so ink-dim holds 6.6:1 even over a white-hot room behind it. */
+.plate { position: relative; max-width: var(--plate-w); padding: 13px 46px 14px 16px; border-left: 2px solid var(--phosphor);
+  background: var(--scrim); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+.plate h2 { margin: 0; font: 400 clamp(1rem, 2vw, 1.32rem)/1.2 var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: var(--phosphor); }
+.plate h2 .n { color: var(--ink-dim); margin-right: .5em; font-family: var(--font-mono); font-weight: 500; letter-spacing: .06em; }
+.plate .lineage { margin: .5rem 0 0; font-size: 11.5px; line-height: 1.5; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-dim); }
+.plate .note { margin: .55rem 0 0; font-size: 13.5px; line-height: 1.55; color: var(--ink); }
 .plate .note.small { font-size: 12px; color: var(--ink-dim); }
 .pull { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 28px; height: 28px; color: var(--amber);
-  text-decoration: none; border-radius: 3px; }
+  text-decoration: none; border-radius: 3px; transition: background-color 160ms; }
 .pull svg { width: 16px; height: 16px; display: block; }
-.pull:hover, .pull:focus-visible { background: color-mix(in srgb, var(--amber) 14%, transparent); }
+.pull:hover, .pull:focus-visible { background: var(--amber-wash); }
 
 /* the sign-off */
 .bay--signoff { align-content: center; justify-items: center; text-align: center; }
 .signoff { max-width: 36rem; }
-.signoff h2 { margin: 0 0 .6rem; font: 600 clamp(1.2rem, 3vw, 1.8rem)/1.15 var(--font-display); letter-spacing: .1em; text-transform: uppercase; color: var(--phosphor); }
-.signoff p { margin: .4rem 0; }
-.signoff nav { margin-top: 1.1rem; display: flex; gap: 1.4rem; justify-content: center; flex-wrap: wrap; letter-spacing: .06em; text-transform: uppercase; font-size: 12.5px; }
+.signoff h2 { margin: 0 0 .8rem; font: 400 clamp(1.1rem, 2.6vw, 1.6rem)/1.2 var(--font-display); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--phosphor-core); text-shadow: 0 0 1px var(--phosphor), 0 0 12px var(--glow); }
+.signoff p { margin: .45rem 0; text-shadow: var(--halo-text); }
+.signoff nav { margin-top: 1.1rem; display: flex; gap: 1.4rem; justify-content: center; flex-wrap: wrap; letter-spacing: .08em; text-transform: uppercase; font-size: 12.5px; font-weight: 500; }
 .signoff nav a { padding: .7rem .4rem; }
 
 /* ?dev=1 tweak row on the ride (never the default) */
 #dev { position: fixed; left: var(--hud-pad); right: var(--hud-pad); bottom: calc(var(--greet-h) + var(--hud-h) + 16px); z-index: var(--z-hud);
-  display: none; gap: 10px 16px; flex-wrap: wrap; align-items: center; padding: 8px 10px; border: 1px dashed var(--amber); background: color-mix(in srgb, var(--field) 85%, transparent); font: 11px/1.3 var(--font-mono); }
+  display: none; gap: 10px 16px; flex-wrap: wrap; align-items: center; padding: 8px 10px; border: 1px dashed var(--amber); background: var(--scrim-deep); font: 11px/1.3 var(--font-mono); }
 html.dev #dev { display: flex; }
 .tweak { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-dim); }
 .tweak input[type="range"] { width: 90px; accent-color: var(--amber); }
 .tweak output { min-width: 4ch; color: var(--ink); font-variant-numeric: tabular-nums; }
 
-/* ---------- mobile: two bottom rows (index strip above, dial + Auto-fly below) ---------- */
+/* ---------- mobile: two bottom rows (index strip above, dial + Auto-fly below);
+   the top readout stacks UNDER the clock, left-aligned, so the two never overprint ---------- */
 @media (max-width: 720px) {
   :root { --hud-h: 82px; --greet-h: 26px; }
   #hud { font-size: 11px; }
+  .hud__readout { top: calc(var(--hud-pad) + 19px); left: var(--hud-pad); right: var(--hud-pad); max-width: none; text-align: left; line-height: 1.5; }
+  .hud__live { display: block; white-space: normal; }
   .dial label { min-width: 0; padding: 8px 8px; min-height: 32px; }
   .hud__bl { gap: 8px; }
   .autofly { min-height: 32px; padding: 0 9px; font-size: 10px; }
   .index { bottom: calc(var(--greet-h) + 10px + 42px); gap: 3px; }
   .index a { width: 24px; height: 30px; line-height: 30px; font-size: 10px; }
-  .plate { padding-right: 40px; }
+  .plate { padding-right: 42px; }
   .plate .note { font-size: 13px; }
   .bay { padding-bottom: calc(var(--greet-h) + var(--hud-h) + 14px); }
-  .bay--yard { padding-top: 8svh; }
+  .bay--yard { padding-top: 11svh; }
   .yard__line { font-size: 14px; }
-  .yard__plate { font-size: 12px; line-height: 1.4; }
+  .yard__plate { font-size: 12px; line-height: 1.45; }
   .yard__cue { bottom: calc(var(--greet-h) + var(--hud-h) + 30px); }
 }
 
@@ -285,7 +372,7 @@ html.dev #dev { display: flex; }
 html:not(.js) #hud .hud__js, html:not(.js) #dev { display: none; }
 html:not(.js) #hud > * { position: static; }
 html:not(.js) .room, html:not(.js) .layer { display: none; }
-html:not(.js) #greetings { position: static; height: auto; line-height: 1.5; white-space: normal; padding: 1rem var(--hud-pad); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); text-transform: none; letter-spacing: .02em; }
+html:not(.js) #greetings { position: static; height: auto; line-height: 1.6; white-space: normal; padding: 1rem var(--hud-pad); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); text-transform: none; letter-spacing: .02em; }
 html:not(.js) .bay { min-height: 0; height: auto; padding: 1.6rem var(--hud-pad); }
 html:not(.js) .bay--yard { min-height: 62svh; padding-top: 14svh; }
 html:not(.js) .bay--yard .yard__cue { display: none; }
@@ -293,23 +380,26 @@ html:not(.js) .bay--signoff { padding: 3rem var(--hud-pad) 4rem; }
 html:not(.js) .index { position: static; justify-content: center; margin: 0 0 1rem; }
 html:not(.js) #hud { position: static; inset: auto; }
 html:not(.js) main { padding-bottom: 0; }
+html:not(.js) .plate { margin-inline: auto; width: 100%; }
 
 /* ---------- reduced motion: the designed still (the dial's Still and the OS setting) ---------- */
-/* The dial writes html[data-dial]; before JS runs (or with JS off) the media query rules apply. */
+/* The dial writes html[data-dial]; before JS runs (or with JS off) the media query rules apply.
+   The light stays in Still (halos, glows, the title's two temperatures); only movement stops. */
 html[data-dial="still"] #greetings .greet__track,
 html[data-dial="still"] #greetings .greet__copy span,
 html[data-dial="calm"] #greetings .greet__copy span,
 html[data-dial="still"] .yard__cue { animation: none !important; }
-html[data-dial="still"] #horizon { transition: none; }
+html[data-dial="still"] #horizon, html[data-dial="still"] #c-tube { transition: none; }
 @media (prefers-reduced-motion: reduce) {
   html:not([data-dial="full"]):not([data-dial="calm"]) #greetings .greet__track,
   html:not([data-dial="full"]) #greetings .greet__copy span,
   html:not([data-dial="full"]):not([data-dial="calm"]) .yard__cue { animation: none !important; }
-  .skip { transition: none; }
+  .skip, #c-tube { transition: none; }
 }
 @media (forced-colors: active) {
   .room__tube { outline: 1px solid CanvasText; }
   .index a[aria-current="true"] { forced-color-adjust: none; }
+  .yard__title, .signoff h2 { text-shadow: none; }
 }
 
 </style>
@@ -537,7 +627,11 @@ const BONEYARD = (() => {
      width for ImageData rooms (upscaled pixelated by CSS). Returns the backing size. */
   function sizeCanvas(canvas, cssW, cssH, dpr, scale, pixel) {
     let bw, bh;
-    if (pixel) { bw = pixel; bh = Math.max(1, Math.round(pixel * cssH / Math.max(1, cssW))); canvas.dataset.pixel = '1'; }
+    if (pixel) {   /* cap the AREA, not the width: a portrait phone would otherwise get 3.5x the pixels */
+      const aspect = cssH / Math.max(1, cssW), area = pixel * pixel * 0.5625 * 1.5;
+      bw = aspect > 0.5625 * 1.5 ? Math.max(1, Math.round(Math.sqrt(area / aspect))) : pixel;
+      bh = Math.max(1, Math.round(bw * aspect)); canvas.dataset.pixel = '1';
+    }
     else { bw = Math.max(1, Math.round(cssW * dpr * scale)); bh = Math.max(1, Math.round(cssH * dpr * scale)); }
     if (canvas.width !== bw) canvas.width = bw;
     if (canvas.height !== bh) canvas.height = bh;
@@ -756,10 +850,10 @@ const bootBoneyardRide = () => {
   /* ---------- adaptive internal scale: 30 consecutive slow frames drop one step ----------
      "slow" is measured against the display's own refresh interval (the median dt of the first 40 frames),
      so a 30 Hz panel or iOS Low Power Mode (rAF capped at 30 fps) does not read as a struggling page. */
-  let slow = 0, refresh = 0; const dts = [];
+  let slow = 0, refresh = 0, calT = 0; const dts = [];
   function adapt() {
     const dt = Ticker.stats.dt;
-    if (!refresh) { if (dt > 4 && dt < 60) dts.push(dt); if (dts.length >= 40) { dts.sort((a, b) => a - b); refresh = dts[20]; } return; }
+    if (!refresh) { calT += dt; if (dt > 4 && dt < 60 && Ticker.stats.work < dt * 0.5) dts.push(dt); if (dts.length >= 40) { dts.sort((a, b) => a - b); refresh = dts[20]; } else if (calT > 3000) refresh = 16.7; if (!refresh) return; }
     if (dt > Math.max(CFG.slowFrame, refresh * 1.6)) { if (++slow >= CFG.slowCount && scaleIdx < CFG.scaleSteps.length - 1) { scaleIdx++; slow = 0; if (post) post.handle.bloom(false); resizeAll(); } }
     else slow = 0;
   }
@@ -929,15 +1023,19 @@ const bootBoneyardRide = () => {
   addEventListener('blur', () => ctx.keys.clear());
 
   /* ---------- the live readout: the current bay's one line of real numbers, in the HUD ---------- */
-  let liveAt = 0;
+  let liveAt = 0, liveTimer = 0;
   function paintLive() {
+    liveAt = performance.now();
     const el = document.getElementById('hud-live'); if (!el) return;
     const b = bays[Math.max(0, current)], text = b && ctx.readouts[b.slug];
     el.textContent = text ? ' · ' + text : '';
   }
+  /* throttled to about 7 per second, trailing edge: the last value always lands (a still frame sends one) */
   ctx.onReadout = (slug) => {
     const b = bays[Math.max(0, current)]; if (!b || b.slug !== slug) return;
-    const n = performance.now(); if (n - liveAt < 150) return; liveAt = n; paintLive();
+    const wait = 150 - (performance.now() - liveAt);
+    if (wait <= 0) { clearTimeout(liveTimer); liveTimer = 0; paintLive(); }
+    else if (!liveTimer) liveTimer = setTimeout(() => { liveTimer = 0; paintLive(); }, wait);
   };
 
   /* ---------- Auto-fly: a visible button, reading pace, any input stops it ---------- */
@@ -1052,7 +1150,8 @@ const bootBoneyardRide = () => {
       devAcc = 0; devN = 0;
     }
     /* idle stop: in Still, with nothing in flight and the scroll settled, the loop dies (0 CPU at rest) */
-    if (still && !autofly && scrollStill > 0.4 && !(switcher && switcher.handle.anyBusy())) { running = false; return false; }
+    const resting = still || (current === LAST && !corridor);   /* the sign-off is for reading: stop the world there too */
+    if (resting && !autofly && scrollStill > 0.4 && !(switcher && switcher.handle.anyBusy())) { running = false; return false; }
   }
   function wake() { if (!running) { running = true; Ticker.add(world); } else if (!Ticker.has(world)) { Ticker.add(world); } }
   ctx.wake = wake;
@@ -1080,42 +1179,279 @@ else bootBoneyardRide();
 
 
 /* BONEYARD PART · L1 · THE TUBE
- * technique   WebGL1 phosphor post-pass over the composited 2D layers (persistence, bloom, slight barrel, vignette)
+ * technique   WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a quarter-res two-pass bloom added back, a very slight barrel, a vignette
  * lineage     the vector CRT: the oscilloscope; Asteroids (Atari, 1979); Battlezone (Atari, 1980); Tempest (Atari, 1981); Vectrex (1982)
- * original    ARWEN'S MODULE. Today this file is the no-op hook the core calls so every room is built to look right
- *             WITHOUT the tube (each room owns its own cheap double-stroke glow). When arwen lands the pass, this
- *             file returns enabled:true and the core unhides #c-tube and feeds it the composited layers each frame.
- * not         scanlines (vector tubes had none; scanlines are ACI's), a curvature gimmick, a blocking dependency
- * deps        none · WebGL1 when present, absent otherwise · 2026-09
- * budget      0.0 ms/frame (no-op hook), desktop Chromium, measured 2026-09-29; the real pass has its own line when it lands
- * api         mount(canvas, params, ctx) -> { enabled, tick(dt, t, sources), resize, still, destroy, bloom(on) }
+ * original    one skin over the whole row that no room depends on: it takes the sky, the row and the corridor canvases as textures, and the rooms stay crisp DOM above it with a static CSS halo on their frames
+ * not         scanlines (vector tubes had none; scanlines are ACI's), a curvature gimmick, a blocking dependency; it does not skin the rooms (see HOW IT WORKS)
+ * deps        none · WebGL1 when present, a clean no-op otherwise · 2026-09
+ * budget      0.24 ms/frame JS (3 uploads + 5 passes) @ 2160x1350 internal (1440x900 x1.5), desktop Chromium 149 on an AMD RX 5600M (D3D11), 2026-09-29;
+ *             A/B over 5 s of scroll, frame work with the tube 4.7 to 5.5 ms vs 4.2 to 5.7 ms without (inside the noise);
+ *             390x844 x1: 0.21 ms JS, +0.6 to 1.4 ms frame work. A readPixels-synced upper bound (?tubeprobe=1) reads 10 to 14 ms
+ *             because it also waits on the layers' own 2D raster; on SwiftShader (software GL) the adaptive budget drops it within seconds; phone TBD
+ * api         mount(canvas, params, ctx) -> { enabled, tick(dt, t, sources), resize(w, h, dpr), still(t), destroy(), bloom(on), params(p) }
  * license     MIT, Desert Data Labs LLC
  */
 /* HOW IT WORKS
- * The core composites the ride from stacked 2D canvases (sky, row, corridor, then one canvas per mounted room).
- * The tube, when present, samples those as textures each frame: previous frame times a decay plus the current
- * frame (persistence), a quarter-resolution two-pass blur added back (bloom), a very slight barrel (k about 0.04)
- * and a vignette. It is the first thing the adaptive budget switches off (bloom(false)), and it is absent without
- * WebGL. This hook draws nothing; it exists so the module contract and the core's call site are already in place.
+ * Each frame the ride hands the tube its three stacked 2D canvases (sky, row, corridor). They are uploaded as
+ * textures and composited over the field gradient, then combined with the previous tube frame by keeping the
+ * brighter of "now" and "last frame times a decay". That is phosphor persistence without the blow-out a plain sum
+ * gives a static line: anything that moves leaves a short tail, anything still stays exactly as bright as it is.
+ * A 4x4 box downsample to quarter resolution (four bilinear taps) keeps one-pixel lines from falling between
+ * samples; a horizontal then a vertical 9-tap blur makes the bloom, which is added back. The last pass samples
+ * through a barrel of k = 0.04 centered on the vanishing point (so the one vanishing point never moves), scaled so
+ * the farthest corner samples its own corner (no black rim), and darkens the corners.
+ * The rooms are CSS-transformed canvases in the DOM, animated by the core and by SWITCH. Rebuilding their
+ * transforms, opacities and flashes inside WebGL every frame would cost a texture upload per room plus a style
+ * read per frame, well past 4 ms, so the rooms sit ABOVE the tube and carry their own static halo (a box-shadow on
+ * the frame, rasterized once and then only transformed). Every room already looks right without the tube.
+ * The adaptive budget drops it first: below internal scale 1 the bloom goes; at 0.5 the tube goes. It turns itself
+ * off under the dial's Still (the layers underneath are the still). Without WebGL it reports enabled: false and the
+ * page never knows. On this parts page it draws its own vector test card so the pass has something to hold.
  */
 (() => {
   'use strict';
   const PARAMS = {
-    persistence: 0.82,     /* previous-frame weight */
-    bloom: 0.35,           /* bloom add-back */
+    persistence: 0.72,     /* last-frame weight at 60 fps (frame-rate corrected) */
+    bloom: 0.9,            /* bloom add-back gain */
+    knee: 0.22,            /* bloom starts above this luma, per 2x2 tap */
+    radius: 1.4,           /* blur step in quarter-res texels */
     barrel: 0.04,          /* barrel distortion k */
-    vignette: 0.25,
+    vignette: 0.30,        /* corner darkening */
   };
+
+  const VS = 'attribute vec2 p;varying vec2 v;void main(){v=p*.5+.5;gl_Position=vec4(p,0.,1.);}';
+  /* A: composite field + three premultiplied layers, then persistence against the last frame */
+  const FS_COMP = 'precision mediump float;varying vec2 v;uniform sampler2D s0,s1,s2,sp;uniform vec3 top,bot;uniform float vpY,decay,n;' +
+    'void main(){vec3 c=mix(top,bot,clamp((1.-v.y)/vpY,0.,1.));' +
+    'vec4 a=texture2D(s0,v);c=a.rgb+c*(1.-a.a);' +
+    'if(n>1.){a=texture2D(s1,v);c=a.rgb+c*(1.-a.a);}' +
+    'if(n>2.){a=texture2D(s2,v);c=a.rgb+c*(1.-a.a);}' +
+    'c=max(c,texture2D(sp,v).rgb*decay);gl_FragColor=vec4(c,1.);}';
+  /* B: 4x4 box to quarter res (four bilinear taps, each a 2x2 average, so a 1 px line still lands at half
+     strength); the knee is applied PER TAP on luma, so thin strokes bloom and broad dim fills (the hour band) do not */
+  const FS_DOWN = 'precision mediump float;varying vec2 v;uniform sampler2D s;uniform vec2 px;uniform float knee;' +
+    'vec3 k(vec2 o){vec3 c=texture2D(s,v+px*o).rgb;float l=dot(c,vec3(.2126,.7152,.0722));return c*smoothstep(knee,knee+.25,l);}' +
+    'void main(){vec3 c=k(vec2(-1.,-1.))+k(vec2(1.,-1.))+k(vec2(-1.,1.))+k(vec2(1.,1.));gl_FragColor=vec4(c*.25,1.);}';
+  /* C/D: separable 9-tap gaussian */
+  const FS_BLUR = 'precision mediump float;varying vec2 v;uniform sampler2D s;uniform vec2 d;' +
+    'void main(){vec3 c=texture2D(s,v).rgb*.227027;' +
+    'c+=(texture2D(s,v+d).rgb+texture2D(s,v-d).rgb)*.1945946;' +
+    'c+=(texture2D(s,v+d*2.).rgb+texture2D(s,v-d*2.).rgb)*.1216216;' +
+    'c+=(texture2D(s,v+d*3.).rgb+texture2D(s,v-d*3.).rgb)*.0540541;' +
+    'c+=(texture2D(s,v+d*4.).rgb+texture2D(s,v-d*4.).rgb)*.0162162;gl_FragColor=vec4(c,1.);}';
+  /* E: barrel CENTERED ON THE VANISHING POINT (so the one vanishing point never moves and the DOM rooms still
+     converge on it), normalized so the farthest corner samples its own corner: no black rim, nothing sampled
+     off the edge. Then the bloom add-back and a vignette about the screen center. */
+  const FS_OUT = 'precision mediump float;varying vec2 v;uniform sampler2D s,b;uniform float k,gain,vig,aspect;uniform vec2 vp;' +
+    'void main(){vec2 d=v-vp;vec2 da=vec2(d.x*aspect,d.y);vec2 fc=vec2(max(vp.x,1.-vp.x)*aspect,max(vp.y,1.-vp.y));' +
+    'float r2=dot(da,da)/dot(fc,fc);vec2 u=vp+d*(1.+k*r2)/(1.+k);' +
+    'vec3 c=texture2D(s,u).rgb+texture2D(b,u).rgb*gain;' +
+    'vec2 q=(v*2.-1.)*vec2(aspect,1.);float rv=dot(q,q)/(1.+aspect*aspect);' +
+    'c*=1.-vig*pow(rv,1.6);gl_FragColor=vec4(c,1.);}';
+
   function mount(canvas, params, ctx) {
+    const OFF = { enabled: false, tick() {}, resize() {}, still() {}, destroy() {}, bloom() {}, params() {} };
+    let gl = null;
+    try {
+      gl = canvas.getContext('webgl', { alpha: false, antialias: false, depth: false, stencil: false, premultipliedAlpha: false, preserveDrawingBuffer: false, failIfMajorPerformanceCaveat: true });   /* software GL: the tube declines (measured 30 to 41 ms/frame on SwiftShader) */
+    } catch (_) { gl = null; }
+    if (!gl || /[?&]tube=0(&|$)/.test(location.search)) return OFF;   /* ?tube=0: the A/B switch for measuring */
+    const R = typeof BONEYARD !== 'undefined' ? BONEYARD : {};   /* a top-level const, not a window property */
+    const toRgb = R.toRgb || (() => [0, 0, 0]);
+
+    function sh(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
+    function prog(fs, names) {
+      const p = gl.createProgram();
+      gl.attachShader(p, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, fs));
+      gl.bindAttribLocation(p, 0, 'p'); gl.linkProgram(p);
+      if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+      const u = {}; for (const n of names) u[n] = gl.getUniformLocation(p, n);
+      return { p, u };
+    }
+    let P;
+    try {
+      P = {
+        comp: prog(FS_COMP, ['s0', 's1', 's2', 'sp', 'top', 'bot', 'vpY', 'decay', 'n']),
+        down: prog(FS_DOWN, ['s', 'px', 'knee']),
+        blur: prog(FS_BLUR, ['s', 'd']),
+        out: prog(FS_OUT, ['s', 'b', 'k', 'gain', 'vig', 'aspect', 'vp']),
+      };
+    } catch (e) { return OFF; }
+
+    const quad = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST);
+
+    function tex() {
+      const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      return t;
+    }
+    function target(w, h) {
+      const t = tex(); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      const f = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+      gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+      return { t, f, w, h };
+    }
+    function free(T) { if (T) { gl.deleteTexture(T.t); gl.deleteFramebuffer(T.f); } }
+
+    const src = [tex(), tex(), tex()];
+    let acc = [null, null], q = [null, null], iw = 0, ih = 0, cur = 0;
+    let bloomOn = true, lost = false, shown = false, fresh = true, age = 0, W = canvas.width, H = canvas.height;
+    let col = { top: [0, 0, 0], bot: [0, 0, 0] };
+    const stats = { ms: 0, n: 0, avg: 0, w: 0, h: 0 };
+    ctx.share.tubeStats = stats;
+
+    function readColors() {
+      const T = ctx.tokens || {};
+      col.top = toRgb(T.field2).map((x) => x / 255); col.bot = toRgb(T.field).map((x) => x / 255);
+    }
+    readColors();
+
+    /* internal buffers follow the layers' own resolution (they already carry dpr and the adaptive scale) */
+    function ensure(w, h) {
+      if (w === iw && h === ih && acc[0]) return;
+      iw = w; ih = h;
+      free(acc[0]); free(acc[1]); free(q[0]); free(q[1]);
+      acc = [target(w, h), target(w, h)];
+      const qw = Math.max(1, Math.ceil(w / 4)), qh = Math.max(1, Math.ceil(h / 4));
+      q = [target(qw, qh), target(qw, qh)];
+      fresh = true;
+    }
+
+    /* the parts-page test card: a vector Lissajous, a sweep and a floor, drawn in the tokens */
+    let demo = null;
+    function drawDemo(t) {
+      if (!demo) { demo = document.createElement('canvas'); }
+      const w = Math.max(2, Math.round(W * 0.75)), h = Math.max(2, Math.round(H * 0.75));
+      if (demo.width !== w || demo.height !== h) { demo.width = w; demo.height = h; }
+      const g = demo.getContext('2d'), T = ctx.tokens;
+      g.clearRect(0, 0, w, h);
+      const vx = ctx.vp.x * w, vy = ctx.vp.y * h, s = Math.min(w, h);
+      g.lineWidth = Math.max(1, s / 500);
+      g.strokeStyle = T.phosphorDim;
+      g.beginPath();
+      for (let i = -12; i <= 12; i++) { g.moveTo(vx, vy); g.lineTo(vx + i * w * 0.18, h); }
+      for (let z = 1; z < 14; z++) { const y = vy + (h - vy) * (1 / (1 + (14 - z) * 0.45)); g.moveTo(0, y); g.lineTo(w, y); }
+      g.stroke();
+      g.strokeStyle = T.phosphor; g.lineWidth = Math.max(1.2, s / 380);
+      g.beginPath(); g.moveTo(0, vy); g.lineTo(w, vy); g.stroke();
+      const cx = w / 2, cy = vy - s * 0.02, rx = s * 0.26, ry = s * 0.2, ph = t * 0.7;
+      g.beginPath();
+      for (let i = 0; i <= 480; i++) { const a = i / 480 * Math.PI * 2; const x = cx + rx * Math.sin(3 * a + ph), y = cy + ry * Math.sin(2 * a); if (i) g.lineTo(x, y); else g.moveTo(x, y); }
+      g.stroke();
+      g.strokeStyle = T.phosphorCore; g.lineWidth = Math.max(1, s / 520);
+      const sa = t * 1.3;
+      g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(sa) * rx * 1.15, cy + Math.sin(sa) * ry * 1.15); g.stroke();
+      g.fillStyle = T.amber;
+      g.fillRect(cx + Math.cos(sa) * rx * 1.15 - 2, cy + Math.sin(sa) * ry * 1.15 - 2, 4, 4);
+      return demo;
+    }
+
+    function upload(i, c) {
+      gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, src[i]);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+    }
+    function bindTex(unit, t) { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t); }
+    function draw() { gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); }
+
+    function render(list, decay, useBloom) {
+      const base = list[0];
+      ensure(base.width, base.height);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+      for (let i = 0; i < list.length; i++) upload(i, list[i]);
+      const prev = acc[cur], next = acc[1 - cur];
+      /* A */
+      gl.bindFramebuffer(gl.FRAMEBUFFER, next.f); gl.viewport(0, 0, iw, ih);
+      gl.useProgram(P.comp.p); const u = P.comp.u;
+      gl.uniform1i(u.s0, 0); gl.uniform1i(u.s1, 1); gl.uniform1i(u.s2, 2); gl.uniform1i(u.sp, 3);
+      bindTex(3, prev.t);
+      gl.uniform3fv(u.top, col.top); gl.uniform3fv(u.bot, col.bot);
+      gl.uniform1f(u.vpY, Math.max(0.05, ctx.vp.y)); gl.uniform1f(u.decay, fresh ? 0 : decay); gl.uniform1f(u.n, list.length);
+      draw();
+      cur = 1 - cur; fresh = false;
+      /* B, C, D */
+      if (useBloom) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, q[0].f); gl.viewport(0, 0, q[0].w, q[0].h);
+        gl.useProgram(P.down.p); gl.uniform1i(P.down.u.s, 0); bindTex(0, next.t);
+        gl.uniform2f(P.down.u.px, 1 / iw, 1 / ih); gl.uniform1f(P.down.u.knee, params.knee); draw();
+        gl.useProgram(P.blur.p); gl.uniform1i(P.blur.u.s, 0);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, q[1].f); bindTex(0, q[0].t); gl.uniform2f(P.blur.u.d, params.radius / q[0].w, 0); draw();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, q[0].f); bindTex(0, q[1].t); gl.uniform2f(P.blur.u.d, 0, params.radius / q[0].h); draw();
+      }
+      /* E */
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, W, H);
+      gl.useProgram(P.out.p); const o = P.out.u;
+      gl.uniform1i(o.s, 0); gl.uniform1i(o.b, 1); bindTex(0, next.t); bindTex(1, q[0].t);
+      gl.uniform1f(o.k, params.barrel); gl.uniform1f(o.gain, useBloom ? params.bloom : 0); gl.uniform1f(o.vig, params.vignette);
+      gl.uniform1f(o.aspect, W / Math.max(1, H)); gl.uniform2f(o.vp, ctx.vp.x, 1 - ctx.vp.y);
+      draw();
+    }
+
+    function show(on) {
+      if (on === shown) return;
+      shown = on;
+      canvas.classList.toggle('is-live', on);
+      if (!on) { fresh = true; age = 0; }
+    }
+
+    const onLost = (e) => { e.preventDefault(); lost = true; show(false); };
+    canvas.addEventListener('webglcontextlost', onLost);
+
+    const measure = /[?&]tubeprobe=1/.test(location.search);   /* readPixels sync: includes the 2D layers' own GPU raster, so it over-reads */
+    function timed(fn) {
+      const t0 = performance.now();
+      fn();
+      if (measure) { const px = new Uint8Array(4); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); }   /* forces the GPU work into the number */
+      stats.ms += performance.now() - t0; stats.n++;
+      if (stats.n >= 30) { stats.avg = stats.ms / stats.n; stats.ms = 0; stats.n = 0; stats.w = iw; stats.h = ih; }
+    }
+
     return {
-      enabled: false,
-      tick() {},
-      resize() {},
-      still() {},
-      destroy() {},
-      bloom() {},
-      params() {},
+      enabled: true,
+      stats,
+      tick(dt, t, sources) {
+        if (lost) return;
+        const onRide = sources && typeof sources === 'object';
+        const off = ctx.dial === 'still' || ctx.scale <= 0.5 || document.hidden;
+        if (off) { show(false); return; }
+        const list = onRide ? [sources.sky, sources.row, sources.corridor].filter((c) => c && c.width > 1) : [drawDemo(t)];
+        if (!list.length) return;
+        age += dt;
+        if (age < 0.6 && onRide) { fresh = true; return; }     /* hold until the 500 ms switch-on is done, then warm up */
+        readColorsMaybe();
+        const decay = Math.pow(params.persistence, Math.max(0, dt) * 60) * (ctx.dial === 'calm' ? 0.85 : 1);
+        timed(() => render(list, decay, bloomOn && ctx.scale >= 1));
+        show(true);
+      },
+      resize(w, h) { W = w; H = h; fresh = true; readColors(); },
+      still(t) {
+        /* parts page only (the ride never calls it): a crisp single frame, persistence off, bloom on */
+        if (lost) return;
+        fresh = true;
+        render([drawDemo(t || 0)], 0, true);
+        show(true);
+      },
+      destroy() {
+        canvas.removeEventListener('webglcontextlost', onLost);
+        show(false);
+        free(acc[0]); free(acc[1]); free(q[0]); free(q[1]);
+        for (const t of src) gl.deleteTexture(t);
+        for (const k in P) gl.deleteProgram(P[k].p);
+        gl.deleteBuffer(quad);
+        if (ctx.share.tubeStats === stats) delete ctx.share.tubeStats;
+      },
+      bloom(on) { bloomOn = !!on; },
+      params(p) { params = p; },
     };
+
+    /* the field tokens only change with a theme; re-read them on a slow clock, never per frame */
+    function readColorsMaybe() { if ((stats.n & 63) === 0) readColors(); }
   }
   BAYS.push({ slug: 'tube', title: 'The tube', order: 1, role: 'layer', kind: 'post', params: PARAMS, mount });
 })();
@@ -1643,6 +1979,115 @@ else bootBoneyardRide();
 })();
 
 
+/* BONEYARD PART · C3 · RINGS
+ * technique   the dot tunnel: concentric squares of dots at fixed depths, projected by 1/z onto the shared vanishing
+ *             point, each ring rotated by an angle that grows with its depth, so the far end of the tunnel twists
+ * lineage     the demoscene dot tunnel (Amiga and PC intros, about 1991); the 1/z projection it shares with every
+ *             starfield of the era
+ * original    scroll is the only clock: the camera's depth is a function of progress through the gap, eased so a
+ *             stopped scroll holds a still tunnel; the tunnel fades in and out at the gap's ends, so it says "a
+ *             machine bay is next" and never covers the bays themselves; it converges on the one vanishing point
+ * not         a time-looping screensaver, a raster tunnel, a texture-mapped tube. It never moves unless you do.
+ * deps        none · Canvas 2D · 2026-09
+ * budget      0.17 to 0.24 ms/frame @ 1440x900 internal (dpr 1), headless desktop Chromium, parts page counter
+ *             (2026-09-29); phone TBD
+ * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
+ * license     MIT, Desert Data Labs LLC
+ */
+/* HOW IT WORKS
+ * rings squares sit at depths spacing apart. The camera travels travel units down the tunnel as progress goes from
+ * 0 to 1; a ring's depth is its slot minus the camera, wrapped, so rings stream past and new ones appear at the far
+ * end. Each ring is a square of half-size radius with dotsPerSide dots per side, turned by twist times its depth.
+ * A dot at (x, y, z) lands at (vpX + f x / z, vpY + f y / z). Each ring's brightness falls with depth and rises
+ * from zero over the last few units before the camera (the
+ * mouth), so the nearest rings fade out instead of scattering past the screen edge like stars. Dots are sorted into
+ * six brightness bins; each bin is one Path2D of small squares, stroked once for a halo and filled once for the core.
+ * The tunnel's opacity is zero at both ends of the gap and full in the middle.
+ */
+(() => {
+  'use strict';
+  const PARAMS = {
+    rings: 20,
+    dotsPerSide: 14,
+    radius: 1.35,         /* square half-size, world units */
+    spacing: 0.8,         /* depth between rings */
+    travel: 26,           /* depth the camera covers across the whole gap */
+    twist: 0.09,          /* radians of turn per unit of depth */
+    zNear: 0.55,
+    focalK: 0.62,
+    dotPx: 2.4,           /* dot size in css px: dotPx * (0.55 + 1.6 / z) */
+    settle: 0.3,
+    rampIn: 0.12,
+    mouth: 1.8,           /* depth over which a ring fades in as it nears the camera, so the tunnel has a clean mouth */
+    stillProgress: 0.5,
+  };
+  const BINS = 6;
+  function mount(canvas, params, ctx) {
+    const g = canvas.getContext('2d', { alpha: true });
+    let w = canvas.width, h = canvas.height, f = h * params.focalK, px = 1, cam = -1, env = 0;
+    function draw(camZ, envelope) {
+      const T = ctx.tokens;
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.clearRect(0, 0, w, h);
+      if (envelope <= 0.002) return;
+      const vpX = ctx.vp.x * w, vpY = ctx.vp.y * h;
+      const n = params.rings | 0, m = Math.max(2, params.dotsPerSide | 0), R = params.radius, sp = params.spacing;
+      const span = n * sp;
+      const paths = []; for (let b = 0; b < BINS; b++) paths.push(new Path2D());
+      for (let i = 0; i < n; i++) {
+        let z = (i * sp - camZ) % span; if (z < 0) z += span;
+        z += params.zNear;
+        const d = (z - params.zNear) / span;                              /* 0 near .. 1 far */
+        const nearA = Math.min(1, (z - params.zNear) / Math.max(0.01, params.mouth));
+        const al = (1 - 0.75 * d) * nearA * nearA * (3 - 2 * nearA);
+        if (al < 0.04) continue;
+        const bin = Math.min(BINS - 1, Math.round(al * (BINS - 1)));
+        const ang = params.twist * (z + camZ * 0.35), c = Math.cos(ang), s = Math.sin(ang);
+        const k = f / z, size = Math.max(1, params.dotPx * px * (0.55 + 1.6 / z)), hs = size / 2;
+        const p = paths[bin];
+        for (let side = 0; side < 4; side++) {
+          for (let j = 0; j < m; j++) {
+            const q = -R + (2 * R * j) / m;
+            const lx = side === 0 ? q : side === 1 ? R : side === 2 ? -q : -R;
+            const ly = side === 0 ? -R : side === 1 ? q : side === 2 ? R : -q;
+            const x = lx * c - ly * s, y = lx * s + ly * c;
+            const sx = vpX + x * k, sy = vpY + y * k;
+            if (sx < -hs || sx > w + hs || sy < -hs || sy > h + hs) continue;
+            p.rect(sx - hs, sy - hs, size, size);
+          }
+        }
+      }
+      for (let b = BINS - 1; b >= 0; b--) {
+        const a = envelope * (b / (BINS - 1));
+        g.globalAlpha = a * 0.3; g.fillStyle = T.phosphor; g.lineWidth = 3 * px; g.strokeStyle = T.phosphor; g.stroke(paths[b]);
+        g.globalAlpha = a; g.fillStyle = b === BINS - 1 ? T.phosphorCore : T.phosphor; g.fill(paths[b]);
+      }
+      g.globalAlpha = 1;
+    }
+    function envelopeAt(p) {
+      const r = Math.max(0.01, params.rampIn);
+      const e = Math.min(1, p / r) * Math.min(1, (1 - p) / r);
+      return e * e * (3 - 2 * e);
+    }
+    return {
+      tick(dt, t, progress) {
+        const p = Math.max(0, Math.min(1, progress));
+        const target = p * params.travel, k = 1 - Math.exp(-dt / Math.max(0.02, params.settle));
+        if (cam < 0) cam = target; else cam += (target - cam) * k;
+        env += (envelopeAt(p) - env) * k;
+        ctx.share.warp = env * 0.5;                                       /* the sky dims its dots a little under the tunnel */
+        draw(cam, env);
+      },
+      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); f = h * params.focalK; },
+      still() { const p = params.stillProgress; draw(p * params.travel, envelopeAt(p)); },
+      destroy() { ctx.share.warp = 0; g.clearRect(0, 0, w, h); },
+      params(p) { params = p; f = h * params.focalK; },
+    };
+  }
+  BAYS.push({ slug: 'rings', title: 'Rings', order: 3, role: 'corridor', params: PARAMS, mount });
+})();
+
+
 /* BONEYARD PART · 01 · JUMP
  * technique   1/z starfield in warp: stars flow toward the camera along rays from the vanishing point and are drawn as
  *             streaks whose length is the warp; press-and-hold raises warp, release settles to cruise
@@ -1729,6 +2174,1747 @@ else bootBoneyardRide();
     };
   }
   BAYS.push({ slug: 'jump', title: 'Jump', order: 1, role: 'bay', params: PARAMS, mount });
+})();
+
+
+/* BONEYARD PART · 02 · GATE
+ * technique   slit-scan corridor: two planes (floor and ceiling) receding to the shared vanishing point, cut into
+ *             lanes that run along the line of flight; every texel samples a 1-D strip of artwork at an index
+ *             that slides with the dolly, so colour rushes down each lane toward the viewer
+ * lineage     Douglas Trumbull's slit-scan for 2001: A Space Odyssey (1968), itself after John Whitney's slit-scan
+ *             experiments (1950s and 1960s); the polar variant is the stargate
+ * original    the "artwork" is ONE column of Tim Gilbert's own 2025-03-01 Sonoran sunset photograph, resampled to
+ *             1 x 1024 (assets/sunset-strip.png, provenance in sunset-strip.json); the photo itself never ships.
+ *             Scroll past the hold sets the dolly speed, the pointer shoves the lanes, and every lane keeps its
+ *             own phase and pace, so the corridor is the one real sky smeared into many moments
+ * not         a film recreation, a video, a photo. No hue is invented: every lit texel is a strip colour times fog.
+ * deps        none · Canvas 2D ImageData · 2026-09
+ * budget      1.1 to 1.5 ms/frame @ 320x200 internal (pixel 320), headless desktop Chromium, parts page counter
+ *             (2026-09-29); phone TBD
+ * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
+ * license     MIT, Desert Data Labs LLC
+ */
+/* HOW IT WORKS
+ * The camera sits between two infinite planes, one below and one above the eye. A screen row at distance dy from
+ * the vanishing point lies on a plane at depth z = f * height / |dy|, and a pixel on that row sits at lateral
+ * position u = (x - vpX) * z / f. The planes are cut into lanes of constant u, so every lane is a ray to the
+ * vanishing point. Each lane has a start offset, a pace and a brightness drawn once from a seeded hash, and its
+ * texel colour is the strip sampled at offset + (z + dolly * pace) * stripPerUnit, mirrored so the strip never
+ * seams. As the dolly advances, colour travels down every lane toward you: that is the slit-scan smear.
+ *
+ * Depth fog fades each row toward the field colour; where a lane gets narrower than about two pixels the row
+ * blends toward the strip's mean colour instead of aliasing. Dolly speed eases toward cruise times a gain on
+ * how far past the hold you have scrolled; Calm halves it and drops the pointer shove. The still is the dolly
+ * frozen mid-corridor.
+ */
+(() => {
+  'use strict';
+  const PARAMS = {
+    cruise: 5,           /* world units per second at the hold */
+    scrollGain: 9,       /* extra speed factor per bay length scrolled past the hold (progress 0..0.3) */
+    settle: 0.45,        /* seconds to ease toward the target speed */
+    lanes: 5,            /* lanes per world unit */
+    lanePool: 64,        /* distinct lane personalities before the pattern repeats (rounded to a power of two) */
+    stripPerUnit: 44,    /* strip texels per world unit of depth: the length of a colour run down a lane */
+    paceSpread: 0.35,    /* lane pace varies by +- this fraction */
+    floorH: 1, ceilH: 1.15,
+    focalK: 0.62,        /* focal length as a fraction of internal width */
+    fog: 20,             /* depth (world units) where fog reaches about 63% */
+    gain: 1.45,          /* exposure on the strip colours */
+    sat: 1.3,            /* saturation lift about each texel's own luma (1 = the photo's own) */
+    edge: 0.78,          /* lane edge darkening: 0 flat, 1 black seams */
+    shove: 0.9,          /* lateral world units of shove at the pointer's edge */
+    stillDolly: 23.5,
+  };
+  /* one small seeded hash, so the lane personalities are the same on every visit */
+  function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function assetUrl(name) { return new URL((location.pathname.includes('/parts/') ? '../assets/' : 'assets/') + name, document.baseURI).href; }
+
+  function mount(canvas, params, ctx) {
+    const g = canvas.getContext('2d', { alpha: false });
+    let w = canvas.width, h = canvas.height, img = null, buf = null;
+    let raw = null, mips = [], meanR = 0, meanG = 0, meanB = 0, ready = false, dead = false;
+    let dolly = params.stillDolly, speed = params.cruise, shove = 0;
+    let laneOff, lanePace, laneLit;
+    const edgeLut = new Float32Array(64);
+
+    function lanesFrom(p) {
+      const r = rng(20250301), n = 1 << Math.max(2, Math.min(10, Math.round(Math.log2(Math.max(4, p.lanePool)))));
+      laneOff = new Float32Array(n); lanePace = new Float32Array(n); laneLit = new Float32Array(n);
+      for (let i = 0; i < n; i++) { laneOff[i] = r() * 2048; lanePace[i] = 1 + (r() * 2 - 1) * p.paceSpread; laneLit[i] = 0.55 + 0.45 * r(); }
+      for (let i = 0; i < 64; i++) { const s = Math.sin(Math.PI * (i + 0.5) / 64); edgeLut[i] = 1 - p.edge + p.edge * Math.pow(s, 0.6); }
+    }
+    lanesFrom(params);
+
+    /* the strip: 1 x 1024 RGB, read once into three float arrays of 2048 (mirrored, so index wraps seamlessly) */
+    const pic = new Image();
+    pic.decoding = 'async';
+    pic.onload = () => {
+      if (dead) return;
+      const c = document.createElement('canvas'); c.width = 1; c.height = pic.naturalHeight || 1024;
+      const cg = c.getContext('2d', { willReadFrequently: true }); cg.drawImage(pic, 0, 0);
+      const d = cg.getImageData(0, 0, 1, c.height).data, n = c.height;
+      raw = new Float32Array(2048 * 3);
+      for (let i = 0; i < 2048; i++) {
+        const k = i < 1024 ? i : 2047 - i, s = Math.min(n - 1, Math.floor(k * n / 1024)) * 4;
+        raw[i * 3] = d[s]; raw[i * 3 + 1] = d[s + 1]; raw[i * 3 + 2] = d[s + 2];
+      }
+      meanR = meanG = meanB = 0;
+      for (let i = 0; i < 1024; i++) { meanR += raw[i * 3]; meanG += raw[i * 3 + 1]; meanB += raw[i * 3 + 2]; }
+      meanR /= 1024; meanG /= 1024; meanB /= 1024;
+      buildMips();
+      ready = true;
+      if (ctx.dial === 'still' || !lastTick) { draw(); ctx.readout('gate', 'strip 2025-03-01 sunset · still'); }
+    };
+    pic.src = assetUrl('sunset-strip.png');
+    let lastTick = 0;
+
+    /* mip levels of the mirrored strip: level L is a circular box blur 2^L texels wide, with the saturation lift
+       baked in. A row whose depth step covers many strip texels samples a blurred level instead of aliasing. */
+    function buildMips() {
+      if (!raw) return;
+      mips = [];
+      const sat = params.sat;
+      for (let L = 0; L <= 9; L++) {
+        const wdt = 1 << L, m = new Float32Array(2048 * 3);
+        for (let i = 0; i < 2048; i++) {
+          let r = 0, gg = 0, b = 0;
+          for (let j = 0; j < wdt; j++) { const q = ((i - (wdt >> 1) + j) & 2047) * 3; r += raw[q]; gg += raw[q + 1]; b += raw[q + 2]; }
+          r /= wdt; gg /= wdt; b /= wdt;
+          const y = 0.2126 * r + 0.7152 * gg + 0.0722 * b;
+          m[i * 3] = Math.max(0, y + (r - y) * sat); m[i * 3 + 1] = Math.max(0, y + (gg - y) * sat); m[i * 3 + 2] = Math.max(0, y + (b - y) * sat);
+        }
+        mips.push(m);
+      }
+    }
+    function alloc() {
+      img = g.createImageData(w, h);
+      buf = new Uint32Array(img.data.buffer);
+    }
+    alloc();
+
+    function draw() {
+      const [fr, fg, fb] = BONEYARD.toRgb(ctx.tokens.field);
+      const field = (255 << 24) | (fb << 16) | (fg << 8) | fr;
+      if (!ready || !mips.length) { buf.fill(field); g.putImageData(img, 0, 0); return; }
+      const f = w * params.focalK, vpX = ctx.vp.x * w, vpY = ctx.vp.y * h;
+      const nl = laneOff.length, mask = nl - 1, K = params.lanes, spu = params.stripPerUnit, fogZ = Math.max(0.5, params.fog), gn = params.gain;
+      const off = laneOff, pace = lanePace, lit = laneLit, E = edgeLut;
+      for (let y = 0; y < h; y++) {
+        const dy = y + 0.5 - vpY, row = y * w;
+        const below = dy > 0, ady = Math.abs(dy);
+        const z = f * (below ? params.floorH : params.ceilH) / Math.max(0.35, ady);
+        const fog = Math.exp(-z / fogZ) * gn;
+        const lanePx = f / (z * K);                                  /* on-screen lane width at this row */
+        const sharp = Math.max(0, Math.min(1, (lanePx - 2.5) / 3.5));
+        const ew = Math.max(0, Math.min(1, (lanePx - 4) / 6));        /* lane seams only where a lane is wide enough to hold one */
+        const mix = 1 - sharp;
+        const mr = meanR * 0.62 * fog * mix, mg = meanG * 0.62 * fog * mix, mb = meanB * 0.62 * fog * mix;
+        const kf = sharp * fog;
+        if (kf < 0.004 && mr < 1 && mg < 1 && mb < 1) { buf.fill(field, row, row + w); continue; }
+        const du = z / f * K, zs = z * spu + 2048 * 64, ds = dolly * spu;
+        const step = spu * z / Math.max(0.35, ady) * 1.5;           /* strip texels crossed between this row and the next */
+        const S = mips[Math.max(0, Math.min(9, Math.ceil(Math.log2(Math.max(1, step)))))];
+        const laneBias = below ? 0 : nl >> 1;                       /* the ceiling gets a different set of lanes */
+        let lu = (0.5 - vpX) * du + shove * K;
+        for (let x = 0; x < w; x++, lu += du) {
+          const lf = Math.floor(lu), fr2 = lu - lf;
+          const li = (lf + laneBias) & mask;
+          const s = ((off[li] + zs + ds * pace[li]) & 2047) * 3, a = kf * lit[li] * (1 - ew + ew * E[(fr2 * 64) | 0]);
+          let r = S[s] * a + mr + fr, gg = S[s + 1] * a + mg + fg, b = S[s + 2] * a + mb + fb;
+          r = r > 255 ? 255 : r; gg = gg > 255 ? 255 : gg; b = b > 255 ? 255 : b;
+          buf[row + x] = (255 << 24) | ((b | 0) << 16) | ((gg | 0) << 8) | (r | 0);
+        }
+      }
+      g.putImageData(img, 0, 0);
+    }
+
+    function stripLine() { return 'strip 2025-03-01 sunset · dolly ' + (speed / params.cruise).toFixed(1) + 'x'; }
+
+    return {
+      tick(dt, t, progress, pointer) {
+        lastTick = t || 1e-3;
+        const calm = ctx.dial === 'calm';
+        const past = Math.max(0, Math.min(0.3, progress || 0));
+        const target = params.cruise * (1 + params.scrollGain * past) * (calm ? 0.5 : 1);
+        speed += (target - speed) * (1 - Math.exp(-dt / Math.max(0.02, params.settle)));
+        dolly += speed * dt;
+        if (dolly > 4096) dolly -= 4096;          /* keeps the strip index small and exact; the pattern repeats long before that */
+        const p = pointer || ctx.pointer;
+        const want = !calm && p && p.present && !p.coarse ? (p.nx - 0.5) * 2 * params.shove : 0;
+        shove += (want - shove) * (1 - Math.exp(-dt / 0.25));
+        draw();
+        if (ready) ctx.readout('gate', stripLine());
+      },
+      resize(nw, nh) { w = nw; h = nh; alloc(); },
+      still() { dolly = params.stillDolly; shove = 0; speed = params.cruise; draw(); if (ready) ctx.readout('gate', 'strip 2025-03-01 sunset · still'); },
+      destroy() { dead = true; pic.onload = null; img = null; buf = null; raw = null; mips = []; },
+      params(p) { params = p; lanesFrom(p); buildMips(); },
+    };
+  }
+  BAYS.push({ slug: 'gate', title: 'Gate', order: 2, role: 'bay', params: PARAMS, mount, pixel: 320 });
+})();
+
+
+/* BONEYARD PART · 03 · RANGE
+ * technique   Voxel Space: one ray per screen column marched front to back over a heightmap, each hit drawn as a
+ *             vertical span above the column's running y-buffer; distance fog; hillshaded colour table
+ * lineage     NovaLogic, Comanche: Maximum Overkill, 1992; adapted from a CC0 voxel demo at 3d-retro.com whose
+ *             terrain was synthetic sine waves; ported from Voxel Catalinas (desertdatalabs.com/labs/voxel-catalinas/)
+ * original    the heightmap is real: the Santa Catalina Mountains over the Tucson basin, 768 x 768 cells of about
+ *             64 m (AWS Terrain Tiles, Mapzen Terrarium, compiled from SRTM, USGS 3DEP/NED and others), coloured
+ *             by the six Catalina Highway life-zone bands from 27 Miles; an autopilot tour of seven stops that
+ *             any input interrupts; a readout of the true altitude and ground elevation under the camera; the
+ *             same deterministic fast-forward as the Labs page, so #range?t=22 lands on the pose and readout the Labs page shows at t=22
+ * not         a map for navigation: 64 m cells, an interpretive six-band life-zone framing (boundaries shift with
+ *             aspect and have moved upslope), 2x vertical exaggeration by default (named in the readout; v = 1x)
+ * deps        none · Canvas 2D · 2026-09
+ * budget      2.9 ms/frame @ 384x240 internal (1440x900 backing), desktop Chromium, headless, busy machine (2026-09-29);
+ *             177x384 at 390x844 2.0 ms; phone TBD
+ * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
+ * license     MIT, Desert Data Labs LLC · elevation: Mapzen terrain tiles; data from SRTM, NED, and others
+ */
+/* HOW IT WORKS
+ * The Catalina grid arrives once (ctx.dem) as metres per cell. Two tables are built from it: a height in screen
+ * units (elevation above a 600 m basin floor, times the vertical exaggeration, over the cell size) and a colour per
+ * cell, the life-zone band for that elevation in feet, blended 120 ft into the next band and multiplied by a
+ * west-southwest afternoon hillshade from central differences. Each frame, for every column of a buffer whose long side
+ * is 384 pixels, a ray leaves the camera at that column's angle and steps outward in growing strides. A sample projects to
+ * screen y = horizon + (camera height - ground height) / distance * scale; if that is above everything drawn in the
+ * column so far, the span between is painted in the cell colour faded toward the tube's fog, and the column's
+ * y-buffer rises. Near ground paints first and hides the far ridges behind it, which is why no sorting is needed.
+ *
+ * The camera flies at a fixed ground speed. On autopilot it turns toward the next of seven stops (the Catalina
+ * Highway base, Windy Point, Mount Lemmon, Mount Kimball, Pusch Peak, Sabino Canyon, downtown) and holds 320 m over
+ * the highest ground in the next 90 cells. Arrow keys or a sideways drag take the stick; a pause hands it back.
+ * The tour is stepped at a fixed 1/60 s to reach any t, so a deep link and the still land on the same pose as the
+ * Labs page. The horizon sits on the shared vanishing point; the sky and fog come from the tube's tokens; the
+ * landmark tags are DOM spans placed with the same projection and hidden when a ridge is in front of them.
+ */
+(() => {
+  'use strict';
+  const PARAMS = {
+    ve: 2,               /* vertical exaggeration: 1, 2 or 3 */
+    speed: 26,           /* ground speed, grid cells per second */
+    fov: 1.0,            /* horizontal field of view, radians */
+    far: 560,            /* draw distance, cells */
+    cruiseAgl: 320,      /* autopilot clearance over the terrain ahead, metres */
+    minAgl: 110,         /* never closer to the ground than this, metres */
+    stillT: 22,          /* the designed still: seconds into the tour (the Labs page's t=22 pose: past the summit, heading for Mount Kimball) */
+    idleResume: 8,       /* seconds without input before the tour takes the stick back */
+    labels: true,
+    buffer: 384,         /* long side of the internal buffer, pixels */
+  };
+
+  const FT = 3.28084, BASE_M = 600, DT = 1 / 60;
+  /* the grid's edges (Web Mercator tile edges, assets/catalinas-meta.json) */
+  const B = { north: 32.54681317351515, south: 32.10118973232094, west: -111.09375, east: -110.56640625 };
+  /* the Labs page's 512-cell crop: the soft fence the camera turns back from, so the tour flies the same line */
+  const FENCE = { north: 32.505129231918936, south: 32.20815332547324, west: -111.005859375, east: -110.654296875, margin: 44 };
+  const MPP = 64.59248259040142;
+  /* the six life-zone bands (floor in ft, name, colour): data from the 27 Miles grounding bible, not decoration */
+  const BANDS = [
+    [0, 'Sonoran Desertscrub', 201, 138, 90], [4000, 'Semidesert Grassland', 185, 162, 98],
+    [5000, 'Madrean Oak Woodland', 127, 154, 92], [6000, 'Pine-Oak Woodland', 79, 127, 102],
+    [7000, 'Ponderosa Pine Forest', 58, 106, 90], [8000, 'Mixed-Conifer Forest', 52, 92, 112],
+  ];
+  const TOUR_LL = [[32.2560, -110.7300], [32.3703, -110.7175], [32.4431, -110.7883], [32.3768, -110.8792],
+    [32.3721, -110.9389], [32.3103, -110.8226], [32.2217, -110.9265]];
+  const LANDMARKS = [['Mount Lemmon', 32.4431, -110.7883], ['Mount Kimball', 32.3768, -110.8792],
+    ['Summerhaven', 32.4300, -110.7590], ['Windy Point', 32.3703, -110.7175], ['Sabino Canyon', 32.3103, -110.8226],
+    ['Pusch Peak', 32.3721, -110.9389], ['Catalina Hwy base', 32.2560, -110.7300], ['Downtown Tucson', 32.2217, -110.9265]];
+  const START = { lat: 32.232, lon: -110.80, yaw: -Math.PI / 2, altM: 1700 };   /* over the basin, facing north */
+  const SUN_AZ = Math.PI * 0.95;
+
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const wrap = (a) => { a = (a + Math.PI) % (2 * Math.PI); if (a < 0) a += 2 * Math.PI; return a - Math.PI; };
+  const mercY = (la) => Math.log(Math.tan(Math.PI / 4 + la * Math.PI / 360));
+  const fmt = (n) => Math.round(n).toLocaleString('en-US');
+  const bandOf = (ft) => { let k = 0; for (let i = 0; i < BANDS.length; i++) if (ft >= BANDS[i][0]) k = i; return k; };
+
+  /* t from ?t= or from a hash such as #range?t=22 */
+  function linkT() {
+    let v = parseFloat(new URLSearchParams(location.search).get('t'));
+    if (!(v > 0)) { const h = location.hash, q = h.indexOf('?'); if (q >= 0 && /^#range\b/.test(h)) v = parseFloat(new URLSearchParams(h.slice(q + 1)).get('t')); }
+    return v > 0 ? Math.min(v, 600) : 0;
+  }
+
+  function mount(canvas, params, ctx) {
+    let P = Object.assign({}, PARAMS, params);
+    const g = canvas.getContext('2d', { alpha: false });
+    let buf = document.createElement('canvas'), bctx = buf.getContext('2d');   /* the low-res buffer, upscaled pixelated */
+    let BW = 0, BH = 0, img = null, px = null, ybuf = null, skyKey = '';
+    let W = 768, H = 768, elev = null, hu = null, colR = null, colG = null, colB = null, ready = false, dead = false;
+    let VE = P.ve, mN = mercY(B.north), mS = mercY(B.south);
+    const toPx = (lat, lon) => ({ x: (lon - B.west) / (B.east - B.west) * W, z: (mN - mercY(lat)) / (mN - mS) * H });
+    let TOUR = [], LM = [], fence = null;
+    let camX = 0, camZ = 0, yaw = 0, altM = 0, altTarget = 0, autopilot = true, tourIdx = 0;
+    let look = 0, idle = 0, stickHeld = false, lastKeys = new Set(), drag = null, wasDown = false, readAt = 0;
+    let wantStill = true, cssW = 1, cssH = 1;
+    const T0 = linkT();
+
+    /* ---------- labels (DOM, aria-hidden overlay) ---------- */
+    const overlay = ctx.overlayFor(canvas);
+    const labelEls = LANDMARKS.map((l) => { const s = document.createElement('span'); s.textContent = l[0]; s.style.display = 'none'; overlay.appendChild(s); return s; });
+    const labelVis = new Array(LANDMARKS.length).fill(false);
+
+    const cellIdx = (x, z) => clamp(z | 0, 0, H - 1) * W + clamp(x | 0, 0, W - 1);
+    const elevAt = (x, z) => (x < 0 || z < 0 || x >= W || z >= H) ? BASE_M : elev[cellIdx(x, z)];
+    const toUnits = (m) => (m - BASE_M) * VE / MPP;
+
+    function setBuffer(w, h) {
+      if (w === BW && h === BH && img) return;
+      BW = w; BH = h; buf.width = w; buf.height = h; img = bctx.createImageData(w, h); px = img.data; px32 = new Uint32Array(px.buffer); ybuf = new Float32Array(w); skyKey = '';
+    }
+    /* colour + height tables, built in row chunks so a phone keeps scrolling while the grid is prepared */
+    function build(done) {
+      const n = W * H; hu = new Float32Array(n); colR = new Uint8Array(n); colG = new Uint8Array(n); colB = new Uint8Array(n);
+      let lx = -0.80, ly = 0.55, lz = 0.28; const ll = Math.hypot(lx, ly, lz); lx /= ll; ly /= ll; lz /= ll;
+      const shadeVE = 1.6;
+      let z = 0;
+      (function chunk() {
+        if (dead) return;
+        const zEnd = Math.min(H, z + 128);
+        for (; z < zEnd; z++) for (let x = 0; x < W; x++) {
+          const i = z * W + x, e = elev[i], ft = e * FT; hu[i] = toUnits(e);
+          const k = bandOf(ft); let r = BANDS[k][2], gg = BANDS[k][3], b = BANDS[k][4];
+          if (k < BANDS.length - 1) {
+            const t = clamp((ft - (BANDS[k + 1][0] - 120)) / 120, 0, 1);
+            if (t > 0) { const nb = BANDS[k + 1]; r += (nb[2] - r) * t; gg += (nb[3] - gg) * t; b += (nb[4] - b) * t; }
+          }
+          const eW = elevAt(x - 1, z), eE = elevAt(x + 1, z), eN = elevAt(x, z - 1), eS = elevAt(x, z + 1);
+          let nx = -(eE - eW) / (2 * MPP) * shadeVE, nz = -(eS - eN) / (2 * MPP) * shadeVE, ny = 1;
+          const nl = Math.hypot(nx, ny, nz); nx /= nl; ny /= nl; nz /= nl;
+          const sh = 0.42 + 0.78 * Math.max(0, nx * lx + ny * ly + nz * lz);
+          colR[i] = clamp(r * sh, 0, 255); colG[i] = clamp(gg * sh, 0, 255); colB[i] = clamp(b * sh, 0, 255);
+        }
+        if (z < H) setTimeout(chunk, 0); else done();
+      })();
+    }
+    const rebuildHeights = () => { for (let i = 0; i < W * H; i++) hu[i] = toUnits(elev[i]); };
+
+    function reset() {
+      const s = toPx(START.lat, START.lon);
+      camX = s.x; camZ = s.z; yaw = START.yaw; altM = START.altM; altTarget = START.altM; tourIdx = 0; autopilot = true; look = 0; idle = 0;
+    }
+    function aheadMax() {
+      let a = 0; for (let s = 10; s <= 90; s += 10) a = Math.max(a, elevAt(camX + Math.cos(yaw) * s, camZ + Math.sin(yaw) * s));
+      return a;
+    }
+    /* one fixed step of the flight model (the Labs page's, byte for byte in behaviour) */
+    function step(dt, speedK, yawIn) {
+      if (autopilot) {
+        const t = TOUR[tourIdx], dx = t.x - camX, dz = t.z - camZ;
+        if (Math.hypot(dx, dz) < 22) tourIdx = (tourIdx + 1) % TOUR.length;
+        yaw += wrap(Math.atan2(dz, dx) - yaw) * Math.min(1, 1.6 * dt);
+      } else {
+        yaw += yawIn * dt;
+      }
+      altTarget = Math.max(1500, aheadMax() + P.cruiseAgl);           /* terrain-following in both modes: there is no altitude stick here */
+      const m = FENCE.margin;
+      if (camX < fence.x0 + m || camZ < fence.z0 + m || camX > fence.x1 - m || camZ > fence.z1 - m)
+        yaw += wrap(Math.atan2((fence.z0 + fence.z1) / 2 - camZ, (fence.x0 + fence.x1) / 2 - camX) - yaw) * Math.min(1, 2.2 * dt);
+      const v = P.speed * speedK;
+      camX = clamp(camX + Math.cos(yaw) * v * dt, fence.x0 + 2, fence.x1 - 3);
+      camZ = clamp(camZ + Math.sin(yaw) * v * dt, fence.z0 + 2, fence.z1 - 3);
+      const gnd = elevAt(camX, camZ);
+      altM += (altTarget - altM) * Math.min(1, 2.0 * dt);
+      if (altM < gnd + P.minAgl) { altM = gnd + P.minAgl; if (altTarget < altM) altTarget = altM; }
+    }
+    function fastForward(tt) { reset(); for (let s = 0; s < tt; s += DT) step(DT, 1, 0); }
+
+    /* ---------- render ---------- */
+    /* sky: one packed colour per scanline from the tokens, filled row by row (a memset, not a pixel loop) */
+    let px32 = null, skyTop = null, skyHz = null, skyRow = null;
+    function skyTable(tok) {
+      const key = BH + '|' + tok.field2 + tok.horizonTint;
+      if (key !== skyKey) { skyKey = key; skyTop = BONEYARD_RGB(tok.field2); skyHz = BONEYARD_RGB(tok.horizonTint); skyRow = new Uint32Array(BH); }
+      const hy = BH * ctx.vp.y, top = skyTop, hz = skyHz;
+      for (let y = 0; y < BH; y++) {
+        const t = y < hy ? Math.pow(y / hy, 1.6) : 1;
+        skyRow[y] = (255 << 24) | ((top[2] + (hz[2] - top[2]) * t) << 16) | ((top[1] + (hz[1] - top[1]) * t) << 8) | (top[0] + (hz[0] - top[0]) * t);
+      }
+      for (let y = 0; y < BH; y++) px32.fill(skyRow[y], y * BW, y * BW + BW);
+    }
+    function draw() {
+      if (!ready || !px) return;
+      const tok = ctx.tokens;
+      skyTable(tok);
+      const fov = P.fov, far = P.far, horizonY = BH * ctx.vp.y;
+      const scale = (BW / fov) * 0.5625 * Math.max(1, Math.min(1.8, (BH / BW) * 0.9));   /* portrait: taller relief, same horizontal fov */
+      const view = yaw;
+      /* the sun, low in the west, in the tube's amber */
+      const sunRel = wrap(SUN_AZ - view);
+      if (Math.abs(sunRel) < fov * 0.5 + 0.2) {
+        const am = BONEYARD_RGB(tok.amber), R = Math.max(10, BW * 0.05);
+        const sx = (sunRel + fov / 2) / fov * BW, sy = horizonY * 0.62;
+        const x0 = Math.max(0, (sx - R) | 0), x1 = Math.min(BW - 1, (sx + R) | 0), y0 = Math.max(0, (sy - R) | 0), y1 = Math.min(horizonY | 0, (sy + R) | 0);
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+          const d = Math.hypot(x - sx, y - sy); if (d > R) continue;
+          const i = (y * BW + x) * 4, a = d < R * 0.22 ? 1 : Math.max(0, 1 - (d - R * 0.22) / (R * 0.78)) * 0.5;
+          px[i] += (am[0] - px[i]) * a; px[i + 1] += (am[1] - px[i + 1]) * a; px[i + 2] += (am[2] - px[i + 2]) * a;
+        }
+      }
+      const FOG = BONEYARD_RGB(tok.horizonTint), camH = toUnits(altM);
+      const fr = FOG[0], fg = FOG[1], fb = FOG[2];
+      for (let col = 0; col < BW; col++) {
+        const rel = -fov * 0.5 + fov * ((col + 0.5) / BW), ang = view + rel, cosA = Math.cos(rel);
+        const dx = Math.cos(ang), dz = Math.sin(ang);
+        let maxY = BH, dist = 2.5;
+        while (dist < far && maxY > 0) {
+          const mx = camX + dx * dist, mz = camZ + dz * dist;
+          const inside = mx >= 0 && mz >= 0 && mx < W && mz < H;
+          const idx = inside ? ((mz | 0) * W + (mx | 0)) : -1;
+          const hh = inside ? hu[idx] : 0;
+          const sy = ((camH - hh) / (dist * cosA)) * scale + horizonY;
+          if (sy < maxY) {
+            const f = dist / far, fog = 1 - Math.min(1, f * f * 1.15);
+            let r, gg, b;
+            if (inside) { r = colR[idx]; gg = colG[idx]; b = colB[idx]; } else { r = 150; gg = 112; b = 84; }
+            r = r * fog + fr * (1 - fog); gg = gg * fog + fg * (1 - fog); b = b * fog + fb * (1 - fog);
+            const y0 = sy < 0 ? 0 : sy | 0, y1 = maxY | 0;
+            for (let y = y0; y < y1; y++) { const i = (y * BW + col) * 4; px[i] = r; px[i + 1] = gg; px[i + 2] = b; }
+            maxY = sy;
+          }
+          dist += 0.45 + dist * 0.011;
+        }
+        ybuf[col] = maxY;
+      }
+      bctx.putImageData(img, 0, 0);
+      g.imageSmoothingEnabled = false;
+      g.drawImage(buf, 0, 0, canvas.width, canvas.height);
+      placeLabels(view, camH, horizonY, scale);
+    }
+    /* the highest screen row nearer ground reaches in column c before the ray gets to distance d: a landmark whose
+       projected ground sits below that row is hidden. The same march as draw(), one column, stopped early. */
+    function occluder(c, d, view, camH, horizonY, scale) {
+      const fov = P.fov, rel = -fov * 0.5 + fov * ((c + 0.5) / BW), ang = view + rel, cosA = Math.cos(rel);
+      const dx = Math.cos(ang), dz = Math.sin(ang), stop = (d - 3) / cosA;
+      let maxY = BH, dist = 2.5;
+      while (dist < stop && maxY > 0) {
+        const mx = camX + dx * dist, mz = camZ + dz * dist;
+        const hh = (mx >= 0 && mz >= 0 && mx < W && mz < H) ? hu[(mz | 0) * W + (mx | 0)] : 0;
+        const sy = ((camH - hh) / (dist * cosA)) * scale + horizonY;
+        if (sy < maxY) maxY = sy;
+        dist += 0.45 + dist * 0.011;
+      }
+      return maxY;
+    }
+    function placeLabels(view, camH, horizonY, scale) {
+      if (!cssW || cssW < 2) { cssW = canvas.clientWidth || 1; cssH = canvas.clientHeight || 1; }
+      const fov = P.fov, far = P.far;
+      for (let k = 0; k < LM.length; k++) {
+        const l = LM[k], el = labelEls[k];
+        const dx = l.x - camX, dz = l.z - camZ, dist = Math.hypot(dx, dz), rel = wrap(Math.atan2(dz, dx) - view);
+        if (!P.labels || dist < 6 || dist > far * 0.92 || Math.abs(rel) > fov * 0.42) { if (labelVis[k]) el.style.display = 'none'; labelVis[k] = false; continue; }
+        const colf = (rel + fov / 2) / fov * BW, hh = hu[cellIdx(l.x, l.z)];
+        const sy = ((camH - hh) / (dist * Math.cos(rel))) * scale + horizonY;
+        const c = clamp(colf | 0, 0, BW - 1);
+        const top = occluder(c, dist * Math.cos(rel), view, camH, horizonY, scale);
+        /* hysteresis: appear when clearly in front of the nearer ground, vanish only when clearly behind it (no flicker on far ridges) */
+        const vis = sy >= 0 && (labelVis[k] ? sy <= top + 4 : sy < top + 1);
+        if (!vis) { if (labelVis[k]) el.style.display = 'none'; labelVis[k] = false; continue; }
+        if (!labelVis[k]) el.style.display = 'block';
+        labelVis[k] = true;
+        el.style.transform = 'translate3d(' + clamp(colf / BW * cssW, 64, Math.max(64, cssW - 64)).toFixed(1) + 'px,' + (sy / BH * cssH).toFixed(1) + 'px,0) translate(-50%,-100%)';
+        el.style.opacity = String(clamp(1.25 - dist / far, 0.35, 1).toFixed(2));
+      }
+    }
+    function readout(force) {
+      const now = performance.now();
+      if (!force && now - readAt < 140) return;
+      readAt = now;
+      const gft = elevAt(camX, camZ) * FT;
+      ctx.readout('range', 'ALT ' + fmt(altM * FT) + ' ft · GROUND ' + fmt(gft) + ' ft · ' + BANDS[bandOf(gft)][1] + ' · ' + VE + 'x vertical' + (autopilot ? '' : ' · stick'));
+    }
+
+    /* ---------- the grid arrives ---------- */
+    ctx.dem().then((dem) => {
+      if (dead) return;
+      W = dem.width; H = dem.height; elev = dem.elev;
+      mN = mercY(B.north); mS = mercY(B.south);
+      TOUR = TOUR_LL.map((p) => toPx(p[0], p[1]));
+      LM = LANDMARKS.map((l) => toPx(l[1], l[2]));
+      const a = toPx(FENCE.north, FENCE.west), b = toPx(FENCE.south, FENCE.east);
+      fence = { x0: a.x, z0: a.z, x1: b.x, z1: b.z };
+      build(() => {
+        if (dead) return;
+        ready = true;
+        fastForward(T0 || P.stillT);
+        if (wantStill || ctx.dial === 'still') { draw(); readout(true); }
+      });
+    }).catch(() => { ctx.readout('range', 'elevation grid unavailable'); });
+
+    /* ---------- input: ctx.keys and ctx.pointer, read each tick ---------- */
+    function input(dt, pointer) {
+      const keys = ctx.keys;
+      const edge = (k) => keys.has(k) && !lastKeys.has(k);
+      if (edge('a')) { autopilot = !autopilot; stickHeld = !autopilot; idle = 0; }
+      if (edge('v')) { VE = VE >= 3 ? 1 : VE + 1; rebuildHeights(); }
+      if (edge('r')) { reset(); stickHeld = false; }
+      lastKeys = new Set(keys);
+      let yawIn = 0;
+      const kYaw = (keys.has('ArrowLeft') ? -1 : 0) + (keys.has('ArrowRight') ? 1 : 0);
+      if (kYaw) yawIn += kYaw * 1.3;
+      /* drag: arms only on a sideways move (|dx| > 8 and |dx| > |dy|), so a vertical scroll swipe never takes the stick */
+      if (pointer.down && !wasDown) drag = { x: pointer.x, y: pointer.y, armed: false };
+      if (!pointer.down) drag = null;
+      wasDown = pointer.down;
+      if (drag) {
+        const dx = pointer.x - drag.x, dy = pointer.y - drag.y;
+        if (!drag.armed && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) drag.armed = true;
+        if (drag.armed) { look = clamp(dx / Math.max(120, (canvas.clientWidth || 800) * 0.3), -1, 1); yawIn += look * 1.5; }
+      } else look = 0;
+      if (yawIn) { if (autopilot) autopilot = false; idle = 0; }
+      else if (!autopilot && !stickHeld) { idle += dt; if (idle > P.idleResume) { autopilot = true; idle = 0; } }
+      return yawIn;
+    }
+
+    return {
+      tick(dt, t, progress, pointer) {
+        if (!ready) return;
+        wantStill = false;
+        const calm = ctx.dial === 'calm' ? 0.5 : 1;
+        const yawIn = input(dt, pointer || ctx.pointer) * calm;
+        step(Math.min(0.05, dt), calm, yawIn);
+        draw();
+        readout(false);
+      },
+      resize(w, h) {
+        /* the long side of the buffer is P.buffer pixels (the Labs page's rule): a phone costs what a desktop costs */
+        const aspect = Math.max(1, w) / Math.max(1, h), L = Math.round(P.buffer);
+        setBuffer(aspect >= 1 ? L : Math.max(160, Math.round(L * aspect)), aspect >= 1 ? Math.max(120, Math.round(L / aspect)) : L);
+        cssW = canvas.clientWidth || 0; cssH = canvas.clientHeight || 0;
+        if (ready) draw();
+      },
+      still() {
+        wantStill = true;
+        if (!ready) return;
+        fastForward(T0 || P.stillT);
+        draw(); readout(true);
+      },
+      params(p) {
+        const veChanged = p.ve !== P.ve;
+        const bufChanged = p.buffer !== P.buffer;
+        P = Object.assign({}, PARAMS, p);
+        if (bufChanged) { BW = 0; this.resize(canvas.width, canvas.height); }
+        if (veChanged) { VE = clamp(Math.round(P.ve), 1, 3); if (ready) rebuildHeights(); }
+        if (ready) draw();
+      },
+      destroy() {
+        dead = true; ready = false;
+        for (const el of labelEls) el.remove();
+        elev = hu = colR = colG = colB = null; img = px = px32 = ybuf = skyRow = null; buf = bctx = null;
+      },
+    };
+  }
+
+  /* token colour -> [r, g, b] (the runtime's parser, reached through the global it exports) */
+  function BONEYARD_RGB(c) { return BONEYARD.toRgb(c); }
+
+  BAYS.push({ slug: 'range', title: 'Range', order: 3, role: 'bay', params: PARAMS, mount, dem: true });
+})();
+
+
+/* BONEYARD PART · 04 · WASH
+ * technique   particle advection through a vector field: each drop steps along the downslope gradient of a real
+ *             elevation grid plus a weak divergence-free curl noise, and leaves a decaying phosphor trail
+ * lineage     vector-field particle advection and streakline plots in 1990s scientific visualization; the
+ *             generative flow-field sketches that grew out of them
+ * original    the field is the Santa Catalina Mountains (the same 768 x 768 grid RANGE flies), so Sabino, Bear,
+ *             Ventana and Pima canyons draw themselves out of the front range in a few seconds; the pointer is a
+ *             rain cloud; the trail buffer never fades by rewriting pixels (a growing deposit weight does the
+ *             decay), so the twenty-second still is the same buffer the live bay keeps drawing into
+ * not         hydrology: no flow accumulation, infiltration, channels, rainfall or discharge. It shows where water
+ *             would run downhill on a 64 m surface, not where it does run
+ * deps        none · Canvas 2D · 2026-09
+ * budget      2.4 ms/frame @ 480x300 internal (1440x900 backing), 2,400 drops, desktop Chromium, headless, busy machine
+ *             (2026-09-29); 222x480 at 390x844 2.2 ms; phone TBD
+ * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
+ * license     MIT, Desert Data Labs LLC · elevation: Mapzen terrain tiles; data from SRTM, NED, and others
+ */
+/* HOW IT WORKS
+ * When the grid arrives it is smoothed once with a 3 x 3 box and differenced (central differences, metres per
+ * metre) into a slope field. A drop moves opposite the slope, at a speed that grows with steepness up to a cap, plus
+ * a small curl-noise drift (the curl of a sum of sines, so it neither piles drops up nor spreads them out) that
+ * keeps the nearly flat basin from freezing. Drops live a few seconds and are reborn at random places in the view,
+ * or under the pointer, which is the rain cloud.
+ *
+ * Trails live in a density grid the size of the elevation grid. Each step a drop adds weight equal to the distance
+ * it moved (so a drop stalled in a pit does not glow) times a factor S that grows every frame; dividing by S when
+ * drawing makes every older deposit fade exponentially without touching the buffer. On mount the model runs twenty
+ * seconds at a fixed step with a seeded random source, so the still is already full of canyons and the live bay
+ * continues from that exact state. Each frame maps the view window of the grid onto a buffer whose long side is 480 pixels: a
+ * faint hillshade in the tube's line colour, plus phosphor where the density is.
+ */
+(() => {
+  'use strict';
+  const PARAMS = {
+    drops: 2400,         /* 1,500 to 3,000; Calm uses half */
+    speed: 34,           /* top speed on steep ground, cells per second */
+    steep: 0.22,         /* slope (m/m) at which a drop reaches top speed */
+    curl: 0.06,          /* curl-noise drift as a fraction of top speed */
+    life: 5,             /* mean lifetime, seconds */
+    fade: 1.6,           /* trail half-life, seconds */
+    glow: 0.35,          /* phosphor gain */
+    shade: 1,            /* hillshade strength */
+    cloud: 26,           /* rain-cloud radius, cells */
+    stillSeconds: 20,
+    buffer: 480,         /* long side of the internal buffer, pixels */
+  };
+
+  const MPP_X = 64.59248259040142, MPP_Y = 64.15933123256292;
+  /* the view window: the front range and its canyons, in grid cells (row 0 = north) */
+  const FOCUS = { col: 400, row: 392, span: 520 };
+
+  function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const fmt = (n) => Math.round(n).toLocaleString('en-US');
+
+  function mount(canvas, params, ctx) {
+    let P = Object.assign({}, PARAMS, params);
+    const g = canvas.getContext('2d', { alpha: false });
+    let buf = document.createElement('canvas'), bctx = buf.getContext('2d');   /* the low-res buffer, upscaled pixelated */
+    let W = 768, H = 768, elev = null, gx = null, gy = null, shadeG = null, dens = null, ready = false, dead = false;
+    let BW = 0, BH = 0, img = null, px = null, map = null, base = null, baseKey = '';
+    let view = { x0: 0, y0: 0, cw: 1 };               /* grid cell at buffer pixel 0,0 and cells per pixel */
+    let N = 0, pxs = null, pys = null, age = null, lifeA = null, sx0 = null, sy0 = null;
+    let tone = null, toneKey = '';                  /* the tone LUT: density -> packed phosphor add, rebuilt when tokens change */
+    let S = 1, simT = 0, rand = rng(1947), readAt = 0, wantStill = true, cloudFt = null;
+
+    function allocDrops(n) {
+      N = n; pxs = new Float32Array(n); pys = new Float32Array(n); age = new Float32Array(n); lifeA = new Float32Array(n); sx0 = new Float32Array(n); sy0 = new Float32Array(n);
+      for (let i = 0; i < n; i++) { spawn(i, null); age[i] = rand() * lifeA[i]; }
+    }
+    function spawn(i, at) {
+      if (at) {
+        const a = rand() * Math.PI * 2, r = Math.sqrt(rand()) * P.cloud;
+        pxs[i] = at.x + Math.cos(a) * r; pys[i] = at.y + Math.sin(a) * r;
+      } else {
+        /* anywhere in the view window, with a margin so drops flow in from the edges too */
+        const vw = BW * view.cw, vh = BH * view.cw;
+        pxs[i] = view.x0 - vw * 0.08 + rand() * vw * 1.16; pys[i] = view.y0 - vh * 0.08 + rand() * vh * 1.16;
+      }
+      age[i] = 0; lifeA[i] = P.life * (0.4 + rand() * 1.2); sx0[i] = pxs[i]; sy0[i] = pys[i];
+    }
+
+    /* slope field from the smoothed grid, and a hillshade for the backdrop */
+    function prepare() {
+      const n = W * H, sm = new Float32Array(n);
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        let s = 0, c = 0;
+        for (let dy = -1; dy <= 1; dy++) { const yy = y + dy; if (yy < 0 || yy >= H) continue; for (let dx = -1; dx <= 1; dx++) { const xx = x + dx; if (xx < 0 || xx >= W) continue; s += elev[yy * W + xx]; c++; } }
+        sm[y * W + x] = s / c;
+      }
+      gx = new Float32Array(n); gy = new Float32Array(n); shadeG = new Float32Array(n);
+      let lx = -0.62, ly = -0.55, lz = 0.56; const ll = Math.hypot(lx, ly, lz); lx /= ll; ly /= ll; lz /= ll;   /* light from the northwest, cartographic convention */
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const i = y * W + x;
+        const xe = Math.min(W - 1, x + 1), xw = Math.max(0, x - 1), ys = Math.min(H - 1, y + 1), yn = Math.max(0, y - 1);
+        const sx = (sm[y * W + xe] - sm[y * W + xw]) / ((xe - xw) * MPP_X);
+        const sy = (sm[ys * W + x] - sm[yn * W + x]) / ((ys - yn) * MPP_Y);
+        gx[i] = sx; gy[i] = sy;
+        /* normal of z = elev with +x east, +y south (row down): n = (-sx, -sy, 1) */
+        const k = 2.2, nx = -sx * k, ny = -sy * k, nl = Math.hypot(nx, ny, 1);
+        shadeG[i] = Math.max(0, (nx * lx + ny * ly + lz) / nl);
+      }
+      dens = new Float32Array(n);
+    }
+
+    /* bilinear slope at a fractional cell */
+    function slopeAt(x, y, out) {
+      const x0 = x | 0, y0 = y | 0, fx = x - x0, fy = y - y0, i = y0 * W + x0;
+      const a = 1 - fx, b = 1 - fy;
+      out[0] = (gx[i] * a + gx[i + 1] * fx) * b + (gx[i + W] * a + gx[i + W + 1] * fx) * fy;
+      out[1] = (gy[i] * a + gy[i + 1] * fx) * b + (gy[i + W] * a + gy[i + W + 1] * fx) * fy;
+    }
+    const sl = new Float32Array(2);
+    function advance(dt, count, cloud) {
+      const vmax = P.speed, steep = P.steep, curl = P.curl * vmax, t = simT;
+      const decay = Math.pow(0.5, dt / P.fade);
+      S /= decay;
+      if (S > 1e24) { const k = 1 / S; for (let i = 0; i < dens.length; i++) dens[i] *= k; S = 1; }
+      for (let i = 0; i < count; i++) {
+        let x = pxs[i], y = pys[i];
+        age[i] += dt;
+        /* reborn when old, off the grid, or stalled in a pit (a drop that has not left a 3-cell circle in a second and a half) */
+        const stalled = age[i] > 1.5 && Math.abs(x - sx0[i]) + Math.abs(y - sy0[i]) < 3;
+        if (stalled || age[i] > lifeA[i] || x < 1 || y < 1 || x >= W - 2 || y >= H - 2) { spawn(i, cloud && rand() < 0.3 ? cloud : null); continue; }
+        slopeAt(x, y, sl);
+        const m = Math.hypot(sl[0], sl[1]) + 1e-9, sp = vmax * Math.min(1, m / steep);
+        /* curl of psi = sin(ax + t) cos(by - 0.7t) + 0.6 sin(c(x + y) + 1.3t): v = (dpsi/dy, -dpsi/dx) */
+        const ax = 0.021 * x + 0.6 * t, by = 0.017 * y - 0.42 * t, cx = 0.037 * (x + y) + 0.78 * t;
+        const dpx = 0.021 * Math.cos(ax) * Math.cos(by) + 0.6 * 0.037 * Math.cos(cx);
+        const dpy = -0.017 * Math.sin(ax) * Math.sin(by) + 0.6 * 0.037 * Math.cos(cx);
+        const vx = -sl[0] / m * sp + dpy * 30 * curl, vy = -sl[1] / m * sp - dpx * 30 * curl;
+        const nx = x + vx * dt, ny = y + vy * dt;
+        const d = Math.hypot(nx - x, ny - y);
+        pxs[i] = nx; pys[i] = ny;
+        /* deposit along the step: weight = distance moved, spread over the cells it crossed */
+        const steps = d > 1 ? Math.ceil(d) : 1, w = (d / steps) * S;
+        for (let s = 1; s <= steps; s++) {
+          const qx = (x + (nx - x) * s / steps) | 0, qy = (y + (ny - y) * s / steps) | 0;
+          if (qx >= 0 && qy >= 0 && qx < W && qy < H) dens[qy * W + qx] += w;
+        }
+      }
+      simT += dt;
+    }
+
+    /* the view window for this aspect, and the per-pixel grid index table */
+    function layout() {
+      const aspect = BW / BH;
+      let vw = FOCUS.span, vh = vw / aspect;
+      if (vh > H * 0.96) { vh = H * 0.96; vw = vh * aspect; }
+      if (aspect < 1) { vw = Math.max(300, Math.min(vw, 380)); vh = Math.min(H * 0.96, vw / aspect); vw = vh * aspect; }
+      const x0 = clamp(FOCUS.col - vw / 2, 0, W - vw), y0 = clamp(FOCUS.row - vh / 2, 0, H - vh);
+      view = { x0, y0, cw: vw / BW };
+      map = new Int32Array(BW * BH);
+      for (let y = 0; y < BH; y++) {
+        const gyC = clamp((y0 + (y + 0.5) * view.cw) | 0, 0, H - 1);
+        for (let x = 0; x < BW; x++) map[y * BW + x] = gyC * W + clamp((x0 + (x + 0.5) * view.cw) | 0, 0, W - 1);
+      }
+      baseKey = '';
+    }
+    /* the backdrop: the field lifted toward the line colour by the hillshade, more on high ground, so the basin
+       stays dark and the range reads as relief; packed as one 32-bit word per pixel */
+    let base32 = null, px32 = null;
+    function backdrop() {
+      const tok = ctx.tokens, key = BW + 'x' + BH + tok.field + tok.line + tok.phosphorDim + P.shade + view.x0 + view.y0;
+      if (key === baseKey) return;
+      baseKey = key;
+      const f = BONEYARD.toRgb(tok.field), l = BONEYARD.toRgb(tok.line), d = BONEYARD.toRgb(tok.phosphorDim);
+      const lo = 625, hi = 2791;
+      base = new Uint8ClampedArray(BW * BH * 3); base32 = new Uint32Array(BW * BH);
+      for (let p = 0; p < BW * BH; p++) {
+        const i = map[p], h = shadeG[i], e = Math.sqrt(clamp((elev[i] - lo) / (hi - lo), 0, 1));
+        const a = clamp((0.1 + 1.25 * h) * (0.3 + 0.7 * e) * P.shade, 0, 1.4), b = clamp(e * 0.22 * P.shade, 0, 0.4);
+        base[p * 3] = f[0] + (l[0] - f[0]) * a + (d[0] - f[0]) * b;
+        base[p * 3 + 1] = f[1] + (l[1] - f[1]) * a + (d[1] - f[1]) * b;
+        base[p * 3 + 2] = f[2] + (l[2] - f[2]) * a + (d[2] - f[2]) * b;
+        base32[p] = (255 << 24) | (base[p * 3 + 2] << 16) | (base[p * 3 + 1] << 8) | base[p * 3];
+      }
+    }
+    /* tone: v / (1 + v) to the 0.75, phosphor rising to the core colour in the brightest channels; 1,024 steps of v in [0, 8) */
+    function toneTable(tok) {
+      const key = tok.phosphor + tok.phosphorCore;
+      if (key === toneKey) return;
+      toneKey = key; tone = new Float32Array(1024 * 3);
+      const ph = BONEYARD.toRgb(tok.phosphor), core = BONEYARD.toRgb(tok.phosphorCore);
+      for (let i = 0; i < 1024; i++) {
+        const v = (i + 0.5) / 128, a = Math.pow(v / (1 + v), 0.75), c = a > 0.72 ? (a - 0.72) * 3.2 : 0;
+        for (let ch = 0; ch < 3; ch++) tone[i * 3 + ch] = ph[ch] * a + (core[ch] - ph[ch]) * c * a;
+      }
+    }
+    function draw() {
+      if (!ready || !px) return;
+      backdrop(); toneTable(ctx.tokens);
+      const k = (P.glow / (S * view.cw)) * 128;       /* density -> LUT index, normalised for how many cells a pixel spans */
+      const floor = 0.75 / k;                          /* below LUT step 0.75 a pixel is plain backdrop: the fast path */
+      const n = BW * BH;
+      for (let p = 0; p < n; p++) {
+        const raw = dens[map[p]];
+        if (raw < floor) { px32[p] = base32[p]; continue; }
+        let i = (raw * k) | 0; if (i > 1023) i = 1023; i *= 3;
+        const q = p * 3, o = p * 4;
+        px[o] = base[q] + tone[i]; px[o + 1] = base[q + 1] + tone[i + 1]; px[o + 2] = base[q + 2] + tone[i + 2]; px[o + 3] = 255;
+      }
+      bctx.putImageData(img, 0, 0);
+      g.imageSmoothingEnabled = false;
+      g.drawImage(buf, 0, 0, canvas.width, canvas.height);
+    }
+    function readout(active, force) {
+      const now = performance.now();
+      if (!force && now - readAt < 140) return;
+      readAt = now;
+      ctx.readout('wash', 'slope model, not hydrology · ' + fmt(active) + ' drops' + (cloudFt != null ? ' · rain at ' + fmt(cloudFt) + ' ft' : ''));
+    }
+    function precompute() {
+      rand = rng(1947); S = 1; simT = 0; dens.fill(0); allocDrops(Math.round(clamp(P.drops, 100, 6000)));
+      const n = ctx.dial === 'calm' ? N >> 1 : N;
+      for (let s = 0; s < P.stillSeconds; s += 1 / 30) advance(1 / 30, n, null);
+    }
+    /* the pointer as a grid cell, when it is over the canvas */
+    function cloudAt(pointer) {
+      if (!pointer || !pointer.present || (pointer.coarse && !pointer.down)) return null;
+      const r = canvas.getBoundingClientRect();
+      if (pointer.x < r.left || pointer.x > r.right || pointer.y < r.top || pointer.y > r.bottom) return null;
+      const bx = (pointer.x - r.left) / r.width * BW, by = (pointer.y - r.top) / r.height * BH;
+      return { x: view.x0 + bx * view.cw, y: view.y0 + by * view.cw };
+    }
+
+    ctx.dem().then((dem) => {
+      if (dead) return;
+      W = dem.width; H = dem.height; elev = dem.elev;
+      setTimeout(() => {
+        if (dead) return;
+        prepare();
+        if (BW) layout();
+        ready = !!BW;
+        if (ready) { precompute(); if (wantStill || ctx.dial === 'still') { draw(); readout(ctx.dial === 'calm' ? N >> 1 : N, true); } }
+      }, 0);
+    }).catch(() => { ctx.readout('wash', 'elevation grid unavailable'); });
+
+    return {
+      tick(dt, t, progress, pointer) {
+        if (!ready) return;
+        wantStill = false;
+        const count = ctx.dial === 'calm' ? N >> 1 : N;
+        const cloud = cloudAt(pointer || ctx.pointer);
+        cloudFt = cloud && cloud.x >= 0 && cloud.y >= 0 && cloud.x < W && cloud.y < H ? elev[(cloud.y | 0) * W + (cloud.x | 0)] * 3.28084 : null;
+        if (cloud) for (let j = 0; j < 6; j++) spawn((rand() * count) | 0, cloud);   /* the cloud rains: recycle a few drops under it */
+        advance(Math.min(0.05, dt), count, cloud);
+        draw();
+        readout(count, false);
+      },
+      resize(w, h) {
+        /* the long side of the buffer is P.buffer pixels, whatever the aspect: a phone costs what a desktop costs */
+        const aspect = Math.max(1, w) / Math.max(1, h), L = Math.round(P.buffer);
+        const bw = aspect >= 1 ? L : Math.max(120, Math.round(L * aspect)), bh = aspect >= 1 ? Math.max(90, Math.round(L / aspect)) : L;
+        if (bw !== BW || bh !== BH || !img) { BW = bw; BH = bh; buf.width = bw; buf.height = bh; img = bctx.createImageData(bw, bh); px = img.data; px32 = new Uint32Array(px.buffer); baseKey = ''; }
+        if (gx) { layout(); if (!ready) { ready = true; precompute(); } }
+        if (ready) draw();
+      },
+      still() {
+        wantStill = true;
+        if (!ready) return;
+        cloudFt = null;
+        draw(); readout(ctx.dial === 'calm' ? N >> 1 : N, true);
+      },
+      params(p) {
+        const old = P; P = Object.assign({}, PARAMS, p);
+        if (!ready) return;
+        if (p.buffer !== old.buffer) { BW = 0; this.resize(canvas.width, canvas.height); }
+        if (p.drops !== old.drops || p.stillSeconds !== old.stillSeconds) precompute();
+        baseKey = ''; draw();
+      },
+      destroy() {
+        dead = true; ready = false;
+        elev = gx = gy = shadeG = dens = tone = null; buf = bctx = null; pxs = pys = age = lifeA = sx0 = sy0 = null; img = px = px32 = map = base = base32 = null;
+      },
+    };
+  }
+
+  BAYS.push({ slug: 'wash', title: 'Wash', order: 4, role: 'bay', params: PARAMS, mount, dem: true });
+})();
+
+
+/* BONEYARD PART · 05 · RELIEF
+ * technique   scan-processor relief: 96 scanlines of the real Santa Catalina elevation grid, each lifted by height and
+ *             drawn as double-stroked phosphor wire; hidden lines removed by filling each line's curtain (the vertical
+ *             strip from the wire down to the base) with the field colour, far to near, the Unknown Pleasures way
+ * lineage     the Rutt/Etra scan processor (Steve Rutt and Bill Etra, 1973), which bent each video scanline by its
+ *             brightness; the CP 1919 pulsar stack (Harold Craft, 1970) that became the Unknown Pleasures cover (1979)
+ * original    the scanlines are a real terrain grid (AWS Terrain Tiles, 768 x 768 at about 64 m), block-averaged to
+ *             96 lines by 192 samples and held as an object in perspective on the site's one vanishing point; the
+ *             curtains are parallel planes, so sorting them by distance along their normal makes the painter's
+ *             order exact from every orbit angle; a slow orbit that a horizontal drag takes over and that comes back
+ *             to the three-quarter view from the southwest (the Tucson side)
+ * not         true scale: height is exaggerated (the factor is in the readout, never hidden) and the base sits at the
+ *             grid's lowest cell, not sea level; block means soften the peaks, so the summit figure comes from the
+ *             full-resolution grid, not from the drawn lines
+ * deps        none · Canvas 2D · 2026-09
+ * budget      1.6 to 2.4 ms/frame on the parts counter @ 2160x1350 internal (1440x900 x1.5), 1.3 to 2.8 ms per still() redraw;
+ *             headless Chromium, software raster, not a real-GPU frame time (2026-09-29); phone TBD
+ * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
+ * license     MIT, Desert Data Labs LLC
+ */
+/* HOW IT WORKS
+ * The elevation grid arrives once through ctx.dem(). On arrival it is averaged into lines x samples blocks (each
+ * block the mean of every cell inside it), and each sample becomes a 3D point: x east and z south in a box two units
+ * across (the real 49.6 by 49.3 km footprint), y the height above the lowest cell times the vertical factor.
+ *
+ * A camera orbits the box at a fixed elevation and looks at a point just above it, so the look point lands on the
+ * shared vanishing point and the range sits below the horizon line like an object on a table. Every frame the
+ * 18,432 points are projected (one 3x3 rotation and a divide each). Lines are drawn from the farthest to the nearest:
+ * first the curtain under the wire is filled with the field colour, which erases any farther wire it covers, then
+ * the wire is stroked twice (a wide dim halo, a thin bright core), dimmer with distance.
+ *
+ * Horizontal drag (a touch drag only once it is clearly sideways, so vertical scrolling is never stolen) turns the
+ * range. Let go and it waits, eases to the nearest three-quarter view, rests there, then resumes the slow orbit.
+ */
+(() => {
+  'use strict';
+  const PARAMS = {
+    lines: 96,           /* scanlines, north to south */
+    samples: 192,        /* samples along each line, west to east */
+    exaggeration: 4,     /* vertical factor, printed in the readout */
+    elevationDeg: 31,    /* camera elevation above the base plane */
+    distance: 3.3,       /* camera distance, box half-widths */
+    lookY: 0.5,           /* height of the look point, which projects onto the vanishing point */
+    fit: 0.66,           /* focal length as a fraction of min(1.7 x width, 1.5 x height) */
+    orbitDegPerSec: 5,   /* slow auto-orbit */
+    homeDeg: -45,        /* the three-quarter view: camera to the southwest */
+    returnAfter: 2.5,    /* seconds after a drag before it eases home */
+    restAt: 7,           /* seconds resting at the three-quarter view before orbiting again */
+    dragDegPerPx: 0.35,
+    haloWidth: 3.2, coreWidth: 1.05,
+    haloAlpha: 0.16, coreAlpha: 0.9,
+    farAlpha: 0.22,      /* alpha of the farthest line relative to the nearest */
+  };
+  const COMPASS = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'];   /* camera bearing from the centre, yaw 0 = south, +90 = east */
+
+  function mount(canvas, params, ctx) {
+    const g = canvas.getContext('2d', { alpha: true });
+    let w = canvas.width, h = canvas.height, px = 1, dead = false;
+    let grid = null, pts = null, scr = null, L = 0, S = 0, vScale = 1, summitFt = 0, dem = null;
+    let yaw = params.homeDeg, mode = 'orbit', idle = 0, drag = null, lastReadout = '', sinceReadout = 0;
+
+    function build() {
+      if (!dem) return;
+      L = Math.max(8, Math.round(params.lines)); S = Math.max(16, Math.round(params.samples));
+      const W = dem.width, H = dem.height, e = dem.elev;
+      /* the real footprint from catalinas-meta.json: 64.59 m per column, 64.16 m per row */
+      const spanX = W * 64.5925, spanZ = H * 64.1593, half = spanX / 2;
+      vScale = params.exaggeration / half;               /* metres -> box units, times the factor */
+      grid = new Float32Array(L * S);
+      for (let i = 0; i < L; i++) {
+        const r0 = Math.floor(i * H / L), r1 = Math.max(r0 + 1, Math.floor((i + 1) * H / L));
+        for (let j = 0; j < S; j++) {
+          const c0 = Math.floor(j * W / S), c1 = Math.max(c0 + 1, Math.floor((j + 1) * W / S));
+          let sum = 0, n = 0;
+          for (let r = r0; r < r1; r++) for (let c = c0; c < c1; c++) { sum += e[r * W + c]; n++; }
+          grid[i * S + j] = sum / n - dem.min;
+        }
+      }
+      pts = new Float32Array(L * S * 3);
+      const zHalf = spanZ / spanX;
+      for (let i = 0; i < L; i++) {
+        const z = ((i + 0.5) / L * 2 - 1) * zHalf;
+        for (let j = 0; j < S; j++) {
+          const k = (i * S + j) * 3;
+          pts[k] = (j + 0.5) / S * 2 - 1; pts[k + 1] = grid[i * S + j] * vScale; pts[k + 2] = z;
+        }
+      }
+      scr = new Float32Array(L * S * 2);
+      summitFt = Math.round(dem.max * 3.28084);
+    }
+
+    function view() {
+      const A = yaw * Math.PI / 180, E = params.elevationDeg * Math.PI / 180, D = params.distance;
+      const tx = 0, ty = params.lookY, tz = 0;
+      const cx = tx + D * Math.cos(E) * Math.sin(A), cy = ty + D * Math.sin(E), cz = tz + D * Math.cos(E) * Math.cos(A);
+      let fx = tx - cx, fy = ty - cy, fz = tz - cz; const fl = Math.hypot(fx, fy, fz); fx /= fl; fy /= fl; fz /= fl;
+      let rx = -fz, rz = fx; const rl = Math.hypot(rx, rz); rx /= rl; rz /= rl;   /* right = forward x up (y up) */
+      const ux = -rz * fy, uy = rz * fx - rx * fz, uz = rx * fy;                  /* up = right x forward */
+      return { cx, cy, cz, fx, fy, fz, rx, rz, ux, uy, uz };
+    }
+
+    function draw() {
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.clearRect(0, 0, w, h);
+      if (!pts) return;
+      const T = ctx.tokens, V = view();
+      const vpX = ctx.vp.x * w, vpY = ctx.vp.y * h;
+      const f = Math.min(w * 1.7, h * 1.5) * params.fit;
+      /* project every sample */
+      for (let n = 0, m = L * S; n < m; n++) {
+        const k = n * 3, dx = pts[k] - V.cx, dy = pts[k + 1] - V.cy, dz = pts[k + 2] - V.cz;
+        const zc = dx * V.fx + dy * V.fy + dz * V.fz;
+        const xc = dx * V.rx + dz * V.rz, yc = dx * V.ux + dy * V.uy + dz * V.uz;
+        scr[n * 2] = vpX + f * xc / zc; scr[n * 2 + 1] = vpY - f * yc / zc;
+      }
+      const base = (x, z) => {
+        const dx = x - V.cx, dy = -V.cy, dz = z - V.cz;
+        const zc = dx * V.fx + dy * V.fy + dz * V.fz;
+        return [vpX + f * (dx * V.rx + dz * V.rz) / zc, vpY - f * (dx * V.ux + dy * V.uy + dz * V.uz) / zc];
+      };
+      /* the curtains are the planes z = const; the camera's z decides the painter's order (farthest first) */
+      const order = [];
+      for (let i = 0; i < L; i++) order.push(i);
+      const zOf = (i) => pts[(i * S) * 3 + 2];
+      order.sort((a, b) => Math.abs(zOf(b) - V.cz) - Math.abs(zOf(a) - V.cz));
+      const dNear = Math.abs(zOf(order[L - 1]) - V.cz), dFar = Math.max(dNear + 1e-3, Math.abs(zOf(order[0]) - V.cz));
+      g.lineJoin = 'round'; g.lineCap = 'round';
+      const halo = params.haloWidth * px, core = params.coreWidth * px;
+      for (let o = 0; o < L; o++) {
+        const i = order[o], z = zOf(i), row = i * S * 2;
+        const line = new Path2D();
+        line.moveTo(scr[row], scr[row + 1]);
+        for (let j = 1; j < S; j++) line.lineTo(scr[row + j * 2], scr[row + j * 2 + 1]);
+        /* the curtain: the wire, then down to the base at the east end, across, and up at the west end */
+        const curtain = new Path2D(line);
+        const bE = base(pts[(i * S + S - 1) * 3], z), bW = base(pts[(i * S) * 3], z);
+        curtain.lineTo(bE[0], bE[1]); curtain.lineTo(bW[0], bW[1]); curtain.closePath();
+        g.globalAlpha = 1; g.fillStyle = T.field; g.fill(curtain);
+        const q = (Math.abs(z - V.cz) - dNear) / (dFar - dNear);           /* 0 near, 1 far */
+        const a = 1 - (1 - params.farAlpha) * q;
+        g.strokeStyle = T.phosphor; g.lineWidth = halo; g.globalAlpha = a * params.haloAlpha; g.stroke(line);
+        g.strokeStyle = T.phosphorCore; g.lineWidth = core; g.globalAlpha = a * params.coreAlpha; g.stroke(line);
+      }
+      g.globalAlpha = 1;
+    }
+
+    function readout() {
+      if (!dem) return;
+      const a = ((yaw % 360) + 360 + 22.5) % 360;
+      const text = `${L} scanlines · ${dem.width} x ${dem.height} grid · summit ${summitFt.toLocaleString('en-US')} ft · ${params.exaggeration}x vertical · seen from the ${COMPASS[Math.floor(a / 45)]}`;
+      if (text !== lastReadout || sinceReadout > 0.5) { lastReadout = text; sinceReadout = 0; ctx.readout('relief', text); }
+    }
+
+    /* the host throttles readouts on the leading edge; one trailing emit makes sure the Still frame's line lands */
+    let flushT = 0;
+    const flushLater = () => { clearTimeout(flushT); flushT = setTimeout(() => { if (!dead) { lastReadout = ''; readout(); } }, 400); };
+    ctx.dem().then((d) => { if (dead) return; dem = d; build(); readout(); draw(); flushLater(); }).catch(() => {});
+
+    const nearestHome = () => params.homeDeg + Math.round((yaw - params.homeDeg) / 360) * 360;
+
+    return {
+      tick(dt, t, progress, pointer) {
+        const calm = ctx.dial === 'calm' ? 0.5 : 1;
+        /* drag: arms only when the move is clearly sideways (|dx| > 8 and |dx| > |dy|) */
+        if (pointer.down) {
+          if (!drag) drag = { x0: pointer.x, y0: pointer.y, yaw0: yaw, armed: false, dead: false };
+          const dx = pointer.x - drag.x0, dy = pointer.y - drag.y0;
+          if (!drag.armed && !drag.dead) {
+            if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) { drag.armed = true; drag.x0 = pointer.x; drag.yaw0 = yaw; }
+            else if (Math.abs(dy) > 8) drag.dead = true;                 /* a vertical gesture belongs to the page */
+          }
+          if (drag.armed) { yaw = drag.yaw0 - (pointer.x - drag.x0) * params.dragDegPerPx; mode = 'held'; idle = 0; }
+        } else if (drag) { drag = null; }
+        if (!drag || !drag.armed) {
+          idle += dt;
+          if (mode === 'held' && idle > params.returnAfter) mode = 'return';
+          if (mode === 'return') {
+            const target = nearestHome(), k = 1 - Math.exp(-dt / 0.6);
+            yaw += (target - yaw) * k;
+            if (Math.abs(target - yaw) < 0.05) { yaw = target; mode = 'rest'; idle = 0; }
+          } else if (mode === 'rest') {
+            if (idle > params.restAt) mode = 'orbit';
+          } else if (mode === 'orbit') {
+            yaw += params.orbitDegPerSec * calm * dt;
+          }
+        }
+        sinceReadout += dt; draw(); readout();
+      },
+      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); },
+      still() { yaw = params.homeDeg; mode = 'rest'; idle = 0; draw(); readout(); flushLater(); },
+      destroy() { dead = true; clearTimeout(flushT); g.clearRect(0, 0, w, h); grid = pts = scr = null; dem = null; },
+      params(p) {
+        const rebuild = p.lines !== params.lines || p.samples !== params.samples || p.exaggeration !== params.exaggeration;
+        params = p; if (rebuild) build(); lastReadout = ''; readout(); draw();
+      },
+    };
+  }
+  BAYS.push({ slug: 'relief', title: 'Relief', order: 5, role: 'bay', params: PARAMS, mount, dem: true });
+})();
+
+
+/* BONEYARD PART · 06 · TERMINATOR
+ * technique   a back-culled dotted sphere in orthographic projection with faint graticule, land drawn as denser and
+ *             brighter dots from a 1-degree land mask, lit by a Lambert term from the real sub-solar point so the
+ *             day line sits where it sits right now
+ * lineage     Elite's dotted planets (David Braben and Ian Bell, Acornsoft, 1984); the IRIX-era wireframe globe
+ *             (Silicon Graphics workstations, early 1990s)
+ * original    the sun is computed, not animated: solar declination plus the equation of time from the visitor's
+ *             clock place the sub-solar point, and the readout prints it with the sun's real altitude over Tucson,
+ *             whose one dot is amber; the sunlit limb is stroked amber in proportion to how lit it is; the globe is
+ *             centred on the site's shared vanishing point, so the pointer parallax that moves every other room
+ *             moves the planet too; drag spins it and it comes home to face Tucson
+ * not         precise: the low-precision solar formulas (Astronomical Almanac style) are good to about 0.1 degree, but
+ *             the drawn day line is a sharp Lambert edge with no refraction or twilight, which puts the visible
+ *             line up to about a degree from where the sun actually sets. The land mask is Natural Earth 110m
+ *             rasterised to 1 degree, so small islands and narrow coasts are coarse. No city lights: there is no data
+ *             for them here, so the night side is simply dim.
+ * deps        none · Canvas 2D · 2026-09
+ * budget      0.67 ms per full redraw @ 2160x1350 internal (1440x900 x1.5), 0.52 ms/frame on the parts counter while
+ *             dragging, 0.01 ms/frame idle (it redraws only on change); headless Chromium, software raster (2026-09-29); phone TBD
+ * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
+ * license     MIT, Desert Data Labs LLC
+ */
+/* HOW IT WORKS
+ * Two Fibonacci spheres give the dots: a sparse one kept everywhere (the ocean) and a dense one kept only where the
+ * land mask has a bit set, so continents read as crowded, brighter dots. The mask is 360 x 180 bits, row 0 at 90 N,
+ * column 0 at 180 W; it loads after mount, and the globe redraws when it arrives.
+ *
+ * The sun: from days since J2000 the sun's mean longitude and mean anomaly give its ecliptic longitude, then its
+ * declination and right ascension. The equation of time is mean longitude minus right ascension. The sub-solar point
+ * is at latitude = declination and longitude = 180 - 15 x UTC hours - equation of time (in degrees). Each dot's
+ * brightness is ambient plus the Lambert term max(0, n . s), binned into a handful of alpha levels so the whole globe
+ * is about twenty fills. Dots with a negative view-space z are behind the globe and are culled.
+ *
+ * Rotation brings Tucson (32.22 N, 110.97 W) to the centre of the disc. A horizontal drag (touch only once it is
+ * clearly sideways) spins the globe about its axis; released, it waits and eases back to face Tucson. Nothing moves
+ * on its own: the sun is recomputed every few seconds and the frame is redrawn only when something changed.
+ */
+(() => {
+  'use strict';
+  const PARAMS = {
+    radius: 0.31,        /* globe radius, fraction of height (and at most 0.36 of width) */
+    oceanDots: 2600,
+    landDots: 11000,     /* dense sphere, kept only over land */
+    ambient: 0.34,       /* night-side brightness */
+    oceanLevel: 0.55,    /* ocean dot brightness relative to land */
+    dotPx: 2,            /* land dot size, CSS px */
+    oceanPx: 1.3,
+    graticuleDeg: 30,
+    graticuleAlpha: 0.22,
+    limbAlpha: 0.85,     /* amber on the sunlit limb */
+    dayLine: true,       /* stroke the terminator great circle, faintly */
+    returnAfter: 1.8,    /* seconds after a drag before it turns home */
+    dragDegPerPx: 0.3,
+    sunEvery: 5,         /* seconds between sun recomputes while live */
+  };
+  const TUCSON = { lat: 32.22, lon: -110.97 };
+  const D2R = Math.PI / 180;
+
+  /* sub-solar point from a Date (low-precision solar coordinates, about 0.01 degree in declination) */
+  function sun(date) {
+    const n = date.getTime() / 86400000 + 2440587.5 - 2451545.0;
+    const L = ((280.460 + 0.9856474 * n) % 360 + 360) % 360;
+    const gA = ((357.528 + 0.9856003 * n) % 360) * D2R;
+    const lam = (L + 1.915 * Math.sin(gA) + 0.020 * Math.sin(2 * gA)) * D2R;
+    const eps = (23.439 - 0.0000004 * n) * D2R;
+    const dec = Math.asin(Math.sin(eps) * Math.sin(lam)) / D2R;
+    const ra = ((Math.atan2(Math.cos(eps) * Math.sin(lam), Math.cos(lam)) / D2R) + 360) % 360;
+    const eot = ((L - ra) % 360 + 540) % 360 - 180;                  /* degrees; x4 = minutes */
+    const ut = date.getUTCHours() + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
+    const lon = ((180 - 15 * ut - eot) % 360 + 540) % 360 - 180;
+    return { lat: dec, lon, eotMin: eot * 4 };
+  }
+  const unit = (lat, lon) => { const a = lat * D2R, b = lon * D2R; return [Math.cos(a) * Math.sin(b), Math.sin(a), Math.cos(a) * Math.cos(b)]; };
+  function fib(n) {
+    const out = new Float32Array(n * 2), ga = Math.PI * (3 - Math.sqrt(5));
+    for (let i = 0; i < n; i++) {
+      const y = 1 - (i + 0.5) / n * 2;
+      out[i * 2] = Math.asin(y) / D2R;
+      out[i * 2 + 1] = ((i * ga / D2R) % 360 + 540) % 360 - 180;
+    }
+    return out;
+  }
+  function maskUrls() {
+    const inParts = /\/parts\//.test(location.pathname);
+    const a = new URL('assets/land-mask.json', document.baseURI).href, b = new URL('../assets/land-mask.json', document.baseURI).href;
+    return inParts ? [b, a] : [a, b];
+  }
+  let maskPromise = null;
+  function loadMask() {
+    if (maskPromise) return maskPromise;
+    const urls = maskUrls();
+    const tryAt = (i) => fetch(urls[i]).then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .catch((err) => { if (i + 1 < urls.length) return tryAt(i + 1); throw err; });
+    maskPromise = tryAt(0).then((j) => {
+      const bin = atob(j.bits), bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const W = j.width || 360, H = j.height || 180;
+      return (lat, lon) => {
+        const r = Math.min(H - 1, Math.max(0, Math.floor((90 - lat) * H / 180)));
+        const c = ((Math.floor((lon + 180) * W / 360) % W) + W) % W;
+        const k = r * W + c;
+        return (bytes[k >> 3] >> (7 - (k & 7))) & 1;
+      };
+    }).catch((err) => { maskPromise = null; throw err; });
+    return maskPromise;
+  }
+  function placeLabel(lat, lon) {
+    const a = Math.abs(lat).toFixed(1) + (lat < 0 ? ' S' : ' N');
+    const b = Math.abs(lon).toFixed(1) + (lon < 0 ? ' W' : ' E');
+    return a + ', ' + b;
+  }
+
+  function mount(canvas, params, ctx) {
+    const g = canvas.getContext('2d', { alpha: true });
+    let w = canvas.width, h = canvas.height, px = 1, dead = false;
+    let land = null, ocean = fib(Math.round(params.oceanDots)), isLand = null, oceanKeep = null;
+    let S = sun(new Date()), sunAt = 0, sinceReadout = 0, spin = 0, drag = null, idle = 99, dirty = true, lastKey = '', lastReadout = '';
+
+    function prepare() {
+      if (!isLand) return;
+      const all = fib(Math.round(params.landDots)), keep = [];
+      for (let i = 0; i < all.length / 2; i++) if (isLand(all[i * 2], all[i * 2 + 1])) keep.push(all[i * 2], all[i * 2 + 1]);
+      land = new Float32Array(keep);
+      oceanKeep = new Uint8Array(ocean.length / 2);
+      for (let i = 0; i < oceanKeep.length; i++) oceanKeep[i] = isLand(ocean[i * 2], ocean[i * 2 + 1]) ? 0 : 1;
+    }
+    loadMask().then((fn) => { if (dead) return; isLand = fn; prepare(); dirty = true; draw(); }).catch(() => {});
+
+    const BINS = 7;
+    function draw() {
+      dirty = false;
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.clearRect(0, 0, w, h);
+      const T = ctx.tokens;
+      const R = Math.min(h * params.radius, w * 0.36), cx = ctx.vp.x * w, cy = ctx.vp.y * h;
+      const grow = Math.min(2, Math.max(1, R / (150 * px)));             /* dots keep their density on a big globe */
+      /* rotation: longitude so the facing meridian is at +z, then tilt by Tucson's latitude */
+      const lon0 = TUCSON.lon + spin, lat0 = TUCSON.lat * D2R, cl = Math.cos(lat0), sl = Math.sin(lat0);
+      const rot = (lat, lon, out) => {
+        const a = lat * D2R, b = (lon - lon0) * D2R, ca = Math.cos(a);
+        const x = ca * Math.sin(b), y = Math.sin(a), z = ca * Math.cos(b);
+        out[0] = x; out[1] = y * cl - z * sl; out[2] = y * sl + z * cl;
+      };
+      const v = [0, 0, 0], s = [0, 0, 0];
+      rot(S.lat, S.lon, s);
+      /* the disc: a faint fill so the globe reads as a body against the stars, and the dim limb */
+      g.globalAlpha = 1; g.fillStyle = T.field; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill();
+      /* graticule, front half only */
+      const grat = new Path2D(), step = params.graticuleDeg;
+      const seg = (fn) => { let pen = false; for (let u = 0; u <= 360; u += 4) { const [la, lo] = fn(u); rot(la, lo, v); if (v[2] > 0) { const X = cx + R * v[0], Y = cy - R * v[1]; if (pen) grat.lineTo(X, Y); else grat.moveTo(X, Y); pen = true; } else pen = false; } };
+      if (step > 0) {
+        for (let lo = -180; lo < 180; lo += step) seg((u) => [Math.min(90, u / 2 - 90), lo]);
+        for (let la = -90 + step; la < 90; la += step) seg((u) => [la, u - 180]);
+      }
+      g.lineWidth = 1 * px; g.strokeStyle = T.phosphor; g.globalAlpha = params.graticuleAlpha; g.stroke(grat);
+      /* dots, binned by brightness */
+      const paths = [[], []];
+      for (let b = 0; b < BINS; b++) { paths[0].push(new Path2D()); paths[1].push(new Path2D()); }
+      const put = (set, kind, keepArr) => {
+        if (!set) return;
+        const size = (kind ? params.oceanPx : params.dotPx) * px * grow, half = size / 2;
+        for (let i = 0, n = set.length / 2; i < n; i++) {
+          if (keepArr && !keepArr[i]) continue;
+          rot(set[i * 2], set[i * 2 + 1], v);
+          if (v[2] <= 0.02) continue;
+          const lit = Math.max(0, v[0] * s[0] + v[1] * s[1] + v[2] * s[2]);
+          const amb = kind ? params.ambient * 0.45 : params.ambient;          /* night ocean nearly black, night land still legible */
+          const lum = amb + (1 - amb) * lit;
+          const b = Math.min(BINS - 1, Math.floor(lum * BINS));
+          const k = 0.55 + 0.45 * v[2];                                /* foreshorten toward the limb */
+          paths[kind][b].rect(cx + R * v[0] - half * k, cy - R * v[1] - half, size * k, size);
+        }
+      };
+      put(land, 0, null);
+      put(ocean, 1, oceanKeep);
+      g.fillStyle = T.phosphorCore;
+      for (let kind = 0; kind < 2; kind++) {
+        const lvl = kind ? params.oceanLevel : 1;
+        for (let b = 0; b < BINS; b++) { g.globalAlpha = Math.min(1, ((b + 1) / BINS) * lvl); g.fill(paths[kind][b]); }
+      }
+      /* the day line: the great circle perpendicular to the sun, front half */
+      if (params.dayLine) {
+        const e1 = Math.abs(s[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
+        let ax = [s[1] * e1[2] - s[2] * e1[1], s[2] * e1[0] - s[0] * e1[2], s[0] * e1[1] - s[1] * e1[0]];
+        const al = Math.hypot(ax[0], ax[1], ax[2]); ax = ax.map((c) => c / al);
+        const bx = [s[1] * ax[2] - s[2] * ax[1], s[2] * ax[0] - s[0] * ax[2], s[0] * ax[1] - s[1] * ax[0]];
+        const dl = new Path2D(); let pen = false;
+        for (let u = 0; u <= 360; u += 3) {
+          const c = Math.cos(u * D2R), sn = Math.sin(u * D2R);
+          const x = ax[0] * c + bx[0] * sn, y = ax[1] * c + bx[1] * sn, z = ax[2] * c + bx[2] * sn;
+          if (z > 0) { const X = cx + R * x, Y = cy - R * y; if (pen) dl.lineTo(X, Y); else dl.moveTo(X, Y); pen = true; } else pen = false;
+        }
+        g.setLineDash([2 * px, 5 * px]); g.lineWidth = 1 * px; g.strokeStyle = T.amber; g.globalAlpha = 0.45; g.stroke(dl); g.setLineDash([]);
+      }
+      /* the limb: dim all round, amber where the sun lights it */
+      g.lineWidth = 1 * px; g.strokeStyle = T.phosphor; g.globalAlpha = 0.28;
+      g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.stroke();
+      const N = 144, limb = [new Path2D(), new Path2D(), new Path2D(), new Path2D()];
+      for (let i = 0; i < N; i++) {
+        const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2, am = (a0 + a1) / 2;
+        const lit = Math.cos(am) * s[0] + Math.sin(am) * s[1];            /* limb normal (cos, sin, 0), y up */
+        if (lit <= 0.02) continue;
+        const b = Math.min(3, Math.floor(lit * 4));
+        limb[b].moveTo(cx + R * Math.cos(a0), cy - R * Math.sin(a0)); limb[b].lineTo(cx + R * Math.cos(a1), cy - R * Math.sin(a1));
+      }
+      g.lineCap = 'round'; g.strokeStyle = T.amber;
+      for (let b = 0; b < 4; b++) {
+        const a = (b + 0.5) / 4 * params.limbAlpha;
+        g.lineWidth = 4 * px; g.globalAlpha = a * 0.22; g.stroke(limb[b]);
+        g.lineWidth = 1.4 * px; g.globalAlpha = a; g.stroke(limb[b]);
+      }
+      /* Tucson */
+      rot(TUCSON.lat, TUCSON.lon, v);
+      if (v[2] > 0) {
+        const X = cx + R * v[0], Y = cy - R * v[1];
+        g.fillStyle = T.amber;
+        g.globalAlpha = 0.25; g.beginPath(); g.arc(X, Y, 5 * px, 0, Math.PI * 2); g.fill();
+        g.globalAlpha = 1; g.beginPath(); g.arc(X, Y, 2.2 * px, 0, Math.PI * 2); g.fill();
+      }
+      g.globalAlpha = 1;
+    }
+
+    function readout() {
+      /* the sun's altitude over Tucson from the same sub-solar vector: sin(alt) = n_tucson . s */
+      const a = unit(TUCSON.lat, TUCSON.lon), b = unit(S.lat, S.lon);
+      const alt = Math.asin(Math.max(-1, Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2]))) / D2R;
+      const ha = ((TUCSON.lon - S.lon) % 360 + 540) % 360 - 180;         /* local solar hour angle, degrees */
+      const half = ha < 0 ? 'morning' : 'afternoon';
+      let when;
+      if (alt > -0.83) when = Math.abs(ha) < 7.5 ? 'midday' : half;
+      else if (alt > -18) when = ha < 0 ? 'dawn twilight' : 'dusk twilight';
+      else when = 'night';
+      const text = `sub-solar point ${placeLabel(S.lat, S.lon)} · Tucson: ${when}, sun ${Math.abs(Math.round(alt))}° ${alt >= 0 ? 'up' : 'down'}`;
+      if (text !== lastReadout || sinceReadout > 0.5) { lastReadout = text; sinceReadout = 0; ctx.readout('terminator', text); }
+    }
+
+    /* the host throttles readouts on the leading edge; one trailing emit makes sure the Still frame's line lands */
+    let flushT = 0;
+    const flushLater = () => { clearTimeout(flushT); flushT = setTimeout(() => { if (!dead) { lastReadout = ''; readout(); } }, 400); };
+
+    return {
+      tick(dt, t, progress, pointer) {
+        sunAt += dt;
+        if (sunAt > params.sunEvery) { sunAt = 0; S = sun(new Date()); dirty = true; readout(); }
+        if (pointer.down) {
+          if (!drag) drag = { x0: pointer.x, y0: pointer.y, spin0: spin, armed: false, dead: false };
+          const dx = pointer.x - drag.x0, dy = pointer.y - drag.y0;
+          if (!drag.armed && !drag.dead) {
+            if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) { drag.armed = true; drag.x0 = pointer.x; drag.spin0 = spin; }
+            else if (Math.abs(dy) > 8) drag.dead = true;
+          }
+          if (drag.armed) { const ns = drag.spin0 - (pointer.x - drag.x0) * params.dragDegPerPx; if (ns !== spin) { spin = ns; dirty = true; } idle = 0; }
+        } else if (drag) drag = null;
+        if (!drag || !drag.armed) {
+          idle += dt;
+          if (spin !== 0 && idle > params.returnAfter) {
+            const target = Math.round(spin / 360) * 360, k = 1 - Math.exp(-dt / (ctx.dial === 'calm' ? 1.0 : 0.5));
+            spin += (target - spin) * k;
+            if (Math.abs(target - spin) < 0.02) spin = 0;                 /* a whole turn is the same pose */
+            dirty = true;
+          }
+        }
+        /* redraw only on change: spin, sun, size, or the vanishing point moving under pointer parallax */
+        const key = `${w}x${h} ${ctx.vp.x.toFixed(4)} ${ctx.vp.y.toFixed(4)}`;
+        if (key !== lastKey) { lastKey = key; dirty = true; }
+        if (dirty) draw();
+        sinceReadout += dt; if (sinceReadout > 0.5) readout();
+      },
+      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); dirty = true; },
+      still() { spin = 0; S = sun(new Date()); draw(); lastReadout = ''; readout(); flushLater(); },
+      destroy() { dead = true; clearTimeout(flushT); g.clearRect(0, 0, w, h); land = ocean = oceanKeep = null; },
+      params(p) {
+        const reseed = p.oceanDots !== params.oceanDots || p.landDots !== params.landDots;
+        params = p;
+        if (reseed) { ocean = fib(Math.round(params.oceanDots)); prepare(); }
+        draw();
+      },
+    };
+  }
+  BAYS.push({ slug: 'terminator', title: 'Terminator', order: 6, role: 'bay', params: PARAMS, mount });
+})();
+
+
+/* BONEYARD PART · 07 · SCOPE
+ * technique   an oscilloscope in XY mode: X against Y traces a Lissajous figure on a phosphor that is faded, never
+ *             cleared; press-and-hold starts two WebAudio oscillators (left = X, right = Y) and the trace switches to
+ *             the actual samples read back from two AnalyserNodes
+ * lineage     Lissajous figures (Jules Antoine Lissajous, 1857); the oscilloscope's XY mode; oscilloscope music
+ *             (the 2010s practice of composing stereo sound whose two channels draw pictures on an XY scope)
+ * original    what you hear is exactly what you see: the held trace is the post-envelope signal on its way to your
+ *             speakers, so the attack grows the figure and the release shrinks it to a dot; pointer X detunes the
+ *             ratio and snaps gently toward 4:3, 3:2, 5:3 and 2:1; the site's only voice is one you are holding down
+ * not         a synthesizer, a music player, an autoplay tone. No AudioContext exists until a hold; nothing sounds
+ *             without one; peak gain 0.08. If audio is blocked the trace stays computed and says so.
+ * deps        none · Canvas 2D + Web Audio · 2026-09
+ * budget      0.16 ms/frame idle, 0.24 held (one-period sample trace) @ 1440x900 x1 internal; 0.14 / 0.17 @ 390x844; headless desktop
+ *             Chromium (2026-09-29), harness counter; phone TBD
+ * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
+ * license     MIT, Desert Data Labs LLC
+ */
+/* HOW IT WORKS
+ * Idle, the beam is computed: x = sin(2 pi r s + phase), y = sin(2 pi s), where r is the frequency ratio X:Y. Pointer X
+ * maps to r = 1.5 * 2^((x - 0.5) * span), so the middle of the screen (or no pointer at all) is exactly 3:2; within snapWidth of a simple ratio the value is pulled most of the way onto it,
+ * never all the way, so the figure still turns slowly. Each frame the canvas is washed with the field colour at a
+ * low alpha instead of cleared, the whole figure is laid down faintly, and a bright beam sweeps along it: the wash is
+ * the phosphor's persistence.
+ *
+ * Holding the pointer (or Space) creates or resumes an AudioContext inside that gesture, then starts two
+ * OscillatorNodes at base * r and base Hz into a ChannelMerger (X left, Y right), through one GainNode envelope
+ * (soft attack to about 0.08, soft release to zero), to the speakers. A ChannelSplitter after the envelope feeds two
+ * AnalyserNodes; while the voice lives, the trace is their time-domain samples plotted X against Y. Release ramps
+ * the gain down and stops the oscillators. A watchdog stops the voice if the ride stops ticking the room (switched
+ * off, hidden tab) while a hold is still down. destroy() closes the context.
+ */
+(() => {
+  'use strict';
+  const PARAMS = {
+    base: 110,            /* Hz, the Y oscillator */
+    span: 0.83,           /* pointer X across the screen = this many octaves of ratio, centred on 3:2 */
+    snapWidth: 0.055,     /* ratio distance inside which the pull starts */
+    snapPull: 0.88,       /* how far onto the simple ratio (1 would lock it) */
+    drift: 0.16,          /* idle phase drift, radians per second (Calm halves) */
+    sweep: 0.9,           /* idle beam: full figures per second (Calm halves) */
+    fade: 0.085,          /* field wash per frame: lower = longer persistence, but an 8-bit wash stalls about 0.5 / fade levels above the field */
+    radius: 0.3,          /* of the smaller canvas side */
+    haloWidth: 3.2, coreWidth: 1.1,
+    haloAlpha: 0.14, coreAlpha: 0.7,
+    ghostAlpha: 0.05,     /* the whole figure, laid down every frame */
+    gridAlpha: 0.03,
+    peak: 0.08, attack: 0.07, release: 0.28,
+    fftSize: 2048,
+  };
+  const SIMPLE = [[4, 3], [3, 2], [5, 3], [2, 1]];
+  const CYCLES = 6;       /* y cycles drawn: closes every ratio in SIMPLE */
+
+  function mount(canvas, params, ctx) {
+    const g = canvas.getContext('2d', { alpha: true });
+    let w = canvas.width, h = canvas.height, px = 1;
+    let phase = 0.35, sweepS = 0, ratio = 1.5, lastTick = -1e9, lastText = '', sentAt = 0;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    let ac = null, chain = null, voice = null, blocked = false, dog = 0, dead = false;
+    let bufX = null, bufY = null;
+    const inParts = /\/parts\//.test(location.pathname);
+
+    /* ---------- ratio: pointer X, snapped gently ---------- */
+    function nearest(r) {
+      let best = SIMPLE[0], d = Infinity;
+      for (const s of SIMPLE) { const e = Math.abs(r - s[0] / s[1]); if (e < d) { d = e; best = s; } }
+      return best;
+    }
+    function ratioFrom(nx) {
+      const raw = 1.5 * Math.pow(2, (Math.min(1, Math.max(0, nx)) - 0.5) * params.span);
+      const s = nearest(raw), target = s[0] / s[1], d = Math.abs(raw - target);
+      if (d >= params.snapWidth) return raw;
+      const k = 1 - d / params.snapWidth;
+      return raw + (target - raw) * params.snapPull * k * k * (3 - 2 * k);
+    }
+    function label(r) {
+      const s = nearest(r);
+      return Math.abs(r - s[0] / s[1]) < 0.0045 ? `${s[0]}:${s[1]}` : r.toFixed(3);
+    }
+
+    /* ---------- audio: created only inside the hold gesture ---------- */
+    function unlock() {
+      if (!AC || dead) return;
+      try { if (!ac) ac = new AC({ latencyHint: 'interactive' }); } catch (_) { blocked = true; return; }
+      if (ac.state === 'suspended') ac.resume().then(() => { blocked = false; }, () => { blocked = true; });
+    }
+    function onGesture(e) {
+      if (performance.now() - lastTick > 250 || ctx.dial === 'still') return;   /* only while this room is live */
+      const tg = e.target && e.target.closest ? e.target : null;
+      if (e.type === 'keydown') {
+        if (e.key !== ' ' || e.repeat || e.altKey || e.ctrlKey || e.metaKey) return;
+        if (tg && tg.closest('input, select, textarea, button, a')) return;
+      } else {
+        if (e.button !== 0) return;
+        if (tg && tg.closest(inParts ? 'main, a, button, input' : '#hud, #dev, a, button, input')) return;
+      }
+      unlock();
+    }
+    addEventListener('pointerdown', onGesture, { capture: true, passive: true });
+    addEventListener('keydown', onGesture, { capture: true, passive: true });
+
+    function build() {
+      const merger = ac.createChannelMerger(2);
+      const env = ac.createGain(); env.gain.value = 0;
+      const split = ac.createChannelSplitter(2);
+      const ax = ac.createAnalyser(), ay = ac.createAnalyser();
+      ax.fftSize = ay.fftSize = params.fftSize;
+      merger.connect(env); env.connect(ac.destination); env.connect(split);
+      split.connect(ax, 0); split.connect(ay, 1);
+      bufX = new Float32Array(ax.fftSize); bufY = new Float32Array(ay.fftSize);
+      chain = { merger, env, ax, ay };
+    }
+    function startVoice() {
+      if (!ac || ac.state === 'closed') return;
+      if (!chain) build();
+      const now = ac.currentTime;
+      const ox = ac.createOscillator(), oy = ac.createOscillator();
+      ox.frequency.value = params.base * ratio; oy.frequency.value = params.base;
+      ox.connect(chain.merger, 0, 0); oy.connect(chain.merger, 0, 1);
+      const gn = chain.env.gain;
+      gn.cancelScheduledValues(now); gn.setValueAtTime(gn.value, now);
+      gn.setTargetAtTime(params.peak, now, params.attack / 3);
+      ox.start(now); oy.start(now);
+      voice = { ox, oy, releasedAt: 0, until: Infinity };
+    }
+    function releaseVoice() {
+      if (!voice || voice.releasedAt) return;
+      const now = ac.currentTime, gn = chain.env.gain;
+      gn.cancelScheduledValues(now); gn.setValueAtTime(gn.value, now);
+      gn.setTargetAtTime(0, now, params.release / 4);
+      const end = now + params.release * 1.6;
+      try { voice.ox.stop(end); voice.oy.stop(end); } catch (_) {}
+      voice.releasedAt = performance.now(); voice.until = voice.releasedAt + params.release * 1600 + 60;
+    }
+    function watchdog() { clearTimeout(dog); if (voice && !voice.releasedAt) dog = setTimeout(releaseVoice, 300); }
+
+    /* ---------- drawing ---------- */
+    const geom = () => ({ cx: w / 2, cy: h * 0.46, R: Math.min(w, h) * params.radius });
+    function wash(a) {
+      g.globalCompositeOperation = 'source-over';
+      g.globalAlpha = a; g.fillStyle = ctx.tokens.field; g.fillRect(0, 0, w, h);
+      g.globalAlpha = 1;
+    }
+    function graticule(a) {
+      const { cx, cy, R } = geom(), T = ctx.tokens, p = new Path2D(), step = R / 4, span = R * 1.25;
+      for (let i = -5; i <= 5; i++) { const o = i * step; p.moveTo(cx + o, cy - span); p.lineTo(cx + o, cy + span); }
+      for (let i = -5; i <= 5; i++) { const o = i * step; if (Math.abs(o) > span) continue; p.moveTo(cx - R * 1.25, cy + o); p.lineTo(cx + R * 1.25, cy + o); }
+      g.globalAlpha = a; g.strokeStyle = T.phosphorDim || T.phosphor; g.lineWidth = Math.max(1, px * 0.8); g.stroke(p);
+      g.globalAlpha = 1;
+    }
+    function beam(path, halo, core) {
+      const T = ctx.tokens;
+      g.globalCompositeOperation = 'lighter'; g.lineCap = 'round'; g.lineJoin = 'round';
+      g.strokeStyle = T.phosphor; g.globalAlpha = halo; g.lineWidth = params.haloWidth * px; g.stroke(path);
+      g.strokeStyle = T.phosphorCore; g.globalAlpha = core; g.lineWidth = params.coreWidth * px; g.stroke(path);
+      g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    }
+    function curve(r, ph, s0, s1, n) {
+      const { cx, cy, R } = geom(), p = new Path2D(), TAU = Math.PI * 2;
+      for (let i = 0; i <= n; i++) {
+        const s = s0 + (s1 - s0) * i / n;
+        const x = cx + R * Math.sin(TAU * r * s + ph), y = cy - R * Math.sin(TAU * s);
+        if (i) p.lineTo(x, y); else p.moveTo(x, y);
+      }
+      return p;
+    }
+    function samples() {
+      const { cx, cy, R } = geom(), p = new Path2D(), k = R / params.peak;
+      chain.ax.getFloatTimeDomainData(bufX); chain.ay.getFloatTimeDomainData(bufY);
+      /* the newest samples covering one period of the nearest simple figure (q cycles of Y), a little over */
+      const q = nearest(ratio)[1], n = Math.min(bufX.length, Math.ceil(ac.sampleRate * q / params.base * 1.04));
+      let amp = 0;
+      for (let i = bufX.length - n; i < bufX.length; i++) {
+        const x = cx + bufX[i] * k, y = cy - bufY[i] * k;
+        if (i > bufX.length - n) p.lineTo(x, y); else p.moveTo(x, y);
+        amp = Math.max(amp, Math.abs(bufX[i]), Math.abs(bufY[i]));
+      }
+      return { p, amp };
+    }
+    function say(held) {
+      const r = ratio, fx = params.base * r;
+      let tail = 'hold to hear it';
+      if (held && voice && ac && ac.state === 'running') tail = 'sounding, trace is the live signal';
+      else if (held && (!AC || blocked || (ac && ac.state !== 'running'))) tail = 'audio blocked, trace is computed';
+      const text = `ratio ${label(r)} · X ${fx.toFixed(1)} Hz · Y ${params.base} Hz · ${tail}`;
+      const now = performance.now();   /* re-send twice a second: the HUD throttle drops, it does not defer */
+      if (text !== lastText || now - sentAt > 500) { lastText = text; sentAt = now; ctx.readout('scope', text); }
+    }
+
+    return {
+      tick(dt, t, progress, pointer) {
+        lastTick = performance.now();
+        const calm = ctx.dial === 'calm' ? 0.5 : 1;
+        const held = !!(pointer && pointer.down);
+        const target = ratioFrom(pointer && pointer.present ? pointer.nx : 0.5);
+        ratio += (target - ratio) * (1 - Math.exp(-dt / 0.12));
+        /* audio follows the hold, and only the hold */
+        if (held && !voice && ac && ac.state !== 'closed') startVoice();
+        if (!held && voice) releaseVoice();
+        if (voice && !voice.releasedAt) {
+          const now = ac.currentTime;
+          voice.ox.frequency.setTargetAtTime(params.base * ratio, now, 0.04);
+        }
+        if (voice && voice.releasedAt && performance.now() > voice.until) voice = null;
+        watchdog();
+        /* idle phase: a slow drift, plus the residual detune off the nearest simple ratio */
+        const s = nearest(ratio);
+        phase += (params.drift * calm + (ratio - s[0] / s[1]) * 2.2) * dt;
+        wash(params.fade);
+        graticule(params.gridAlpha);
+        const live = voice && ac && ac.state === 'running';
+        if (live) {
+          const { p } = samples();
+          beam(p, params.haloAlpha * 1.2, params.coreAlpha);
+        } else {
+          beam(curve(ratio, phase, 0, CYCLES, 900), params.ghostAlpha * 0.4, params.ghostAlpha);
+          const s0 = sweepS, s1 = sweepS + params.sweep * calm * CYCLES * dt;
+          sweepS = s1 % CYCLES;
+          beam(curve(ratio, phase, s0, s1, 48), params.haloAlpha, params.coreAlpha);
+        }
+        say(held);
+      },
+      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); },
+      still() {
+        /* the designed frame: a 3:2 figure at full persistence, older passes fainter */
+        g.setTransform(1, 0, 0, 1, 0, 0);
+        g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+        g.clearRect(0, 0, w, h); g.fillStyle = ctx.tokens.field; g.fillRect(0, 0, w, h);
+        graticule(0.16);
+        const N = 14;
+        for (let i = N; i >= 1; i--) { const a = Math.pow(1 - i / (N + 1), 2); beam(curve(1.5, 0.35 - i * 0.012, 0, 2, 480), params.haloAlpha * a * 0.6, params.coreAlpha * a * 0.35); }
+        beam(curve(1.5, 0.35, 0, 2, 480), params.haloAlpha * 1.3, params.coreAlpha);
+        ratio = 1.5; phase = 0.35;
+        const text = `ratio 3:2 · X ${(params.base * 1.5).toFixed(1)} Hz · Y ${params.base} Hz · still frame`;
+        lastText = text; ctx.readout('scope', text);
+      },
+      destroy() {
+        dead = true;
+        clearTimeout(dog);
+        removeEventListener('pointerdown', onGesture, { capture: true });
+        removeEventListener('keydown', onGesture, { capture: true });
+        if (voice) { try { voice.ox.stop(); voice.oy.stop(); } catch (_) {} voice = null; }
+        if (ac) { try { ac.close(); } catch (_) {} ac = null; }
+        chain = null; bufX = bufY = null;
+        g.clearRect(0, 0, w, h);
+      },
+      params(p) { params = p; if (chain) { try { chain.ax.fftSize = chain.ay.fftSize = p.fftSize; } catch (_) { return; } bufX = new Float32Array(p.fftSize); bufY = new Float32Array(p.fftSize); } },
+    };
+  }
+  BAYS.push({ slug: 'scope', title: 'Scope', order: 7, role: 'bay', params: PARAMS, mount });
+})();
+
+
+/* BONEYARD PART · 08 · MARK
+ * technique   glenz vectors: a low-poly solid whose faces are translucent, painter-sorted by depth and filled
+ *             additively, so the back faces show through the front ones and pile up as light; edges stroked on top
+ * lineage     Amiga demoscene glenz vectors (about 1989 to 1990)
+ * original    the solid is the Desert Data Labs chip mark from ddl-cactus-mark.svg: the rounded square as a slab,
+ *             with the saguaro circuit (trunk, the two arms that close into a diamond, the node, the ground rail)
+ *             extruded off its face; 57 faces; projected toward the shared vanishing point so the keepsake sits in
+ *             the same space as every pylon on the way in; drag to turn it, and it eases back to its slow spin
+ * not         a textured logo render, a physics toy, a Boing ball. No lighting model beyond facing, no text.
+ * deps        none · Canvas 2D · 2026-09
+ * budget      0.30 ms/frame @ 1440x900 x1 internal; 0.37 @ 390x844; headless desktop Chromium (2026-09-29), harness counter;
+ *             phone TBD
+ * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
+ * license     MIT, Desert Data Labs LLC
+ */
+/* HOW IT WORKS
+ * The mark is built once in the SVG's own units (a 96 unit box, centre 48,48, y flipped to point up): the rounded
+ * square is a 16-sided slab with three segments per corner, and each stroke of the glyph is a box extruded a few
+ * units off the slab's face (the node is an octagonal prism that stands a little proud). Every face keeps an outward
+ * winding, so after the spin (yaw about Y, a fixed pitch about X) its normal says whether it faces the viewer.
+ *
+ * Each frame the faces are sorted far to near by mean depth and filled with 'lighter' compositing at a low alpha:
+ * front faces in phosphor, back faces dimmer, so wherever faces overlap the light adds up. Hard edges are then
+ * stroked, back edges faint and front edges bright; the slab's rounded rim gets no seam lines. Horizontal drag turns
+ * the solid (on touch only once the finger has moved more than 8 px and more sideways than down, so scrolling
+ * still scrolls); on release the spin eases back to the slow cruise. still() draws the 30 degree pose.
+ */
+(() => {
+  'use strict';
+  const PARAMS = {
+    spin: 0.42,          /* radians per second at cruise (Calm halves) */
+    pitch: 0.24,         /* radians, fixed tilt toward the viewer */
+    sway: 0.05,          /* pitch sway amplitude, Full only */
+    size: 0.24,          /* half-width of the chip, as a share of the smaller canvas side (portrait: of the width) */
+    camDist: 5.2,        /* camera distance in chip half-widths */
+    slab: 5,             /* half thickness, SVG units */
+    relief: 4.5,         /* glyph height off the face, SVG units */
+    frontAlpha: 0.17, backAlpha: 0.09, glyphAlpha: 0.34,
+    edgeFront: 0.75, edgeBack: 0.22, edgeWidth: 1.1,
+    settle: 1.4,         /* seconds for a flicked spin to ease back */
+    stillYaw: 30,        /* degrees */
+  };
+
+  /* ---------- geometry, built once in SVG units ---------- */
+  function build(P) {
+    const faces = [];
+    const area = (pts) => { let a = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; a += p[0] * q[1] - q[0] * p[1]; } return a; };
+    const ccw = (pts) => (area(pts) < 0 ? pts.slice().reverse() : pts);
+    /* extrude a 2-D polygon between z0 and z1; bottom cap optional; smooth = no seam strokes on the sides */
+    function prism(poly, z0, z1, kind, opts) {
+      const pts = ccw(poly), n = pts.length, o = opts || {};
+      faces.push({ v: pts.map((p) => [p[0], p[1], z1]), kind, edges: true });
+      if (o.bottom) faces.push({ v: pts.map((p) => [p[0], p[1], z0]).reverse(), kind, edges: true });
+      for (let i = 0; i < n; i++) {
+        const a = pts[i], b = pts[(i + 1) % n];
+        faces.push({ v: [[a[0], a[1], z0], [b[0], b[1], z0], [b[0], b[1], z1], [a[0], a[1], z1]], kind, edges: !o.smooth });
+      }
+    }
+    const S = (x, y) => [x - 48, 48 - y];                 /* SVG -> model, y up */
+    /* the slab: rect 5.5..90.5, rx 22, three segments per corner */
+    const half = 42.5, r = 22, slab = [];
+    const corners = [[half - r, half - r, 0], [-(half - r), half - r, 0.5], [-(half - r), -(half - r), 1], [half - r, -(half - r), 1.5]];
+    for (const [cx, cy, q] of corners) for (let k = 0; k <= 3; k++) { const a = (q + k / 6) * Math.PI; slab.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); }
+    prism(slab, -P.slab, P.slab, 'slab', { bottom: true, smooth: true });
+    /* a stroke of the glyph: a box of width wd from A to B, square-capped by cap units */
+    const bar = (A, B, wd, cap) => {
+      const dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, nx = -uy * wd / 2, ny = ux * wd / 2;
+      const a = [A[0] - ux * cap, A[1] - uy * cap], b = [B[0] + ux * cap, B[1] + uy * cap];
+      return [[a[0] + nx, a[1] + ny], [b[0] + nx, b[1] + ny], [b[0] - nx, b[1] - ny], [a[0] - nx, a[1] - ny]];
+    };
+    const z0 = P.slab, z1 = P.slab + P.relief;
+    prism(bar(S(48, 22), S(48, 76), 4, 2), z0, z1, 'glyph');           /* trunk */
+    const d = [S(48, 31), S(59, 41), S(48, 51), S(37, 41)];              /* the arms, closing into the diamond */
+    for (let i = 0; i < 4; i++) prism(bar(d[i], d[(i + 1) % 4], 4, 1.2), z0, z1, 'glyph');
+    prism(bar(S(36, 76), S(60, 76), 4, 2), z0, z1, 'glyph');           /* ground rail */
+    const node = [], c = S(48, 41);                                       /* the node, standing proud */
+    for (let k = 0; k < 8; k++) { const a = (k + 0.5) / 8 * Math.PI * 2; node.push([c[0] + 3.8 * 1.08 * Math.cos(a), c[1] + 3.8 * 1.08 * Math.sin(a)]); }
+    prism(node, z0, z1 + 2.2, 'node');
+    return faces;
+  }
+
+  function mount(canvas, params, ctx) {
+    const g = canvas.getContext('2d', { alpha: true });
+    let w = canvas.width, h = canvas.height, px = 1;
+    let faces = build(params), yaw = params.stillYaw * Math.PI / 180, vel = params.spin, pitch = params.pitch;
+    let drag = null, lastText = '', sentAt = 0;
+    const out = [];
+
+    function draw() {
+      const T = ctx.tokens;
+      const cx = ctx.vp.x * w, cy = ctx.vp.y * h;
+      const R = Math.min(w * params.size * 1.25, h * params.size), D = params.camDist * 42.5, f = R * (D - params.slab) / 42.5;   /* the front face plane projects at R */
+      const cyw = Math.cos(yaw), syw = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+      out.length = 0;
+      let away = 0;
+      for (const fc of faces) {
+        const n = fc.v.length, sx = new Array(n), sy = new Array(n), cam = new Array(n);
+        let zs = 0;
+        for (let i = 0; i < n; i++) {
+          const [x, y, z] = fc.v[i];
+          const x1 = x * cyw + z * syw, z1 = -x * syw + z * cyw;          /* yaw about Y */
+          const y2 = y * cp + z1 * sp, z2 = -y * sp + z1 * cp;            /* pitch about X: top leans away */
+          cam[i] = [x1, y2, z2]; zs += z2;
+          const k = f / (D - z2);
+          sx[i] = cx + x1 * k; sy[i] = cy - y2 * k;
+        }
+        /* Newell normal in camera space; facing = normal toward the eye at (0, 0, D) */
+        let nx = 0, ny = 0, nz = 0;
+        for (let i = 0; i < n; i++) { const a = cam[i], b = cam[(i + 1) % n]; nx += (a[1] - b[1]) * (a[2] + b[2]); ny += (a[2] - b[2]) * (a[0] + b[0]); nz += (a[0] - b[0]) * (a[1] + b[1]); }
+        const p0 = cam[0], vx = -p0[0], vy = -p0[1], vz = D - p0[2];
+        const nl = Math.hypot(nx, ny, nz) || 1, vl = Math.hypot(vx, vy, vz) || 1;
+        const facing = (nx * vx + ny * vy + nz * vz) / (nl * vl);
+        if (facing <= 0) away++;
+        out.push({ sx, sy, z: zs / n, facing, kind: fc.kind, edges: fc.edges });
+      }
+      out.sort((a, b) => a.z - b.z);                                     /* painter: far first */
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+      g.clearRect(0, 0, w, h); g.fillStyle = T.field; g.fillRect(0, 0, w, h);
+      g.globalCompositeOperation = 'lighter';
+      const front = new Path2D(), back = new Path2D();
+      for (const o of out) {
+        const p = new Path2D();
+        p.moveTo(o.sx[0], o.sy[0]);
+        for (let i = 1; i < o.sx.length; i++) p.lineTo(o.sx[i], o.sy[i]);
+        p.closePath();
+        const lit = o.facing > 0;
+        const base = o.kind === 'slab' ? (lit ? params.frontAlpha : params.backAlpha) : (lit ? params.glyphAlpha : params.backAlpha);
+        g.globalAlpha = base * (0.45 + 0.55 * Math.abs(o.facing));
+        g.fillStyle = lit ? (o.kind === 'slab' ? T.phosphor : T.phosphorCore) : (T.phosphorDim || T.phosphor);
+        g.fill(p);
+        if (o.edges) (lit ? front : back).addPath(p);
+      }
+      g.lineJoin = 'round';
+      g.lineWidth = params.edgeWidth * px;
+      g.strokeStyle = T.phosphorDim || T.phosphor; g.globalAlpha = params.edgeBack; g.stroke(back);
+      g.strokeStyle = T.phosphorCore; g.globalAlpha = params.edgeFront; g.stroke(front);
+      g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+      const deg = ((yaw * 180 / Math.PI) % 360 + 360) % 360;
+      const text = `yaw ${Math.round(deg)}° · ${faces.length} faces · ${away} facing away`;
+      const now = performance.now();   /* re-send twice a second: the HUD throttle drops, it does not defer */
+      if (text !== lastText && now - sentAt > 150 || now - sentAt > 500) { lastText = text; sentAt = now; ctx.readout('mark', text); }
+    }
+
+    return {
+      tick(dt, t, progress, pointer) {
+        const calm = ctx.dial === 'calm';
+        const cruise = params.spin * (calm ? 0.5 : 1);
+        const cssW = Math.max(1, w / px);
+        if (pointer && pointer.down) {
+          if (!drag) drag = { x0: pointer.x, y0: pointer.y, last: pointer.x, armed: !pointer.coarse };
+          if (!drag.armed) {
+            const dx = pointer.x - drag.x0, dy = pointer.y - drag.y0;
+            if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) { drag.armed = true; drag.last = pointer.x; }
+          }
+          if (drag.armed) {
+            const d = (pointer.x - drag.last) / cssW * Math.PI * 1.6;
+            drag.last = pointer.x;
+            yaw += d;
+            const v = dt > 0 ? d / dt : 0;
+            vel += (v - vel) * (1 - Math.exp(-dt / 0.06));
+          } else {
+            vel += (cruise - vel) * (1 - Math.exp(-dt / (params.settle / 3)));
+            yaw += vel * dt;
+          }
+        } else {
+          drag = null;
+          vel = Math.max(-12, Math.min(12, vel));
+          vel += (cruise - vel) * (1 - Math.exp(-dt / (params.settle / 3)));
+          yaw += vel * dt;
+        }
+        pitch = params.pitch + (calm ? 0 : params.sway * Math.sin(t * 0.37));
+        draw();
+      },
+      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); },
+      still() { yaw = params.stillYaw * Math.PI / 180; pitch = params.pitch; vel = params.spin; draw(); },
+      destroy() { g.clearRect(0, 0, w, h); faces = []; out.length = 0; },
+      params(p) { params = p; faces = build(p); },
+    };
+  }
+  BAYS.push({ slug: 'mark', title: 'Mark', order: 8, role: 'bay', params: PARAMS, mount });
 })();
 
 

@@ -8,6 +8,16 @@
 <meta property="og:title" content="__TITLE__ · a BONEYARD part">
 <meta property="og:description" content="__DESCRIPTION__">
 <meta property="og:type" content="website">
+<meta property="og:url" content="__CANONICAL__">
+<meta property="og:image" content="__OG_IMAGE__">
+<meta property="og:image:type" content="__OG_TYPE__">
+<meta property="og:image:width" content="__OG_W__">
+<meta property="og:image:height" content="__OG_H__">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="__TITLE__ · a BONEYARD part">
+<meta name="twitter:description" content="__DESCRIPTION__">
+<meta name="twitter:image" content="__OG_IMAGE__">
+<link rel="canonical" href="__CANONICAL__">
 <meta name="theme-color" content="#030509">
 <style>
 __TOKENS__
@@ -98,7 +108,19 @@ __MODULE__
   const m = window.BAYS.find((x) => x.slug === SLUG) || window.BAYS[window.BAYS.length - 1];
   const canvas = document.getElementById('part'), host = document.getElementById('dom-host');
   const tweaks = document.getElementById('tweaks'), ctl = document.getElementById('ctl'), live = document.getElementById('live'), stillBox = document.getElementById('still');
-  const ctx = makeCtx({ demUrl: '../assets/catalinas-dem.png' });
+  /* assets: this page runs at parts/<slug>.html (assets are ../assets/) AND lifted into any folder next to a
+     copy of assets/ (assets are assets/). Try the likelier base first, fall back to the other; both are this
+     page's own origin, so the lift test's "no other hosts" holds either way. ctx.assetBases carries the same
+     ordered list for a module that loads its own file (sunset strip, land mask). */
+  const inParts = /\/parts\/[^/]*$/.test(location.pathname);
+  const ASSET_BASES = inParts ? ['../assets/', 'assets/'] : ['assets/', '../assets/'];
+  const ctx = makeCtx({ demUrl: ASSET_BASES[0] + 'catalinas-dem.png' });
+  ctx.assetBases = ASSET_BASES.slice();
+  ctx.dem = (() => {
+    let p = null;
+    return () => p || (p = ASSET_BASES.reduce((acc, base) => acc.catch(() => BONEYARD.demLoader(base + 'catalinas-dem.png')()), Promise.reject(new Error('no DEM')))
+      .catch((err) => { p = null; throw err; }));
+  })();
   const rmq = matchMedia('(prefers-reduced-motion: reduce)');
   ctx.dial = rmq.matches ? 'still' : 'full';
   stillBox.checked = ctx.dial === 'still';
@@ -121,8 +143,16 @@ __MODULE__
   });
   addEventListener('blur', () => ctx.keys.clear());
   const readoutEl = document.getElementById('part-readout');
-  let readAt = 0;
-  ctx.onReadout = (slug) => { const n = performance.now(); if (n - readAt < 150) return; readAt = n; readoutEl.textContent = ctx.readouts[slug] || ''; };
+  /* throttled to ~7/s, TRAILING edge: a call inside the window schedules one paint for when it closes, so the
+     last value always lands (a still frame that reports once right after load must not stay blank) */
+  let readAt = 0, readTimer = 0, readSlug = SLUG;
+  const paintReadout = () => { readTimer = 0; readAt = performance.now(); readoutEl.textContent = ctx.readouts[readSlug] || ''; };
+  ctx.onReadout = (slug) => {
+    readSlug = slug;
+    const wait = 150 - (performance.now() - readAt);
+    if (wait <= 0) { if (readTimer) { clearTimeout(readTimer); } paintReadout(); }
+    else if (!readTimer) readTimer = setTimeout(paintReadout, wait);
+  };
 
   function size() {
     W = innerWidth; H = innerHeight; const dpr = dprCap(); ctx.dpr = dpr * ctx.scale;
