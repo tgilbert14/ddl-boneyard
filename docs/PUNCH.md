@@ -40,7 +40,7 @@ still controllable.
    faster dolly.
 6. **SCOPE**: fat, multi-pass trace (3 to 5 persistent copies), brighter core, bigger figure,
    ratio morphs visibly as the pointer moves.
-7. **Sound (opt-in)**: a SOUND toggle in the HUD. When on: a low synth engine hum whose pitch
+7. **Sound (ON by default, Tim 2026-09-30: "we should start with sound on")**: the SOUND button starts pressed and audio begins on the visitor's first click, tap or key (browsers allow nothing sooner; scroll is not a gesture). An explicit off is remembered. Reduced motion or the Still dial default to off. Original text follows: a SOUND toggle in the HUD. When on: a low synth engine hum whose pitch
    follows scroll speed, a clunk on every tube switch, a rising whoosh on hyperspace, and SCOPE's
    tone as before. All synthesized in WebAudio (no files, no network). Remembered per device.
    Off by default; muted on hidden tab; volume sane.
