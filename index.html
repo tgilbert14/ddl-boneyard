@@ -517,12 +517,12 @@ html.js .bay:is([data-slug="range"], [data-slug="relief"], [data-slug="terminato
 .dial input:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 
 /* Auto-fly and Sound: visible buttons next to the dial (24-sound.js wires #sound's click, pressed state and label) */
-.autofly, .sound { min-height: 34px; padding: 0 12px;
+#autofly, #sound { min-height: 34px; padding: 0 12px;
   font: inherit; letter-spacing: inherit; text-transform: inherit; text-shadow: none; color: var(--ink-dim); background: var(--scrim);
   border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; transition: color 160ms, border-color 160ms; }
-.autofly:hover:not(:disabled), .sound:hover:not(:disabled) { color: var(--ink); border-color: var(--phosphor-dim); }
-.autofly[aria-pressed="true"], .sound[aria-pressed="true"] { color: var(--amber-hot); border-color: var(--amber); box-shadow: 0 0 10px -2px var(--amber-glow); }
-.autofly:disabled, .sound:disabled { color: color-mix(in srgb, var(--ink-dim) 70%, var(--field)); cursor: default; }
+#autofly:hover:not(:disabled), #sound:hover:not(:disabled) { color: var(--ink); border-color: var(--phosphor-dim); }
+#autofly[aria-pressed="true"], #sound[aria-pressed="true"] { color: var(--amber-hot); border-color: var(--amber); box-shadow: 0 0 10px -2px var(--amber-glow); }
+#autofly:disabled, #sound:disabled { color: color-mix(in srgb, var(--ink-dim) 70%, var(--field)); cursor: default; }
 
 /* the index strip: eight ticks, real links, bottom right. Amber = visited (yours), phosphor = here. */
 .index { bottom: calc(var(--greet-h) + 10px); right: var(--hud-pad); margin: 0; padding: 0; list-style: none;
@@ -616,7 +616,7 @@ html.dev #dev { display: flex; }
   .hud__live { display: block; white-space: normal; }
   .dial label { min-width: 0; padding: 8px 8px; min-height: 32px; }
   .hud__bl { gap: 8px; }
-  .autofly, .sound { min-height: 32px; padding: 0 9px; font-size: 10px; }
+  #autofly, #sound { min-height: 32px; padding: 0 9px; font-size: 10px; }
   .index { bottom: calc(var(--greet-h) + 10px + 42px); gap: 3px; }
   .index a { width: 24px; height: 30px; line-height: 30px; font-size: 10px; }
   .plate { padding-right: 42px; }
@@ -682,14 +682,14 @@ html.js:not(.ignited) .yard__title { text-shadow: 0 0 22px var(--glow-far) !impo
 .hud-actions a, .hud-actions button, .settings summary { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
 .shelf-link { padding: 0 10px; color: var(--ink); text-decoration: none; gap: 12px; font-size: 11px; }
 .shelf-link span { color: var(--amber); }
-.autofly, .sound { border-color: var(--line); min-height: 44px; background: var(--scrim-deep); border-radius: 2px; font-size: 10px; }
-.autofly { min-width: 84px; }
-.sound { position: relative; width: 44px; padding: 0; flex: none; }
-.sound svg { width: 21px; height: 21px; }
+#autofly, #sound { border-color: var(--line); min-height: 44px; background: var(--scrim-deep); border-radius: 2px; font-size: 10px; }
+#autofly { min-width: 84px; }
+#sound { position: relative; width: 44px; padding: 0; flex: none; }
+#sound svg { width: 21px; height: 21px; }
 .sound-muted { display: none; }
-.sound[data-state="off"] .sound-waves { display: none; }
-.sound[data-state="off"] .sound-muted { display: block; }
-.sound[data-state="pending"]::after { content: ''; position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); top: 6px; right: 6px; }
+#sound[data-state="off"] .sound-waves { display: none; }
+#sound[data-state="off"] .sound-muted { display: block; }
+#sound[data-state="pending"]::after { content: ''; position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); top: 6px; right: 6px; }
 .settings { position: relative; }
 .settings summary { cursor: pointer; padding: 0; list-style: none; width: 44px; border: 1px solid var(--line); background: var(--scrim-deep); }
 .settings summary::-webkit-details-marker { display: none; }
@@ -757,7 +757,7 @@ html.js:not(.ignited) .yard__title { text-shadow: 0 0 22px var(--glow-far) !impo
 #dev { bottom: 116px; }
 a, button, summary, .dial label { -webkit-tap-highlight-color: transparent; }
 .enter-ride:active, .parts-entry:active, .pull:active, .nav-step:active, .bay-menu:active, .settings summary:active { transform: translateY(2px); }
-.autofly:active, .sound:active { background: var(--glow-far); box-shadow: inset 0 0 0 1px var(--amber); }
+#autofly:active, #sound:active { background: var(--glow-far); box-shadow: inset 0 0 0 1px var(--amber); }
 .index a:active { background: var(--amber); color: var(--field); }
 @media (max-width: 1000px) and (min-width: 721px) { .nav-name { font-size: 9px; } .index a { padding-inline: 7px; } .hud__clock { display: none; } }
 @media (max-width: 720px) {
@@ -767,7 +767,7 @@ a, button, summary, .dial label { -webkit-tap-highlight-color: transparent; }
   .hud__clock { display: none; }
   .hud-actions { top: max(14px, env(safe-area-inset-top)); gap: 4px; }
   .shelf-link { font-size: 10px; gap: 7px; padding: 0 7px; }
-  .autofly { min-width: 68px; padding: 0 8px; font-size: 9px; background: transparent; border-color: transparent; }
+  #autofly { min-width: 68px; padding: 0 8px; font-size: 9px; background: transparent; border-color: transparent; }
   .settings summary { border-color: transparent; background: transparent; }
   .settings-panel { width: 245px; }
   .hud__readout { top: 72px; left: var(--hud-pad); right: var(--hud-pad); max-width: none; font-size: 9px; line-height: 1.6; }

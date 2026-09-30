@@ -1,6 +1,6 @@
 {
   "passed": true,
-  "observed_at": "2026-09-30T19:04:34.184Z",
+  "observed_at": "2026-09-30T19:07:25.829Z",
   "base": "http://127.0.0.1:4186/",
   "conditions": "Installed Chromium, normal autoplay policy, real first-leg timing; complete-route state test uses compressed configured timing. Phone is emulated Chromium, not hardware Safari.",
   "checks": [
@@ -17,6 +17,11 @@
       "autofly": false,
       "soundState": "on",
       "overflow": false
+    },
+    {
+      "name": "Auto-fly button styling does not leak into the document",
+      "padding": "0px",
+      "background": "rgb(6, 8, 14)"
     },
     {
       "name": "Auto-fly starts audio and travels monotonically with real default timing",
@@ -58,7 +63,7 @@
             "to": 900,
             "fromBay": 0,
             "fromOffset": 0,
-            "elapsed": 0.2000999999999999,
+            "elapsed": 0.19999999999999998,
             "duration": 4.2
           },
           "autofly": true,
@@ -102,7 +107,7 @@
             "to": 900,
             "fromBay": 0,
             "fromOffset": 0,
-            "elapsed": 0.6083000000000001,
+            "elapsed": 0.6084,
             "duration": 4.2
           },
           "autofly": true,
@@ -124,7 +129,7 @@
             "to": 900,
             "fromBay": 0,
             "fromOffset": 0,
-            "elapsed": 0.8081000000000002,
+            "elapsed": 0.8083000000000004,
             "duration": 4.2
           },
           "autofly": true,
@@ -146,7 +151,7 @@
             "to": 900,
             "fromBay": 0,
             "fromOffset": 0,
-            "elapsed": 1.0250000000000004,
+            "elapsed": 1.0250000000000008,
             "duration": 4.2
           },
           "autofly": true,
@@ -155,7 +160,7 @@
         },
         {
           "motion": "full",
-          "y": 137,
+          "y": 139,
           "on": true,
           "pending": false,
           "audio": "running",
@@ -168,7 +173,7 @@
             "to": 900,
             "fromBay": 0,
             "fromOffset": 0,
-            "elapsed": 1.2241000000000009,
+            "elapsed": 1.2333000000000018,
             "duration": 4.2
           },
           "autofly": true,
@@ -177,7 +182,7 @@
         },
         {
           "motion": "full",
-          "y": 200,
+          "y": 202,
           "on": true,
           "pending": false,
           "audio": "running",
@@ -190,7 +195,7 @@
             "to": 900,
             "fromBay": 0,
             "fromOffset": 0,
-            "elapsed": 1.433400000000002,
+            "elapsed": 1.4417000000000026,
             "duration": 4.2
           },
           "autofly": true,
@@ -199,7 +204,7 @@
         },
         {
           "motion": "full",
-          "y": 272,
+          "y": 275,
           "on": true,
           "pending": false,
           "audio": "running",
@@ -212,7 +217,7 @@
             "to": 900,
             "fromBay": 0,
             "fromOffset": 0,
-            "elapsed": 1.6417000000000024,
+            "elapsed": 1.6499000000000035,
             "duration": 4.2
           },
           "autofly": true,
@@ -252,7 +257,7 @@
       "flight": {
         "phase": "hold",
         "target": 1,
-        "elapsed": 0.6334,
+        "elapsed": 0.6250000000000001,
         "duration": 4.2
       },
       "autofly": true,
@@ -271,7 +276,7 @@
       "flight": {
         "phase": "hold",
         "target": 1,
-        "elapsed": 0.7667000000000003,
+        "elapsed": 0.7583000000000004,
         "duration": 4.2
       },
       "autofly": true,
@@ -290,7 +295,7 @@
       "flight": {
         "phase": "hold",
         "target": 1,
-        "elapsed": 1.0500000000000007,
+        "elapsed": 1.0333000000000008,
         "duration": 4.2
       },
       "autofly": true,
@@ -347,7 +352,7 @@
       "pending": false,
       "audio": "running",
       "playing": true,
-      "outputLevel": 0.25,
+      "outputLevel": 0.13315971195697784,
       "flight": null,
       "autofly": false,
       "soundState": "on",
@@ -361,7 +366,7 @@
       "pending": false,
       "audio": "running",
       "playing": true,
-      "outputLevel": 0.25,
+      "outputLevel": 0.2220485955476761,
       "flight": null,
       "autofly": false,
       "soundState": "on",
@@ -437,7 +442,7 @@
       "pending": false,
       "audio": "running",
       "playing": true,
-      "outputLevel": 0.0442708320915699,
+      "outputLevel": 0.08871527761220932,
       "flight": null,
       "autofly": false,
       "soundState": "on",
@@ -461,7 +466,7 @@
     {
       "name": "Replay returns smoothly instead of jumping to opening",
       "motion": "full",
-      "y": 7937,
+      "y": 7938,
       "on": true,
       "pending": false,
       "audio": "running",
@@ -474,7 +479,7 @@
         "to": 0,
         "fromBay": 9,
         "fromOffset": 0,
-        "elapsed": 0.10840000000000144,
+        "elapsed": 0.10820000000000074,
         "duration": 0.8
       },
       "autofly": true,
@@ -484,7 +489,7 @@
     {
       "name": "Escape stops flight",
       "motion": "full",
-      "y": 7937,
+      "y": 7938,
       "on": true,
       "pending": false,
       "audio": "running",

@@ -23,6 +23,7 @@ try{
   await page.goto(base,{waitUntil:'networkidle'});let s=await state(page);assert.equal(s.motion,'full');assert.equal(s.on,true);assert.equal(s.audio,null);record('Fresh defaults: Full, sound enabled, silent before intent',s);
   await page.getByRole('button',{name:'Start auto-fly',exact:true}).click();
   await page.waitForFunction(()=>window.BONEYARD_SOUND.context?.state==='running');
+  const rootStyle=await page.evaluate(()=>{const s=getComputedStyle(document.documentElement);return{padding:s.padding,background:s.backgroundColor};});assert.equal(rootStyle.padding,'0px');record('Auto-fly button styling does not leak into the document',rootStyle);
   await page.waitForFunction(()=>window.BONEYARD_RIDE.flight?.phase==='travel');
   const samples=[];for(let i=0;i<9;i++){samples.push(await state(page));await page.waitForTimeout(200);}
   assert(samples.at(-1).y>samples[0].y);assert(samples.every((v,i)=>!i||v.y>=samples[i-1].y));

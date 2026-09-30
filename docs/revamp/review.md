@@ -111,10 +111,10 @@ within the click gesture. Browsers that deny first-wheel playback show a one-tap
 Mute fades and suspends audio, persists after reload, and is respected by subsequent scrolling
 and Auto-fly. Still remains independent of the sound choice.
 
-`ride-checks.json` records 18 passing installed-Chromium checks, no page errors and no external
+`ride-checks.json` records 19 passing installed-Chromium checks, no page errors and no external
 requests. The first leg and dwell use real default timing. The complete nine-leg route test uses
 compressed configured timing. Checks include orientation resize during a hold, keyboard Tab,
-visible mute during flight, pause, wheel takeover, remembered mute, phone touch start/pause, 320px
+visible mute during flight, document/button style isolation, pause, wheel takeover, remembered mute, phone touch start/pause, 320px
 layout and 44px controls, Still, shelf completion, replay and Escape. The blocked-audio recovery
 test injects an AudioContext resume denial with actual native audio nodes and a trusted tap;
 it is a controlled integration test, not a hardware Safari autoplay observation. The in-app
