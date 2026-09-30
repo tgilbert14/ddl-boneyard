@@ -79,6 +79,7 @@ h.dataset.dial=(d==='full'||d==='calm'||d==='still')?d:(matchMedia('(prefers-red
 @property --ink-dim        { syntax: "<color>"; inherits: true; initial-value: #99b7bf; }
 @property --line           { syntax: "<color>"; inherits: true; initial-value: #193a47; }
 @property --horizon-tint   { syntax: "<color>"; inherits: true; initial-value: #1b2850; }
+@property --amber-hot      { syntax: "<color>"; inherits: true; initial-value: #ffd474; }
 @property --room-s         { syntax: "<number>"; inherits: false; initial-value: 1; }
 @property --room-o         { syntax: "<number>"; inherits: false; initial-value: 1; }
 
@@ -94,6 +95,10 @@ h.dataset.dial=(d==='full'||d==='calm'||d==='still')?d:(matchMedia('(prefers-red
 
   /* ONE accent: desert amber */
   --amber: #fab048;          /* oklch(0.81 0.145 72) */
+  /* the accent's LOUD twin (the bad-ass pass): same hue family, hotter and whiter. Loud moments only:
+     warp peak, the pull glyph's lit ring, MARK's hot edges, visited ticks. Never body type and never a
+     second meaning: still "yours / pull / sun", turned up. 12.9:1 on field. */
+  --amber-hot: #ffd474;      /* oklch(0.90 0.13 80) */
 
   /* type ink */
   --ink: #dbf0f3;            /* oklch(0.94 0.022 208) */
@@ -109,6 +114,8 @@ h.dataset.dial=(d==='full'||d==='calm'||d==='still')?d:(matchMedia('(prefers-red
   --glow: color-mix(in srgb, var(--phosphor) 42%, transparent);      /* near halo */
   --glow-far: color-mix(in srgb, var(--phosphor) 14%, transparent);  /* far halo */
   --amber-wash: color-mix(in srgb, var(--amber) 14%, transparent);   /* pull glyph hover */
+  --amber-glow: color-mix(in srgb, var(--amber) 45%, transparent);   /* the amber halo on loud moments */
+  --white-hot: color-mix(in srgb, var(--phosphor-core) 55%, white);  /* the ignition's one overdriven instant, never a resting color */
   --halo-text: 0 0 1px var(--field), 0 0 3px var(--field), 0 0 10px var(--field);          /* HUD text over live scenery */
 
   /* type: Eurostile-family display, humanist mono */
@@ -210,6 +217,62 @@ canvas { display: block; }
   box-shadow: 0 0 3px var(--phosphor), 0 0 14px var(--glow-far); }
 html.js.tube-on #horizon { opacity: 0; transition: opacity var(--switch-on) linear; }
 
+/* ---------- IGNITION (arwen, the bad-ass pass): the first second is an event, under 1.2 s ----------
+   Three states, all keyed on classes the page already has (html.js + data-dial are set in <head> before the
+   first paint; the core adds .tube-on at boot, in the same frame it opens #field from the hairline):
+     OFF   html.js, dial Full or Calm, before boot: the tube is off. A standby dot on the horizon, the floor
+           black, the title a DIM filament (phosphor-dim, 3.4:1: visible and legible as large text, never
+           opacity 0, so the h1 is still painted at first paint and stays the LCP). A 5 s step-end failsafe
+           lights the title even if the core never boots.
+     IGNITE .tube-on: 0 to 110 ms the dot draws out into the hairline; the core opens the field from it
+           (0 to 500 ms); ONE white-hot flash peaks at about 270 ms (Full only; one flash, WCAG 2.3.1 allows 3/s);
+           380 to 740 ms the floor snaps in from the horizon toward you behind a bright scan front;
+           480 to 1165 ms the title ignites letter by letter: dim, one overdriven instant, lit.
+     LIT   the resting title. 20-tube.js adds .ignited about 1.5 s after boot (at once on a deep link), so a
+           later dial change never replays the ignition.
+   Only opacity and transform animate on the overlay; the glyphs animate color and text-shadow on eight inline
+   spans for 0.3 s each (paint, once). Still, reduced motion and no-JS match none of this: the lit title. */
+/* the cold filament keeps the lit halo's GEOMETRY (same four blur radii, faint colors): LCP measures the text's
+   visual rect, shadows included, so a shadowless dim title would shrink and hand LCP to a paragraph at 390 px */
+.yard__title { --ig-cold: 0 0 1px var(--phosphor-dim), 0 0 8px transparent, 0 0 24px transparent, 0 0 70px color-mix(in srgb, var(--phosphor-dim) 22%, transparent); }
+#ignite { position: absolute; inset: 0; z-index: 3; display: none; pointer-events: none; }
+#ignite i { position: absolute; left: 0; right: 0; display: block; }
+#ignite .ig-cover { top: var(--vp-y); bottom: 0; background: var(--field); transform: translate3d(0, 101%, 0); }
+#ignite .ig-cover::before { content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 2px; background: var(--phosphor-core);
+  box-shadow: 0 0 6px var(--phosphor), 0 0 26px 3px var(--glow), 0 0 80px 10px var(--glow-far); }
+#ignite .ig-line { top: calc(var(--vp-y) - 1px); height: 2px; background: var(--white-hot); opacity: 0; transform-origin: var(--vp-x) 50%;
+  box-shadow: 0 0 4px var(--phosphor-core), 0 0 18px 2px var(--phosphor), 0 0 60px 8px var(--glow); }
+#ignite .ig-flash { top: 0; bottom: 0; opacity: 0;
+  background: radial-gradient(120% 70% at var(--vp-x) var(--vp-y), var(--white-hot) 0, var(--phosphor-core) 16%, var(--glow) 44%, var(--glow-far) 66%, transparent 86%); }
+
+/* OFF (before boot) */
+html.js:is([data-dial="full"], [data-dial="calm"]):not(.tube-on):not(.ignited) #ignite { display: block; }
+html.js:is([data-dial="full"], [data-dial="calm"]):not(.tube-on):not(.ignited) #ignite .ig-cover { transform: none; }
+html.js:is([data-dial="full"], [data-dial="calm"]):not(.tube-on):not(.ignited) #ignite .ig-line { opacity: .85; transform: scaleX(.012); }
+html.js:is([data-dial="full"], [data-dial="calm"]):not(.tube-on):not(.ignited) .yard__title .g { animation: ig-off 5s step-end both; }
+@keyframes ig-off { 0% { color: var(--phosphor-dim); text-shadow: var(--ig-cold); } }
+
+/* IGNITE (Full) */
+html.js.tube-on[data-dial="full"]:not(.ignited) #ignite,
+html.js.tube-on[data-dial="calm"]:not(.ignited) #ignite { display: block; }
+html.js.tube-on[data-dial="full"]:not(.ignited) #ignite .ig-line { animation: ig-line 780ms var(--ease-out) backwards; }
+html.js.tube-on[data-dial="full"]:not(.ignited) #ignite .ig-flash { animation: ig-flash 600ms cubic-bezier(.3, 0, .2, 1) 120ms backwards; }
+html.js.tube-on[data-dial="full"]:not(.ignited) #ignite .ig-cover { animation: ig-floor 360ms cubic-bezier(.55, 0, .85, .4) 380ms backwards; }
+html.js.tube-on[data-dial="full"]:not(.ignited) .yard__title .g { animation: ig-glyph 300ms ease-out calc(480ms + var(--i, 0) * 55ms) backwards; }
+/* IGNITE (Calm): the same order at a gentler pace, no flash and no overdriven instant */
+html.js.tube-on[data-dial="calm"]:not(.ignited) #ignite .ig-line { animation: ig-line 900ms var(--ease-out) backwards; }
+html.js.tube-on[data-dial="calm"]:not(.ignited) #ignite .ig-cover { animation: ig-floor 480ms cubic-bezier(.45, 0, .7, .5) 400ms backwards; }
+html.js.tube-on[data-dial="calm"]:not(.ignited) .yard__title .g { animation: ig-glyph-calm 360ms ease-out calc(520ms + var(--i, 0) * 40ms) backwards; }
+
+@keyframes ig-line { 0% { opacity: .9; transform: scaleX(.012); } 14% { opacity: 1; transform: scaleX(1); } 55% { opacity: 1; transform: scaleX(1); } 100% { opacity: 0; transform: scaleX(1); } }
+@keyframes ig-flash { 0% { opacity: 0; } 25% { opacity: .92; } 100% { opacity: 0; } }
+@keyframes ig-floor { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(0, 101%, 0); } }
+@keyframes ig-glyph {
+  0% { color: var(--phosphor-dim); text-shadow: var(--ig-cold); }
+  28% { color: var(--white-hot); text-shadow: 0 0 2px var(--phosphor-core), 0 0 14px var(--phosphor), 0 0 40px var(--glow), 0 0 110px var(--glow); }
+}
+@keyframes ig-glyph-calm { 0% { color: var(--phosphor-dim); text-shadow: var(--ig-cold); } }
+
 /* room wrappers: one per mounted bay. The OUTER wrapper carries the 1/z approach scale from the
    vanishing point (10-core.js writes --room-s per frame, compositor-only); the INNER wrapper is
    SWITCH's (30-switch.js animates it with WAAPI). The bezel and its halo are static box-shadow:
@@ -234,9 +297,13 @@ html.js .bay:is([data-slug="range"], [data-slug="relief"], [data-slug="terminato
 #hud { position: fixed; inset: 0; z-index: var(--z-hud); pointer-events: none; font: 500 12px/1 var(--font-mono);
   letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim); text-shadow: var(--halo-text); }
 #hud > * { position: absolute; pointer-events: auto; }
-.hud__clock { top: var(--hud-pad); left: var(--hud-pad); font-variant-numeric: tabular-nums; color: var(--ink); }
+.hud__clock { top: var(--hud-pad); left: var(--hud-pad); font-variant-numeric: tabular-nums; color: var(--ink);
+  background: var(--scrim); padding: 5px 9px; border-radius: var(--radius); }
 .hud__clock .dev { color: var(--amber); margin-left: .8em; }
-.hud__readout { top: var(--hud-pad); right: var(--hud-pad); max-width: min(62vw, 46rem); text-align: right; line-height: 1.45; color: var(--ink); }
+/* the readout rides over live bays (GATE's white-pink core, WASH's cyan): a scrim chip, not a bare halo.
+   86% field over pure white leaves ink 12.0:1, ink-dim 6.7:1, amber 7.7:1 (Smaug W3: was about 1.3:1). */
+.hud__readout { top: var(--hud-pad); right: var(--hud-pad); max-width: min(62vw, 46rem); text-align: right; line-height: 1.45; color: var(--ink);
+  background: var(--scrim); padding: 5px 10px; border-radius: var(--radius); }
 .hud__readout .dot { color: var(--amber); }
 .hud__live { color: var(--ink-dim); font-variant-numeric: tabular-nums; }
 .part-overlay span { position: absolute; left: 0; top: 0; font: 500 11px/1.2 var(--font-mono); letter-spacing: .06em; color: var(--ink);
@@ -260,13 +327,13 @@ html.js .bay:is([data-slug="range"], [data-slug="relief"], [data-slug="terminato
 .dial label:has(input:checked) { position: relative; color: var(--phosphor); border-color: var(--phosphor-dim); }
 .dial input:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
 
-/* Auto-fly: a visible button next to the dial */
-.autofly { min-height: 34px; padding: 0 12px;
+/* Auto-fly and Sound: visible buttons next to the dial (24-sound.js wires #sound's click, pressed state and label) */
+.autofly, .sound { min-height: 34px; padding: 0 12px;
   font: inherit; letter-spacing: inherit; text-transform: inherit; text-shadow: none; color: var(--ink-dim); background: var(--scrim);
   border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; transition: color 160ms, border-color 160ms; }
-.autofly:hover:not(:disabled) { color: var(--ink); border-color: var(--phosphor-dim); }
-.autofly[aria-pressed="true"] { color: var(--amber); border-color: var(--amber); }
-.autofly:disabled { color: color-mix(in srgb, var(--ink-dim) 70%, var(--field)); cursor: default; }
+.autofly:hover:not(:disabled), .sound:hover:not(:disabled) { color: var(--ink); border-color: var(--phosphor-dim); }
+.autofly[aria-pressed="true"], .sound[aria-pressed="true"] { color: var(--amber-hot); border-color: var(--amber); box-shadow: 0 0 10px -2px var(--amber-glow); }
+.autofly:disabled, .sound:disabled { color: color-mix(in srgb, var(--ink-dim) 70%, var(--field)); cursor: default; }
 
 /* the index strip: eight ticks, real links, bottom right. Amber = visited (yours), phosphor = here. */
 .index { bottom: calc(var(--greet-h) + 10px); right: var(--hud-pad); margin: 0; padding: 0; list-style: none;
@@ -275,7 +342,7 @@ html.js .bay:is([data-slug="range"], [data-slug="relief"], [data-slug="terminato
   color: var(--ink-dim); border: 1px solid var(--line); border-radius: 3px; font-size: 11px;
   background: var(--scrim); transition: color 160ms, border-color 160ms; }
 .index a:hover { color: var(--ink); border-color: var(--phosphor-dim); }
-.index a.is-visited { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 55%, var(--field)); }
+.index a.is-visited { color: var(--amber-hot); border-color: color-mix(in srgb, var(--amber) 70%, var(--field)); box-shadow: 0 0 8px -2px var(--amber-glow); }
 .index a[aria-current="true"] { color: var(--field); background: var(--phosphor); border-color: var(--phosphor);
   box-shadow: 0 0 10px -2px var(--glow); }
 
@@ -308,7 +375,8 @@ html.js .bay { height: 100svh; }
 .yard__kicker { margin: 0 0 1.1rem; font: 500 12px/1 var(--font-mono); letter-spacing: .24em; text-transform: uppercase; color: var(--ink-dim); }
 .yard__title { margin: 0; font: 400 clamp(2.1rem, 7.6vw, 5.6rem)/1.05 var(--font-display); letter-spacing: .1em; margin-right: -.1em; text-transform: uppercase;
   color: var(--phosphor-core);
-  text-shadow: 0 0 1px var(--phosphor), 0 0 12px var(--glow), 0 0 44px var(--glow-far); }
+  text-shadow: 0 0 1px var(--phosphor), 0 0 8px var(--glow), 0 0 24px var(--glow), 0 0 70px var(--glow-far); }
+.yard__title .g { display: inline; }   /* inline, never inline-block: the h1 stays ONE text block, so it stays the LCP element */
 .yard__line { margin: 1.3rem auto 0; max-width: 34rem; font-size: 15px; color: var(--ink); text-shadow: var(--halo-text); }
 .yard__plate { margin: .6rem auto 0; max-width: 34rem; font-size: 12.5px; line-height: 1.5; color: var(--ink-dim); letter-spacing: .02em; text-shadow: var(--halo-text); }
 .yard__cue { position: absolute; left: 50%; bottom: calc(var(--greet-h) + var(--hud-h) + 26px); translate: -50% 0;
@@ -325,10 +393,15 @@ html.js .bay { height: 100svh; }
 .plate .lineage { margin: .5rem 0 0; font-size: 11.5px; line-height: 1.5; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-dim); }
 .plate .note { margin: .55rem 0 0; font-size: 13.5px; line-height: 1.55; color: var(--ink); }
 .plate .note.small { font-size: 12px; color: var(--ink-dim); }
-.pull { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 28px; height: 28px; color: var(--amber);
-  text-decoration: none; border-radius: 3px; transition: background-color 160ms; }
-.pull svg { width: 16px; height: 16px; display: block; }
-.pull:hover, .pull:focus-visible { background: var(--amber-wash); }
+/* the pull glyph is a LOUD moment: a lit amber key (hot glyph, amber ring, a static amber halo; painted once).
+   Hover inverts it to a solid amber key with a field glyph (10.8:1). */
+.pull { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 28px; height: 28px; color: var(--amber-hot);
+  text-decoration: none; border-radius: 3px; background: var(--amber-wash);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--amber) 60%, transparent), 0 0 12px -2px var(--amber-glow);
+  transition: background-color 160ms, color 160ms; }
+.pull svg { width: 16px; height: 16px; display: block; filter: drop-shadow(0 0 2px var(--amber-glow)); }
+.pull:hover, .pull:focus-visible { background: var(--amber); color: var(--field); }
+.pull:hover svg, .pull:focus-visible svg { filter: none; }
 
 /* the sign-off */
 .bay--signoff { align-content: center; justify-items: center; text-align: center; }
@@ -352,11 +425,11 @@ html.dev #dev { display: flex; }
 @media (max-width: 720px) {
   :root { --hud-h: 82px; --greet-h: 26px; }
   #hud { font-size: 11px; }
-  .hud__readout { top: calc(var(--hud-pad) + 19px); left: var(--hud-pad); right: var(--hud-pad); max-width: none; text-align: left; line-height: 1.5; }
+  .hud__readout { top: calc(var(--hud-pad) + 27px); left: var(--hud-pad); right: var(--hud-pad); max-width: none; text-align: left; line-height: 1.5; }
   .hud__live { display: block; white-space: normal; }
   .dial label { min-width: 0; padding: 8px 8px; min-height: 32px; }
   .hud__bl { gap: 8px; }
-  .autofly { min-height: 32px; padding: 0 9px; font-size: 10px; }
+  .autofly, .sound { min-height: 32px; padding: 0 9px; font-size: 10px; }
   .index { bottom: calc(var(--greet-h) + 10px + 42px); gap: 3px; }
   .index a { width: 24px; height: 30px; line-height: 30px; font-size: 10px; }
   .plate { padding-right: 42px; }
@@ -419,6 +492,7 @@ html[data-dial="still"] #horizon, html[data-dial="still"] #c-tube { transition: 
     <div id="rooms"></div>
   </div>
   <canvas class="layer" id="c-tube" hidden></canvas>
+  <div id="ignite"><i class="ig-cover"></i><i class="ig-line"></i><i class="ig-flash"></i></div>
 </div>
 
 <header id="hud" aria-label="Heads-up display">
@@ -432,6 +506,7 @@ html[data-dial="still"] #horizon, html[data-dial="still"] #c-tube { transition: 
       <label><input type="radio" name="dial" id="dial-still" value="still"><span>Still</span></label>
     </fieldset>
     <button type="button" class="autofly" id="autofly" aria-pressed="false">Auto-fly</button>
+    <button type="button" class="sound" id="sound" aria-pressed="false">Sound</button>
   </div>
   <ol class="index" id="index" aria-label="Bays">
     <li><a href="#jump" data-bay="1">01</a></li>
@@ -448,7 +523,7 @@ html[data-dial="still"] #horizon, html[data-dial="still"] #c-tube { transition: 
 <main id="row-main">
   <section class="bay bay--yard" id="yard" data-bay="0" data-slug="yard" aria-labelledby="title">
     <p class="yard__kicker">A Desert Data Labs experience</p>
-    <h1 class="yard__title" id="title">Boneyard</h1>
+    <h1 class="yard__title" id="title" aria-label="Boneyard"><span class="g" aria-hidden="true" style="--i:0">B</span><span class="g" aria-hidden="true" style="--i:1">o</span><span class="g" aria-hidden="true" style="--i:2">n</span><span class="g" aria-hidden="true" style="--i:3">e</span><span class="g" aria-hidden="true" style="--i:4">y</span><span class="g" aria-hidden="true" style="--i:5">a</span><span class="g" aria-hidden="true" style="--i:6">r</span><span class="g" aria-hidden="true" style="--i:7">d</span></h1>
     <p class="yard__line">Eight retired display machines, tubes still on, in a row on the desert floor. Scroll to fly the row. Pull any part.</p>
     <p class="yard__plate">A fiction of display machines, not the aircraft at Davis-Monthan. The clock in the corner shows your local time, and the horizon colour follows your hour.</p>
     <span class="yard__cue" id="cue"></span>
@@ -1189,7 +1264,7 @@ else bootBoneyardRide();
 
 
 /* BONEYARD PART · L1 · THE TUBE
- * technique   WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a quarter-res two-pass bloom added back, a very slight barrel, a vignette
+ * technique   WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a two-scale bloom (quarter-res tight, eighth-res wide) added back, overdriven white-hot cores, a very slight barrel, a vignette, and a light chromatic fringe only at peak warp or a punch
  * lineage     the vector CRT: the oscilloscope; Asteroids (Atari, 1979); Battlezone (Atari, 1980); Tempest (Atari, 1981); Vectrex (1982)
  * original    one skin over the whole row that no room depends on: it takes the sky, the row and the corridor canvases as textures, and the rooms stay crisp DOM above it with a static CSS halo on their frames
  * not         scanlines (vector tubes drew lines, not rasters, so they had none), a curvature gimmick, a blocking dependency; it does not skin the rooms (see HOW IT WORKS)
@@ -1222,9 +1297,12 @@ else bootBoneyardRide();
   'use strict';
   const PARAMS = {
     persistence: 0.72,     /* last-frame weight at 60 fps (frame-rate corrected) */
-    bloom: 0.9,            /* bloom add-back gain */
-    knee: 0.22,            /* bloom starts above this luma, per 2x2 tap */
-    radius: 1.4,           /* blur step in quarter-res texels */
+    bloom: 1.3,            /* tight bloom add-back gain (quarter res): the arcade glow */
+    wide: 0.85,            /* wide halo add-back gain (eighth res) */
+    knee: 0.17,            /* bloom starts above this luma, per 2x2 tap */
+    radius: 1.8,           /* blur step in quarter-res texels */
+    hot: 0.55,             /* overdrive: how far the brightest strokes whiten toward a white-hot core */
+    fringe: 0.006,         /* chromatic split at the far corner (uv) at full warp or punch; 0 at the vanishing point */
     barrel: 0.04,          /* barrel distortion k */
     vignette: 0.30,        /* corner darkening */
   };
@@ -1252,14 +1330,34 @@ else bootBoneyardRide();
   /* E: barrel CENTERED ON THE VANISHING POINT (so the one vanishing point never moves and the DOM rooms still
      converge on it), normalized so the farthest corner samples its own corner: no black rim, nothing sampled
      off the edge. Then the bloom add-back and a vignette about the screen center. */
-  const FS_OUT = 'precision mediump float;varying vec2 v;uniform sampler2D s,b;uniform float k,gain,vig,aspect;uniform vec2 vp;' +
+  /* Hot cores: the brightest strokes are pushed toward their own max channel (a white-hot core inside a cyan
+     stroke, the overdriven vector beam), then the tight and wide blooms are added. Fringe: R and B are sampled
+     a hair apart ALONG the ray from the vanishing point, so the split is 0 at the vanishing point and grows
+     outward; the uniform is 0 unless warp is near peak or a punch lands (Full only). */
+  const FS_OUT = 'precision mediump float;varying vec2 v;uniform sampler2D s,b,w;uniform float k,gain,wgain,hot,fr,vig,aspect;uniform vec2 vp;' +
     'void main(){vec2 d=v-vp;vec2 da=vec2(d.x*aspect,d.y);vec2 fc=vec2(max(vp.x,1.-vp.x)*aspect,max(vp.y,1.-vp.y));' +
     'float r2=dot(da,da)/dot(fc,fc);vec2 u=vp+d*(1.+k*r2)/(1.+k);' +
-    'vec3 c=texture2D(s,u).rgb+texture2D(b,u).rgb*gain;' +
+    'vec3 c=texture2D(s,u).rgb;if(fr>0.){vec2 o=d*fr;c.r=texture2D(s,u+o).r;c.b=texture2D(s,u-o).b;}' +
+    'float l=dot(c,vec3(.2126,.7152,.0722));c=mix(c,vec3(max(c.r,max(c.g,c.b))),hot*smoothstep(.55,.95,l));' +
+    'c+=texture2D(b,u).rgb*gain+texture2D(w,u).rgb*wgain;' +
     'vec2 q=(v*2.-1.)*vec2(aspect,1.);float rv=dot(q,q)/(1.+aspect*aspect);' +
     'c*=1.-vig*pow(rv,1.6);gl_FragColor=vec4(c,1.);}';
 
+  /* The yard's ignition is CSS (01-tube.css, keyed on html.tube-on, which the core adds at boot). This latch is
+     its only JavaScript: once it has played (about 1.2 s) html.ignited retires it, so a later dial change never
+     replays the flash; on a deep link (the ride did not start at the yard) it is retired at once. It runs before
+     the WebGL check on purpose: the ignition does not need the tube. Ride only (the parts page has no #title). */
+  function latchIgnition(canvas) {
+    const html = document.documentElement;
+    if (canvas.id !== 'c-tube' || !document.getElementById('title') || html.classList.contains('ignited')) return;
+    const hash = location.hash.split('?')[0];
+    const deep = (hash && hash !== '#' && hash !== '#yard') || window.scrollY > window.innerHeight * 0.3;
+    if (deep) { html.classList.add('ignited'); return; }
+    setTimeout(() => html.classList.add('ignited'), 1500);
+  }
+
   function mount(canvas, params, ctx) {
+    latchIgnition(canvas);
     const OFF = { enabled: false, tick() {}, resize() {}, still() {}, destroy() {}, bloom() {}, params() {} };
     let gl = null;
     try {
@@ -1284,7 +1382,7 @@ else bootBoneyardRide();
         comp: prog(FS_COMP, ['s0', 's1', 's2', 'sp', 'top', 'bot', 'vpY', 'decay', 'n']),
         down: prog(FS_DOWN, ['s', 'px', 'knee']),
         blur: prog(FS_BLUR, ['s', 'd']),
-        out: prog(FS_OUT, ['s', 'b', 'k', 'gain', 'vig', 'aspect', 'vp']),
+        out: prog(FS_OUT, ['s', 'b', 'w', 'k', 'gain', 'wgain', 'hot', 'fr', 'vig', 'aspect', 'vp']),
       };
     } catch (e) { return OFF; }
 
@@ -1310,7 +1408,7 @@ else bootBoneyardRide();
     function free(T) { if (T) { gl.deleteTexture(T.t); gl.deleteFramebuffer(T.f); } }
 
     const src = [tex(), tex(), tex()];
-    let acc = [null, null], q = [null, null], iw = 0, ih = 0, cur = 0;
+    let acc = [null, null], q = [null, null], e = [null, null], iw = 0, ih = 0, cur = 0;
     let bloomOn = true, lost = false, shown = false, fresh = true, age = 0, W = canvas.width, H = canvas.height;
     let col = { top: [0, 0, 0], bot: [0, 0, 0] };
     const stats = { ms: 0, n: 0, avg: 0, w: 0, h: 0 };
@@ -1326,10 +1424,12 @@ else bootBoneyardRide();
     function ensure(w, h) {
       if (w === iw && h === ih && acc[0]) return;
       iw = w; ih = h;
-      free(acc[0]); free(acc[1]); free(q[0]); free(q[1]);
+      free(acc[0]); free(acc[1]); free(q[0]); free(q[1]); free(e[0]); free(e[1]);
       acc = [target(w, h), target(w, h)];
       const qw = Math.max(1, Math.ceil(w / 4)), qh = Math.max(1, Math.ceil(h / 4));
       q = [target(qw, qh), target(qw, qh)];
+      const ew = Math.max(1, Math.ceil(qw / 2)), eh = Math.max(1, Math.ceil(qh / 2));
+      e = [target(ew, eh), target(ew, eh)];
       fresh = true;
     }
 
@@ -1369,7 +1469,8 @@ else bootBoneyardRide();
     function bindTex(unit, t) { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t); }
     function draw() { gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); }
 
-    function render(list, decay, useBloom) {
+    function render(list, decay, useBloom, fx) {
+      fx = fx || { gain: 1, fr: 0 };
       const base = list[0];
       ensure(base.width, base.height);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -1393,12 +1494,17 @@ else bootBoneyardRide();
         gl.useProgram(P.blur.p); gl.uniform1i(P.blur.u.s, 0);
         gl.bindFramebuffer(gl.FRAMEBUFFER, q[1].f); bindTex(0, q[0].t); gl.uniform2f(P.blur.u.d, params.radius / q[0].w, 0); draw();
         gl.bindFramebuffer(gl.FRAMEBUFFER, q[0].f); bindTex(0, q[1].t); gl.uniform2f(P.blur.u.d, 0, params.radius / q[0].h); draw();
+        /* the wide halo: the blurred quarter-res bloom, halved again (bilinear) and blurred at eighth res */
+        gl.viewport(0, 0, e[0].w, e[0].h);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, e[1].f); bindTex(0, q[0].t); gl.uniform2f(P.blur.u.d, params.radius * 1.5 / e[0].w, 0); draw();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, e[0].f); bindTex(0, e[1].t); gl.uniform2f(P.blur.u.d, 0, params.radius * 1.5 / e[0].h); draw();
       }
       /* E */
       gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, W, H);
       gl.useProgram(P.out.p); const o = P.out.u;
-      gl.uniform1i(o.s, 0); gl.uniform1i(o.b, 1); bindTex(0, next.t); bindTex(1, q[0].t);
-      gl.uniform1f(o.k, params.barrel); gl.uniform1f(o.gain, useBloom ? params.bloom : 0); gl.uniform1f(o.vig, params.vignette);
+      gl.uniform1i(o.s, 0); gl.uniform1i(o.b, 1); gl.uniform1i(o.w, 2); bindTex(0, next.t); bindTex(1, q[0].t); bindTex(2, e[0].t);
+      gl.uniform1f(o.k, params.barrel); gl.uniform1f(o.gain, useBloom ? params.bloom * fx.gain : 0); gl.uniform1f(o.wgain, useBloom ? params.wide * fx.gain : 0);
+      gl.uniform1f(o.hot, params.hot); gl.uniform1f(o.fr, fx.fr); gl.uniform1f(o.vig, params.vignette);
       gl.uniform1f(o.aspect, W / Math.max(1, H)); gl.uniform2f(o.vp, ctx.vp.x, 1 - ctx.vp.y);
       draw();
     }
@@ -1435,8 +1541,13 @@ else bootBoneyardRide();
         age += dt;
         if (age < 0.6 && onRide) { fresh = true; return; }     /* hold until the 500 ms switch-on is done, then warm up */
         readColorsMaybe();
-        const decay = Math.pow(params.persistence, Math.max(0, dt) * 60) * (ctx.dial === 'calm' ? 0.85 : 1);
-        timed(() => render(list, decay, bloomOn && ctx.scale >= 1));
+        const calm = ctx.dial === 'calm';
+        const decay = Math.pow(params.persistence, Math.max(0, dt) * 60) * (calm ? 0.85 : 1);
+        /* the fringe: only in Full, only near peak warp (above 0.6) or on a punch; share.punch is optional (0 when absent) */
+        const S = ctx.share || {};
+        const heat = calm ? 0 : Math.min(1, Math.max(0, ((+S.warp || 0) - 0.6) / 0.4) * 0.7 + Math.max(0, Math.min(1, +S.punch || 0)));
+        const fx = { gain: calm ? 0.7 : 1, fr: params.fringe * heat };
+        timed(() => render(list, decay, bloomOn && ctx.scale >= 1, fx));
         show(true);
       },
       resize(w, h) { W = w; H = h; fresh = true; readColors(); },
@@ -1450,7 +1561,7 @@ else bootBoneyardRide();
       destroy() {
         canvas.removeEventListener('webglcontextlost', onLost);
         show(false);
-        free(acc[0]); free(acc[1]); free(q[0]); free(q[1]);
+        free(acc[0]); free(acc[1]); free(q[0]); free(q[1]); free(e[0]); free(e[1]);
         for (const t of src) gl.deleteTexture(t);
         for (const k in P) gl.deleteProgram(P[k].p);
         gl.deleteBuffer(quad);
@@ -1472,12 +1583,13 @@ else bootBoneyardRide();
  * lineage     the Tron light-grid (Disney, 1982); the Battlezone horizon (Atari, 1980); the per-scanline perspective
  *             floor (Sega, Space Harrier, 1985; Super Nintendo Mode 7, 1990)
  * original    the pylons are the Desert Data Labs saguaro-circuit mark (site/assets/ddl-cactus-mark.svg) drawn as a
- *             1/z vector object at x = +-3 world units every 6 units; the grid's rate IS the ride's one clock
- *             (camera z comes from scroll plus a 0.4 unit/s idle cruise); every stroke is double-stroked (wide dim
- *             halo under a thin bright core) so the row glows without the tube post-pass
+ *             1/z vector object close beside the line of flight, so they whip past the lens; the floor's rate IS the
+ *             ride's one clock (camera velocity from scroll), multiplied in Full so the cruise flies; scroll speed
+ *             kicks the camera (it drops toward the deck and the lens widens, eased); every stroke is double-stroked
+ *             (wide dim halo under a thin bright core) so the row glows without the tube post-pass
  * not         a raster floor: no scanlines, no texture, no fog sprite; lines only. Not a texture-mapped Mode 7 plane.
  * deps        none · Canvas 2D · 2026-09
- * budget      see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD
+ * budget      0.09 ms/frame JS avg (1.4 max) @ 1440x900 dpr 1, headless desktop Chromium (2026-09-30); raster not in this number; phone TBD
  * api         mount(canvas, params, ctx) -> { tick(dt, t, cameraZ, pointer), resize(w, h, dpr), still(t), destroy() }
  * license     MIT, Desert Data Labs LLC
  */
@@ -1487,9 +1599,12 @@ else bootBoneyardRide();
  * whole site shares. Depth lines sit at every whole world unit; only their fractional offset from the camera changes
  * each frame, so the floor scrolls without ever running out of lines. Lateral lines are rays from the vanishing point.
  *
- * Pylons stand at x = +-pylonX every pylonEvery units. Each is the DDL mark as a set of polylines in a 96x96 box,
- * scaled by (f / d) * pylonH / 96 and planted at its projected foot. Everything fades with distance and the ground
- * below the horizon is painted opaque so the sky's stars end where the desert begins.
+ * The row integrates the ride camera's velocity: in Full times speedGain plus a cruise, in Calm at the ride's own
+ * rate, so scrolling back always runs the floor backward. The eased speed (fast attack, slow release) is the kick:
+ * the camera drops by kickDrop of its height and the focal shortens by kickFov, the two cues a racing game uses for
+ * speed. Pylons stand at x = +-pylonX every pylonEvery units, each the DDL mark as polylines in a 96x96 box scaled
+ * by (f / d) * pylonH / 96; at speed each leaves one dim smear copy a little further down the row. If a corridor
+ * publishes a camera shake (ctx.share.shake, css px) the whole layer draws at that offset.
  */
 (() => {
   'use strict';
@@ -1499,14 +1614,19 @@ else bootBoneyardRide();
     zLines: 44,         /* depth lines drawn ahead */
     xLines: 7,          /* lateral lines each side of centre */
     xSpacing: 1,        /* world units between lateral lines */
-    pylonX: 3,          /* pylons at +- this x */
+    pylonX: 2.1,        /* pylons at +- this x: close to the line of flight, so they whip past */
     pylonEvery: 6,      /* units between pylons */
-    pylonH: 1.7,        /* pylon height, world units */
+    pylonH: 1.9,        /* pylon height, world units */
     haloWidth: 5,       /* px, the wide dim stroke */
     coreWidth: 1.1,     /* px, the bright stroke */
     haloAlpha: 0.16,
     coreAlpha: 0.85,
     nearBoost: 1.6,     /* alpha ~ nearBoost / d */
+    speedGain: 2.2,     /* Full: floor travel per unit of ride camera travel */
+    cruiseFull: 3.2,    /* Full: extra idle flight, units per second */
+    kickRef: 14,        /* units per second of ride camera speed that reads as a full kick */
+    kickDrop: 0.32,     /* fraction of camH the camera drops at full kick */
+    kickFov: 0.2,       /* fraction the focal shortens at full kick */
   };
   /* the mark: polylines in a 96-box, from site/assets/ddl-cactus-mark.svg (trunk, node-tipped arms, rail, chip) */
   const GLYPH = (() => {
@@ -1521,78 +1641,105 @@ else bootBoneyardRide();
 
   function mount(canvas, params, ctx) {
     const g = canvas.getContext('2d', { alpha: true });
-    let w = canvas.width, h = canvas.height, f = h * params.focalK, px = 1;
-    function stroke(path, alpha, wide) {
-      g.lineWidth = wide ? params.haloWidth * px : params.coreWidth * px;
+    let w = canvas.width, h = canvas.height, px = 1, bd = 1;
+    let z = null, speed = 0;
+    function stroke(path, alpha, wide, mul) {
+      g.lineWidth = (wide ? params.haloWidth : params.coreWidth) * px * (mul || 1);
       g.globalAlpha = alpha * (wide ? params.haloAlpha : params.coreAlpha);
       g.stroke(path);
     }
-    function draw(z) {
+    function glyphPath(footX, footY, k) {
+      const path = new Path2D();
+      for (const poly of GLYPH) {
+        path.moveTo(footX + (poly[0][0] - 48) * k, footY + (poly[0][1] - 96) * k);
+        for (let i = 1; i < poly.length; i++) path.lineTo(footX + (poly[i][0] - 48) * k, footY + (poly[i][1] - 96) * k);
+      }
+      return path;
+    }
+    function draw(zz, kk, sx, sy) {
       const T = ctx.tokens;
+      const f = h * params.focalK * (1 - params.kickFov * kk);
+      const camH = params.camH * (1 - params.kickDrop * kk);
       const vpX = ctx.vp.x * w, vpY = ctx.vp.y * h;
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.clearRect(0, 0, w, h);
-      /* the ground: opaque, so stars stop at the horizon */
-      g.globalAlpha = 1; g.fillStyle = T.field; g.fillRect(0, Math.floor(vpY), w, h - Math.floor(vpY) + 1);
-      g.lineCap = 'butt'; g.lineJoin = 'round';          /* butt caps on full-width lines: cheaper, invisible */
-      const frac = z - Math.floor(z);
-      /* depth lines, binned by alpha so each bin is one path */
+      g.setTransform(1, 0, 0, 1, sx, sy);
+      /* the ground: opaque, so stars stop at the horizon (over-filled so a shake never shows a gap) */
+      g.globalAlpha = 1; g.fillStyle = T.field; g.fillRect(-16, Math.floor(vpY), w + 32, h - Math.floor(vpY) + 32);
+      g.lineCap = 'butt'; g.lineJoin = 'round';
+      const frac = zz - Math.floor(zz);
       const bins = [new Path2D(), new Path2D(), new Path2D(), new Path2D()];
       const binA = [1, 0.55, 0.28, 0.12];
       for (let i = 0; i < params.zLines; i++) {
         const d = (1 - frac) + i;
-        const y = vpY + f * params.camH / d;
-        if (y > h + 2) continue;
+        const y = vpY + f * camH / d;
+        if (y > h + 20) continue;
         const a = Math.min(1, params.nearBoost / d) * (1 - d / params.zLines);
         const bi = a > 0.7 ? 0 : a > 0.4 ? 1 : a > 0.18 ? 2 : 3;
-        bins[bi].moveTo(0, y); bins[bi].lineTo(w, y);
+        bins[bi].moveTo(-16, y); bins[bi].lineTo(w + 16, y);
       }
-      /* lateral rays from the vanishing point to below the frame */
       const rays = new Path2D();
       for (let i = -params.xLines; i <= params.xLines; i++) {
         const x = i * params.xSpacing;
         const dFar = params.zLines, dNear = 0.22;
-        rays.moveTo(vpX + f * x / dFar, vpY + f * params.camH / dFar);
-        rays.lineTo(vpX + f * x / dNear, vpY + f * params.camH / dNear);
+        rays.moveTo(vpX + f * x / dFar, vpY + f * camH / dFar);
+        rays.lineTo(vpX + f * x / dNear, vpY + f * camH / dNear);
       }
       for (const wide of [true, false]) {
         g.strokeStyle = wide ? T.phosphor : T.phosphorCore;
         for (let b = 0; b < 4; b++) stroke(bins[b], binA[b], wide);
-        stroke(rays, 0.5, wide);
+        stroke(rays, 0.5 + 0.3 * kk, wide);
       }
-      /* the horizon hairline */
       g.globalAlpha = 0.9; g.strokeStyle = T.phosphor; g.lineWidth = 1 * px;
-      g.beginPath(); g.moveTo(0, vpY + 0.5); g.lineTo(w, vpY + 0.5); g.stroke();
-      /* pylons: the mark at x = +-pylonX every pylonEvery units, nearest first is fine (no overlap in x) */
+      g.beginPath(); g.moveTo(-16, vpY + 0.5); g.lineTo(w + 16, vpY + 0.5); g.stroke();
+      /* pylons */
       g.lineCap = 'round';
-      const first = Math.ceil((z + 0.35) / params.pylonEvery) * params.pylonEvery;
+      const first = Math.ceil((zz + 0.3) / params.pylonEvery) * params.pylonEvery;
       const kBox = params.pylonH / 96;
-      for (let zp = first; zp - z < params.zLines; zp += params.pylonEvery) {
-        const d = zp - z;
-        const s = f / d, k = s * kBox;
-        const footY = vpY + f * params.camH / d;
+      const smear = kk > 0.2 ? 0.35 + 1.2 * kk : 0;              /* the speed smear, world units down the row */
+      for (let zp = first; zp - zz < params.zLines; zp += params.pylonEvery) {
+        const d = zp - zz;
+        const k = (f / d) * kBox;
+        const footY = vpY + f * camH / d;
         const a = Math.min(1, params.nearBoost / d) * (1 - d / params.zLines);
         if (a <= 0.02) continue;
+        const heft = Math.min(3, 1 + k * 96 / 260);            /* near pylons get fatter strokes */
         for (const side of [-1, 1]) {
           const footX = vpX + f * (side * params.pylonX) / d;
-          const path = new Path2D();
-          for (const poly of GLYPH) {
-            path.moveTo(footX + (poly[0][0] - 48) * k, footY + (poly[0][1] - 96) * k);
-            for (let i = 1; i < poly.length; i++) path.lineTo(footX + (poly[i][0] - 48) * k, footY + (poly[i][1] - 96) * k);
+          const half = 48 * k;
+          if (footX + half < -20 || footX - half > w + 20) continue;   /* off the frame: no path */
+          if (smear) {
+            const d2 = d + smear, k2 = (f / d2) * kBox;
+            const ghost = glyphPath(vpX + f * (side * params.pylonX) / d2, vpY + f * camH / d2, k2);
+            g.strokeStyle = T.phosphor; stroke(ghost, a * 0.55 * kk, true, heft);
           }
-          g.strokeStyle = T.phosphor; stroke(path, a, true);
-          g.strokeStyle = T.phosphorCore; stroke(path, a, false);
+          const path = glyphPath(footX, footY, k);
+          g.strokeStyle = T.phosphor; stroke(path, a, true, heft);
+          g.strokeStyle = T.phosphorCore; stroke(path, a, false, heft);
           if (k * 96 > 14) { g.globalAlpha = a * params.coreAlpha; g.fillStyle = T.phosphorCore; g.beginPath(); g.arc(footX + (NODE[0] - 48) * k, footY + (NODE[1] - 96) * k, Math.max(0.6, NODE[2] * k), 0, Math.PI * 2); g.fill(); }
         }
       }
       g.globalAlpha = 1;
+      g.setTransform(1, 0, 0, 1, 0, 0);
     }
     return {
-      tick(dt, t, cameraZ) { draw(cameraZ); },
-      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); f = h * params.focalK; },
-      still() { draw(ctx.camera.z); },
+      tick(dt, t, cameraZ) {
+        const full = ctx.dial === 'full';
+        const v = (ctx.camera && ctx.camera.v) || 0;
+        if (z === null) z = cameraZ;
+        z += (full ? v * params.speedGain + params.cruiseFull : v) * dt;
+        /* eased speed: fast attack (80 ms), slow release (600 ms); Full only */
+        const sp = full ? Math.min(1, Math.abs(v) / params.kickRef) : 0;
+        speed += (sp - speed) * (1 - Math.exp(-dt / (sp > speed ? 0.08 : 0.6)));
+        ctx.share.speed = speed;
+        const kick = speed * speed * (3 - 2 * speed);
+        const sh = ctx.share.shake;
+        draw(z, kick, sh ? sh.x * bd : 0, sh ? sh.y * bd : 0);
+      },
+      resize(nw, nh, ndpr) { w = nw; h = nh; bd = ndpr; px = Math.max(0.75, ndpr); },
+      still() { draw(z === null ? ctx.camera.z : z, 0, 0, 0); },
       destroy() { g.clearRect(0, 0, w, h); },
-      params(p) { params = p; f = h * params.focalK; },
+      params(p) { params = p; },
     };
   }
   BAYS.push({ slug: 'row', title: 'The row', order: 2, role: 'layer', params: PARAMS, mount });
@@ -1608,10 +1755,13 @@ else bootBoneyardRide();
  *             blue-black). The ground stays black at every hour and the band's alpha caps at bandAlpha, so daytime
  *             reads as a pale grey-blue line on the horizon, never as daylight; the ramp is NOT clamped to dusk-night
  *             (clampDay: false) because at this alpha the day stops read as "a bright horizon at noon", which is honest.
- *             Flip clampDay if arwen's retune disagrees.
+ *             Flip clampDay if arwen's retune disagrees. In Full the stars fly with the row (speedGain plus a
+ *             cruise, and warp multiplies it through HYPERSPACE), and at speed the near plane draws as short streaks.
+ *             The sky is also the housekeeper of the shared punch: a stale ctx.share.punch / shake (no writer this
+ *             frame) is zeroed here, so a switched-off room never leaves the world shaking.
  * not         twinkle (churn), a skybox, a moon, weather. No random flicker of any kind.
  * deps        none · Canvas 2D · 2026-09
- * budget      see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD
+ * budget      0.12 ms/frame JS avg (1.2 max) @ 1440x900 dpr 1, headless desktop Chromium (2026-09-30); raster not in this number; phone TBD
  * api         mount(canvas, params, ctx) -> { tick(dt, t, cameraZ, pointer), resize(w, h, dpr), still(t), destroy() }
  * license     MIT, Desert Data Labs LLC
  */
@@ -1625,6 +1775,10 @@ else bootBoneyardRide();
  * The horizon band is a vertical gradient from transparent down to the hour's tint at the horizon line. The tint is a
  * linear blend between the two nearest of 24 stops (one per hour), so it drifts continuously through the evening.
  * The core also mirrors the tint to --horizon-tint for the CSS floor.
+ *
+ * Shake: HYPERSPACE and JUMP write ctx.share.shake ({x, y} css px) with a timestamp; every layer draws at that
+ * offset. The sky ticks first among the layers, and it clears any stamp older than 60 ms. ctx.share.punch is a
+ * transient 0..1 (writers spike it and decay it); the sky also folds in the switch flash (ctx.share.flashAt).
  */
 (() => {
   'use strict';
@@ -1640,6 +1794,10 @@ else bootBoneyardRide();
     band: 0.13,                 /* band height, fraction of canvas height */
     bandAlpha: 0.5,
     clampDay: false,
+    speedGain: 2.2,             /* Full: star travel per unit of ride camera travel (the row's number) */
+    cruiseFull: 3.2,            /* Full: idle flight, units per second (the row's number) */
+    warpGain: 5,                /* Full: travel multiplier at warp 1 */
+    streakK: 1.6,               /* Full: near-plane streak length at full speed, world units */
   };
   /* 24 hour stops, index = local hour (dim on purpose: the yard is a night place) */
   const HOURS = ['#0b1030', '#0a0f2e', '#090e2c', '#0a1030', '#101538', '#2a1e4a', '#7a4a3a', '#9a6a3c', '#6f6a5a', '#55606a', '#4a5f75', '#4a6078',
@@ -1648,7 +1806,7 @@ else bootBoneyardRide();
 
   function mount(canvas, params, ctx) {
     const g = canvas.getContext('2d', { alpha: true });
-    let w = canvas.width, h = canvas.height, f = h * params.focalK, px = 1;
+    let w = canvas.width, h = canvas.height, f = h * params.focalK, px = 1, bd = 1;
     const seed = (n) => { const a = new Float32Array(n * 3); for (let i = 0; i < n; i++) spawn(a, i, true); return a; };
     function spawn(a, i, anyZ) {
       a[i * 3] = (Math.random() * 2 - 1) * params.spread;
@@ -1673,9 +1831,21 @@ else bootBoneyardRide();
         a[i * 3 + 2] = z;
       }
     }
-    function drawPlane(a, n, dot, alpha, vpX, vpY) {
+    function drawPlane(a, n, dot, alpha, vpX, vpY, streak) {
       g.globalAlpha = alpha;
       const s = dot * px;
+      if (streak > 0.02) {                                   /* speed streaks: head at z, tail at z + streak */
+        const path = new Path2D();
+        for (let i = 0; i < n; i++) {
+          const x = a[i * 3], y = a[i * 3 + 1], z = a[i * 3 + 2];
+          const sx = vpX + f * x / z, sy = vpY - f * y / z;
+          if (sx < -2 || sx > w + 2 || sy < -2 || sy > vpY) continue;
+          const z2 = z + streak;
+          path.moveTo(vpX + f * x / z2, vpY - f * y / z2); path.lineTo(sx, sy);
+        }
+        g.strokeStyle = g.fillStyle; g.lineWidth = s; g.lineCap = 'round'; g.stroke(path);
+        return;
+      }
       for (let i = 0; i < n; i++) {
         const z = a[i * 3 + 2];
         const sx = vpX + f * a[i * 3] / z, sy = vpY - f * a[i * 3 + 1] / z;
@@ -1683,16 +1853,17 @@ else bootBoneyardRide();
         g.fillRect(sx, sy, s, s);
       }
     }
-    function draw() {
+    function draw(streak, sx, sy) {
       const T = ctx.tokens;
       const vpX = ctx.vp.x * w, vpY = ctx.vp.y * h;
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.globalAlpha = 1; g.clearRect(0, 0, w, h);          /* the field gradient is CSS on the stage: zero fill cost here */
+      g.setTransform(1, 0, 0, 1, sx || 0, sy || 0);
       const warp = ctx.share.warp || 0;
       g.fillStyle = T.phosphorCore;
-      drawPlane(far, params.far, params.dotFar, params.alphaFar * (1 - warp * 0.85), vpX, vpY);
+      drawPlane(far, params.far, params.dotFar, params.alphaFar * (1 - warp * 0.85), vpX, vpY, 0);
       g.fillStyle = T.phosphor;
-      drawPlane(near, params.near, params.dotNear, params.alphaNear * (1 - warp * 0.85), vpX, vpY);
+      drawPlane(near, params.near, params.dotNear, params.alphaNear * (1 - warp * 0.85), vpX, vpY, streak || 0);
       /* the hour band */
       const c = tint(ctx.hour);
       ctx.share.horizonTint = `rgb(${c[0]},${c[1]},${c[2]})`;
@@ -1700,16 +1871,29 @@ else bootBoneyardRide();
       const gr = g.createLinearGradient(0, vpY - bandH, 0, vpY);
       gr.addColorStop(0, `rgba(${c[0]},${c[1]},${c[2]},0)`);
       gr.addColorStop(1, `rgba(${c[0]},${c[1]},${c[2]},${params.bandAlpha})`);
-      g.globalAlpha = 1; g.fillStyle = gr; g.fillRect(0, vpY - bandH, w, bandH + 1);
+      g.globalAlpha = 1; g.fillStyle = gr; g.fillRect(-16, vpY - bandH, w + 32, bandH + 1);
+      g.setTransform(1, 0, 0, 1, 0, 0);
     }
     return {
       tick(dt) {
-        const dz = ctx.camera.v * dt;
+        const S = ctx.share, now = performance.now(), full = ctx.dial === 'full';
+        /* housekeeping: a punch or warp nobody wrote this frame is stale (its room switched off) */
+        const fresh = S.punchAt && now - S.punchAt <= 60;
+        if (!fresh) { S.punch = 0; S.shake = null; S.punchAt = 0; }
+        if (S.warpAt && now - S.warpAt > 60) { S.warp = 0; S.warpAt = 0; }
+        /* a switch flash (30-switch stamps flashAt) is a punch moment too: 1 at the flash, 120 ms decay */
+        const fl = S.flashAt && now - S.flashAt < 450 ? Math.exp(-(now - S.flashAt) / 120) : 0;
+        if (fl) S.punch = Math.max(fresh ? S.punch || 0 : 0, fl);
+        const warp = S.warp || 0, speed = S.speed || 0;
+        const v = ctx.camera.v;
+        const dz = (full ? (v * params.speedGain + params.cruiseFull) * (1 + warp * params.warpGain) : v) * dt;
         if (dz !== 0) { advance(far, params.far, dz * params.farFactor); advance(near, params.near, dz * params.nearFactor); }
-        draw();
+        const streak = full && warp < 0.3 ? speed * params.streakK * (1 - warp / 0.3) : 0;
+        const sh = S.shake;
+        draw(streak, sh ? sh.x * bd : 0, sh ? sh.y * bd : 0);
       },
-      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); f = h * params.focalK; },
-      still() { draw(); },
+      resize(nw, nh, ndpr) { w = nw; h = nh; bd = ndpr; px = Math.max(0.75, ndpr); f = h * params.focalK; },
+      still() { draw(0, 0, 0); },
       destroy() { g.clearRect(0, 0, w, h); if (ctx.share.stars && ctx.share.stars.far === far) delete ctx.share.stars; },
       params(p) { params = p; f = h * params.focalK; },
     };
@@ -1806,9 +1990,315 @@ else bootBoneyardRide();
 })();
 
 
+/* BONEYARD SOUND · the opt-in engine room (PUNCH item 7)
+ * what        one SOUND button in the HUD. On by default (Tim, 2026-09-29), off once the visitor says so. When on: a low synth engine bed whose pitch and filter
+ *             follow scroll speed, a CRT relay clunk plus a high-voltage whine tick on every tube switch, a rising
+ *             filtered-noise whoosh with a pitch sweep when a hyperspace warp crosses 0.6. SCOPE keeps its own tone.
+ * law         no autoplay before a real gesture. No AudioContext exists until the visitor's first pointerup /
+ *             keydown / touchend (scroll and wheel are not activation), and then the bed rises over 1.5 s behind one
+ *             soft switch-on clunk. No gate, no overlay: the page runs silent until then. An explicit off is stored
+ *             and wins. Default OFF under the dial's Still or prefers-reduced-motion.
+ *             Hidden tab suspends the context. The dial's Still mutes it unless SOUND is pressed while in Still,
+ *             and even then no whooshes. The bed ducks to near zero while SCOPE is current and held.
+ * wiring      no BAYS registration and no core edit: a self-starting IIFE that reads window.BONEYARD_RIDE
+ *             (camera.v, share.warp, pointer.down, current) on its own rAF while running, and listens for the
+ *             window CustomEvents boneyard:switch {dir, slug} and boneyard:warp {level}. Until those events exist,
+ *             a change of the current bay is the fallback switch trigger and share.warp the fallback warp.
+ * mix         voices -> master gain 0.25 -> DynamicsCompressor (brick-wall limiter, -3 dB) -> destination.
+ *             Measured offline (OfflineAudioContext, 10 s script, 2026-09-29): idle bed -27 LUFS, full-speed bed -16.5
+ *             LUFS, switch clunk peak -8.4 dBFS, first-gesture clunk -20 dBFS, whoosh peak -5.5 dBFS, whole script -21 LUFS.
+ * deps        none · Web Audio · 2026-09
+ * license     MIT, Desert Data Labs LLC
+ */
+(() => {
+  'use strict';
+  const ACtx = window.AudioContext || window.webkitAudioContext;
+  const KEY = 'boneyard_sound';
+  const store = {
+    get() { try { return localStorage.getItem(KEY); } catch (_) { return null; } },
+    set(v) { try { localStorage.setItem(KEY, v); } catch (_) {} },
+  };
+
+  /* ---------- the mix: every number in one place ---------- */
+  const MIX = {
+    master: 0.25,
+    limitDb: -3,
+    bedIdle: 0.62, bedTop: 0.85,       /* bed gain across speed 0..1 */
+    duck: 0.04,                        /* bed gain multiplier while SCOPE sings */
+    root: 55,                          /* Hz, A1: idle engine pitch */
+    octaves: 1.0,                      /* pitch rise at full speed */
+    cutIdle: 170, cutTop: 2600,        /* lowpass Hz across speed */
+    saw: 0.9, sub: 1.1,
+    clunk: 1.0, whine: 0.10,
+    whoosh: 1.0,
+    speedRef: 12,                      /* camera units/s: s = 1 - exp(-|v| / speedRef) */
+    clunkGap: 0.09, whooshGap: 1.5,    /* seconds between repeats */
+  };
+
+  /* ---------- the graph: pure Web Audio, works on a live or an Offline context ---------- */
+  function graph(ac, dest) {
+    const out = dest || ac.destination;
+    const limiter = ac.createDynamicsCompressor();
+    limiter.threshold.value = MIX.limitDb; limiter.knee.value = 0; limiter.ratio.value = 20;
+    limiter.attack.value = 0.002; limiter.release.value = 0.2;
+    const master = ac.createGain(); master.gain.value = 0;
+    master.connect(limiter); limiter.connect(out);
+
+    /* white-noise buffer, shared by every noise voice (2 s, mono) */
+    const nb = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+    { const d = nb.getChannelData(0); let seed = 1234567; for (let i = 0; i < d.length; i++) { seed = (seed * 1103515245 + 12345) >>> 0; d[i] = seed / 2147483648 - 1; } }
+    const noise = (when, dur) => { const s = ac.createBufferSource(); s.buffer = nb; s.start(when, Math.random() * 0.5, dur + 0.05); return s; };
+
+    /* bed: two detuned saws -> resonant lowpass (slow breath LFO) + a sub sine, all tracking speed */
+    const rise = ac.createGain(); rise.gain.value = 0; rise.connect(master);   /* the bed's fade-in, apart from the fx */
+    const duck = ac.createGain(); duck.gain.value = 1; duck.connect(rise);
+    const bed = ac.createGain(); bed.gain.value = MIX.bedIdle; bed.connect(duck);
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 5; lp.frequency.value = MIX.cutIdle;
+    const sawG = ac.createGain(); sawG.gain.value = MIX.saw * 0.5;
+    lp.connect(sawG); sawG.connect(bed);
+    const saws = [-9, 9].map((cents) => { const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = MIX.root; o.detune.value = cents; o.connect(lp); return o; });
+    const sub = ac.createOscillator(); sub.type = 'sine'; sub.frequency.value = MIX.root;
+    const subG = ac.createGain(); subG.gain.value = MIX.sub * 0.5; sub.connect(subG); subG.connect(bed);
+    const lfo = ac.createOscillator(); lfo.frequency.value = 0.11;
+    const lfoG = ac.createGain(); lfoG.gain.value = 45; lfo.connect(lfoG); lfoG.connect(lp.frequency);
+    const t0 = ac.currentTime;
+    for (const o of [...saws, sub, lfo]) o.start(t0);
+
+    const fx = ac.createGain(); fx.gain.value = 1; fx.connect(master);
+
+    function speed(s, when) {
+      const w = when == null ? ac.currentTime : when;
+      s = Math.max(0, Math.min(1, s));
+      const f = MIX.root * Math.pow(2, s * MIX.octaves);
+      for (const o of saws) o.frequency.setTargetAtTime(f, w, 0.09);
+      sub.frequency.setTargetAtTime(f, w, 0.09);
+      lp.frequency.setTargetAtTime(MIX.cutIdle + (MIX.cutTop - MIX.cutIdle) * Math.pow(s, 1.6), w, 0.08);
+      bed.gain.setTargetAtTime(MIX.bedIdle + (MIX.bedTop - MIX.bedIdle) * s, w, 0.12);
+      return f;
+    }
+    function ducked(on, when) { duck.gain.setTargetAtTime(on ? MIX.duck : 1, when == null ? ac.currentTime : when, on ? 0.04 : 0.25); }
+    /* master: up fast, down in a straight 150 ms line (off must feel instant) */
+    function level(on, when) {
+      const w = when == null ? ac.currentTime : when, p = master.gain;
+      p.cancelScheduledValues(w); p.setValueAtTime(p.value, w);
+      p.linearRampToValueAtTime(on ? MIX.master : 0, w + (on ? 0.03 : 0.15));
+    }
+    /* the bed rising from nothing over dur seconds */
+    function bedIn(dur, when) {
+      const w = when == null ? ac.currentTime : when, p = rise.gain;
+      p.cancelScheduledValues(w); p.setValueAtTime(0, w); p.linearRampToValueAtTime(1, w + dur);
+    }
+
+    /* power-up: the tube spins up, pitch and filter swing from the floor to idle (only on a press) */
+    function ignite(when, soft) {
+      const w = when == null ? ac.currentTime : when;
+      for (const o of [...saws, sub]) { o.frequency.cancelScheduledValues(w); o.frequency.setValueAtTime(MIX.root * 0.35, w); o.frequency.exponentialRampToValueAtTime(MIX.root, w + 0.7); }
+      lp.frequency.cancelScheduledValues(w); lp.frequency.setValueAtTime(60, w); lp.frequency.setTargetAtTime(MIX.cutIdle * 2.2, w, 0.12); lp.frequency.setTargetAtTime(MIX.cutIdle, w + 0.45, 0.25);
+      bedIn(soft ? 1.5 : 0.6, w);
+      clunk(1, w + 0.04, soft ? 0.55 : 1);   /* after the 30 ms master ramp, or the ramp eats the transient */
+    }
+
+    /* the clunk: relay contact + bounce, a chassis thump, a panel ring, and the 15.7 kHz flyback whine tick */
+    function clunk(dir, when, amt, quiet) {
+      const w = when == null ? ac.currentTime : when, g = MIX.clunk * (amt == null ? 1 : amt);
+      /* contacts: two short bright noise clicks, the second a bounce */
+      for (const [dt, amp] of [[0, 0.9], [0.011, 0.35]]) {
+        const n = noise(w + dt, 0.012), hp = ac.createBiquadFilter(), e = ac.createGain();
+        hp.type = 'highpass'; hp.frequency.value = 1400;
+        e.gain.setValueAtTime(0, w + dt); e.gain.linearRampToValueAtTime(amp * g, w + dt + 0.0008); e.gain.exponentialRampToValueAtTime(0.001, w + dt + 0.012);
+        n.connect(hp); hp.connect(e); e.connect(fx);
+      }
+      /* thump: a sine that falls, the armature hitting the frame */
+      const th = ac.createOscillator(), te = ac.createGain();
+      th.frequency.setValueAtTime(dir < 0 ? 96 : 124, w); th.frequency.exponentialRampToValueAtTime(42, w + 0.09);
+      te.gain.setValueAtTime(0, w); te.gain.linearRampToValueAtTime(0.95 * g, w + 0.003); te.gain.exponentialRampToValueAtTime(0.001, w + 0.16);
+      th.connect(te); te.connect(fx); th.start(w); th.stop(w + 0.18);
+      /* panel ring: resonant noise, the steel box answering */
+      const rn = noise(w, 0.1), bp = ac.createBiquadFilter(), re = ac.createGain();
+      bp.type = 'bandpass'; bp.frequency.value = dir < 0 ? 290 : 340; bp.Q.value = 9;
+      re.gain.setValueAtTime(0, w); re.gain.linearRampToValueAtTime(1.6 * g, w + 0.002); re.gain.exponentialRampToValueAtTime(0.001, w + 0.09);
+      rn.connect(bp); bp.connect(re); re.connect(fx);
+      /* whine tick: the horizontal-output transformer, 15734 Hz and its half, 120 ms */
+      if (!quiet) for (const [f, a] of [[15734, 1], [7867, 0.6]]) {
+        const o = ac.createOscillator(), e = ac.createGain();
+        o.frequency.value = f;
+        e.gain.setValueAtTime(0, w + 0.006); e.gain.linearRampToValueAtTime(MIX.whine * a, w + 0.012); e.gain.exponentialRampToValueAtTime(0.0005, w + 0.13);
+        o.connect(e); e.connect(fx); o.start(w + 0.006); o.stop(w + 0.14);
+      }
+    }
+
+    /* the whoosh: bandpassed noise rising 250 Hz to 5 kHz, a filtered saw sweeping up, a sub boom at the top */
+    function whoosh(amt, when) {
+      const w = when == null ? ac.currentTime : when, g = MIX.whoosh * (amt == null ? 1 : amt), rise = 1.1;
+      const n = noise(w, rise + 0.5), bp = ac.createBiquadFilter(), ne = ac.createGain();
+      bp.type = 'bandpass'; bp.Q.value = 1.3;
+      bp.frequency.setValueAtTime(250, w); bp.frequency.exponentialRampToValueAtTime(5000, w + rise);
+      ne.gain.setValueAtTime(0.0001, w); ne.gain.exponentialRampToValueAtTime(1.3 * g, w + rise * 0.85); ne.gain.exponentialRampToValueAtTime(0.001, w + rise + 0.45);
+      n.connect(bp); bp.connect(ne); ne.connect(fx);
+      const sw = ac.createOscillator(), sl = ac.createBiquadFilter(), se = ac.createGain();
+      sw.type = 'sawtooth'; sl.type = 'lowpass'; sl.frequency.value = 1800; sl.Q.value = 3;
+      sw.frequency.setValueAtTime(70, w); sw.frequency.exponentialRampToValueAtTime(880, w + rise);
+      se.gain.setValueAtTime(0.0001, w); se.gain.exponentialRampToValueAtTime(0.22 * g, w + rise * 0.9); se.gain.exponentialRampToValueAtTime(0.001, w + rise + 0.25);
+      sw.connect(sl); sl.connect(se); se.connect(fx); sw.start(w); sw.stop(w + rise + 0.3);
+      const bm = ac.createOscillator(), be = ac.createGain(), bt = w + rise;
+      bm.frequency.setValueAtTime(90, bt); bm.frequency.exponentialRampToValueAtTime(34, bt + 0.4);
+      be.gain.setValueAtTime(0, bt); be.gain.linearRampToValueAtTime(0.9 * g, bt + 0.01); be.gain.exponentialRampToValueAtTime(0.001, bt + 0.55);
+      bm.connect(be); be.connect(fx); bm.start(bt); bm.stop(bt + 0.6);
+    }
+
+    return { speed, ducked, level, bedIn, ignite, clunk, whoosh, master, limiter };
+  }
+
+  /* ---------- the live rig ---------- */
+  let ac = null, g = null, raf = 0;
+  /* the choice: an explicit 'off' wins; 'on' is on; nothing stored = on, unless Still or reduced motion */
+  const quiet = () => (window.BONEYARD_RIDE ? window.BONEYARD_RIDE.ctx.dial : document.documentElement.dataset.dial) === 'still' || matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const saved = store.get();
+  let pref = saved === 'on';              /* resolved at boot, once the core has set the dial */
+  let explicit = saved === 'on' || saved === 'off';
+  let stillOk = false;                    /* SOUND pressed while the dial sits on Still */
+  let armed = false;                      /* remembered "on" waiting for this visit's first gesture */
+  let lastClunk = { on: -1, off: -1 }, lastWhoosh = -1, warpHigh = false, sawSwitchEvent = false, prevBay = null;
+  let sm = 0, lastY = window.scrollY, yMovedAt = 0;
+  const stats = { clunks: 0, whooshes: 0, freq: 0, speed: 0, ducked: false };
+
+  const ride = () => window.BONEYARD_RIDE || null;
+  const dial = () => { const r = ride(); return (r && r.ctx.dial) || document.documentElement.dataset.dial || 'full'; };
+  const allowed = () => pref && (dial() !== 'still' || stillOk);
+  const audible = () => allowed() && !!ac && !document.hidden;
+  const btn = () => document.getElementById('sound');
+
+  function paint() {
+    const b = btn(); if (!b) return;
+    const on = allowed();
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.dataset.state = on ? 'on' : 'off';
+    const label = b.querySelector('[data-label]') || (b.children.length ? null : b);
+    if (label) label.textContent = on ? 'Sound on' : 'Sound off';
+  }
+
+  /* create or resume the context: only ever called from inside a user gesture */
+  function wake(press) {
+    if (!ACtx) return;
+    if (!ac) { ac = new ACtx(); g = graph(ac); }
+    const p = ac.state !== 'running' && ac.resume ? ac.resume() : null;
+    armed = false;
+    Promise.resolve(p).catch(() => {}).then(() => {
+      if (ac.state !== 'running') { armed = allowed(); return; }   /* blocked: try again on the next gesture */
+      if (!audible()) { sleep(); return; }
+      g.level(true);
+      g.ignite(ac.currentTime, !press);   /* switch-on clunk + bed rise: 0.6 s on a press, 1.5 s and soft on the first gesture */
+      loop();
+    });
+  }
+  let sleepT = 0;
+  function sleep() {
+    if (!ac) return;
+    cancelAnimationFrame(raf); raf = 0;
+    g.level(false);
+    clearTimeout(sleepT);
+    sleepT = setTimeout(() => { if (ac && !audible() && ac.state === 'running') ac.suspend(); }, 180);
+  }
+
+  /* the ticker: speed, warp, SCOPE duck, fallback bay switch */
+  function loop() {
+    cancelAnimationFrame(raf);
+    let last = performance.now();
+    const step = (now) => {
+      raf = requestAnimationFrame(step);
+      const dt = Math.min(0.1, (now - last) / 1000); last = now;
+      if (!ac || ac.state !== 'running') return;
+      const r = ride(), c = r && r.ctx;
+      const y = window.scrollY; if (y !== lastY) { lastY = y; yMovedAt = now; }
+      let v = c ? Math.abs(c.camera.v || 0) : 0;
+      if (now - yMovedAt > 600) v = Math.min(v, 0.5);             /* the ride's loop may have stopped with a stale v */
+      const warp = c ? (c.share.warp || 0) : 0;
+      const target = Math.max(1 - Math.exp(-v / MIX.speedRef), warp * 0.9);
+      sm += (target - sm) * (1 - Math.exp(-dt / (target > sm ? 0.12 : 0.6)));   /* flywheel: spins up fast, runs down slow */
+      stats.speed = sm; stats.freq = g.speed(sm);
+      /* SCOPE duck */
+      const cur = r ? r.bays[Math.max(0, r.current)] : null;
+      const duck = !!(cur && cur.slug === 'scope' && c && c.pointer.down);
+      if (duck !== stats.ducked) { stats.ducked = duck; g.ducked(duck); }
+      /* fallback switch: the current bay changed and no boneyard:switch event has been seen */
+      if (r && r.current >= 0) {
+        if (prevBay !== null && r.current !== prevBay && !sawSwitchEvent) onSwitch('on');
+        prevBay = r.current;
+      }
+      /* fallback warp */
+      if (!sawWarpEvent) onWarp(warp);
+    };
+    raf = requestAnimationFrame(step);
+  }
+
+  /* a relay has two sounds: pull-in (the tube coming on: full clunk plus the whine) and drop-out (a lighter,
+     lower release, no whine). 30-switch sends dir 'on' / 'off'; the fallback sends 'on' only. */
+  function onSwitch(dir) {
+    if (!audible() || !ac || ac.state !== 'running') return;
+    const kind = dir === 'off' ? 'off' : 'on', now = ac.currentTime;
+    if (now - lastClunk[kind] < MIX.clunkGap) return;
+    lastClunk[kind] = now; stats.clunks++;
+    if (kind === 'on') g.clunk(1, now); else g.clunk(-1, now, 0.4, true);
+  }
+  let sawWarpEvent = false;
+  function onWarp(level, fromEvent) {
+    if (!fromEvent) {                   /* polled share.warp: our own hysteresis; the event already has one */
+      if (level < 0.3) warpHigh = false;
+      if (level < 0.6 || warpHigh) return;
+      warpHigh = true;
+    }
+    if (!audible() || !ac || ac.state !== 'running' || dial() === 'still') return;
+    const now = ac.currentTime; if (now - lastWhoosh < MIX.whooshGap) return;
+    lastWhoosh = now; stats.whooshes++; g.whoosh(dial() === 'calm' ? 0.6 : 1);
+  }
+  addEventListener('boneyard:switch', (e) => { sawSwitchEvent = true; onSwitch(e.detail && e.detail.dir); });
+  addEventListener('boneyard:warp', (e) => { sawWarpEvent = true; onWarp(+(e.detail && e.detail.level) || 1, true); });
+
+  /* ---------- the button (delegated, so markup that lands late still works) ---------- */
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('#sound'); if (!b) return;
+    explicit = true; armed = false;
+    if (allowed()) { pref = false; stillOk = false; store.set('off'); paint(); sleep(); return; }
+    pref = true; if (dial() === 'still') stillOk = true; store.set('on'); paint();
+    wake(true);
+  });
+  /* default or remembered "on": the first real gesture of the visit starts it (a press on SOUND is the click's business) */
+  const gesture = (e) => {
+    if (!armed || (e.target && e.target.closest && e.target.closest('#sound'))) return;
+    if (allowed()) wake(false);
+  };
+  addEventListener('pointerup', gesture, true);
+  addEventListener('keydown', gesture, true);
+  addEventListener('touchend', gesture, { capture: true, passive: true });
+
+  /* hidden tab: suspend; back: resume if still wanted (the tab was already unlocked by a gesture) */
+  document.addEventListener('visibilitychange', () => {
+    if (!ac) return;
+    if (document.hidden) { cancelAnimationFrame(raf); raf = 0; if (ac.state === 'running') ac.suspend(); }
+    else if (audible()) { ac.resume().then(() => { g.level(true); loop(); }).catch(() => {}); }
+  });
+  /* the dial: entering Still revokes the in-session consent (press SOUND again to have it back, no whooshes) */
+  document.addEventListener('change', (e) => {
+    if (!e.target || e.target.name !== 'dial') return;
+    if (e.target.value === 'still') stillOk = false;
+    if (!explicit) pref = !quiet();   /* an untouched default follows the dial */
+    paint();
+    if (!allowed() || document.hidden) { sleep(); return; }
+    if (ac && ac.state === 'running') { g.level(true); loop(); } else wake(false);   /* the dial change is itself a gesture */
+  });
+
+  const boot = () => { if (!explicit) pref = !quiet(); armed = allowed(); paint(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true }); else boot();
+
+  /* dev and test surface: the graph builder (for an OfflineAudioContext render) and live numbers */
+  window.BONEYARD_SOUND = { graph, MIX, stats, get context() { return ac; }, get on() { return allowed(); } };
+})();
+
+
 /* BONEYARD PART · C1 · SWITCH
- * technique   the CRT switch-off as compositor-only transforms on a room's wrapper: scaleY to a 2 px line (200 ms),
- *             scaleX to a dot (150 ms), the dot recedes to the vanishing point (600 ms); switch-on is the reverse
+ * technique   the CRT switch-off as compositor-only transforms on a room's wrapper: an accelerating slam of scaleY to
+ *             a white-hot line (110 ms in Full, 200 in Calm), scaleX to a white dot (100 / 150 ms), the dot recedes to
+ *             the vanishing point (420 / 600 ms); switch-on is the reverse with a small overshoot in Full
  * lineage     every CRT television's power-off, formalised by 1980s title sequences
  * original    driven by the Web Animations API on the room's inner wrapper (no per-frame JavaScript, no layout,
  *             no paint); the recede targets the SAME vanishing point every room shares; one flash frame at most and
@@ -1821,6 +2311,13 @@ else bootBoneyardRide();
  * license     MIT, Desert Data Labs LLC
  */
 /* HOW IT WORKS
+ * Every play() also dispatches a window event 'boneyard:switch' with detail { dir: 'on' | 'off', slug, dial, flash }
+ * so the sound module can clunk; nothing here listens for it. The white-hot line and dot are the room's flash layer
+ * (a phosphor-core div inside the tube) brought to full opacity only while the tube is a sliver, so their light is a
+ * line, never a frame. The one full-frame flash is the first 34 ms of a switch-off, only when the core grants it
+ * (Full, rate-limited by the core to one each half second and here to one a second, because a bright bay arriving
+ * is a luminance rise too: measured under WCAG 2.3.1's three a second), and only for a room that was on for
+ * flashDwellMs.
  * A room is two nested wrappers around its canvas. The outer carries the 1/z approach scale the core writes each
  * frame (anchored on the vanishing point). This module animates the inner one. Switching off: three keyframe
  * segments on one transform animation, so the browser composites the whole thing without touching the main thread:
@@ -1832,16 +2329,22 @@ else bootBoneyardRide();
 (() => {
   'use strict';
   const PARAMS = {
-    lineMs: 200,      /* scaleY to the line */
-    dotMs: 150,       /* scaleX to the dot */
-    recedeMs: 600,    /* the dot to the vanishing point */
-    onMs: 380,        /* switch-on total */
+    lineMs: 110,      /* Full: scaleY to the line (an accelerating slam) */
+    dotMs: 100,       /* Full: scaleX to the dot */
+    recedeMs: 420,    /* Full: the dot to the vanishing point */
+    onMs: 320,        /* Full: switch-on total */
+    calmLineMs: 200, calmDotMs: 150, calmRecedeMs: 600, calmOnMs: 380,
+    overshoot: 0.05,  /* Full: switch-on opens this far past the frame, then settles */
     stillMs: 200,     /* the crossfade under Still */
     flashMs: 34,      /* two frames of afterglow at most */
+    flashDwellMs: 700, /* only a room you actually watched earns the flash: a flick through the row never strobes */
+    flashGapMs: 1000, /* this module's own floor between flashes, on top of the core's: bright bays arriving also count */
     lineScale: 0.004,
   };
   function mount(container, params, ctx) {
     const live = new Map();   /* room -> Animation[] */
+    let lastFlash = -1e9;
+    const onAt = new WeakMap();   /* room -> when it last switched on */
     const done = (room) => { live.delete(room); };
     function cancel(room) {
       const list = live.get(room); if (!list) return;
@@ -1854,29 +2357,60 @@ else bootBoneyardRide();
       const tube = room.tube, outer = room.room, flash = room.flash;
       const list = [];
       let main;
+      const slug = (outer && outer.dataset && outer.dataset.slug) || '';
+      const now = performance.now();
+      if (dir === 'on') onAt.set(room, now);
+      const flashNow = !!opts.flash && dir === 'off' && !opts.still && now - lastFlash > params.flashGapMs && now - (onAt.get(room) || 0) > params.flashDwellMs;
+      if (flashNow) { lastFlash = now; ctx.share.flashAt = now; }
+      try { window.dispatchEvent(new CustomEvent('boneyard:switch', { detail: { dir, slug, dial: ctx.dial, flash: flashNow } })); } catch (_) {}
+      const calm = ctx.dial !== 'full';
+      const lineMs = calm ? params.calmLineMs : params.lineMs, dotMs = calm ? params.calmDotMs : params.dotMs;
+      const recedeMs = calm ? params.calmRecedeMs : params.recedeMs, onMs = calm ? params.calmOnMs : params.onMs;
       if (opts.still) {
         main = tube.animate([{ opacity: dir === 'on' ? 0 : 1 }, { opacity: dir === 'on' ? 1 : 0 }], { duration: params.stillMs, easing: 'linear', fill: dir === 'off' ? 'forwards' : 'none' });
         list.push(main);
       } else if (dir === 'on') {
         const from = Math.max(0.02, Math.min(1, opts.from || 0.02));
-        list.push(outer.animate([{ transform: `translate3d(0,0,0) scale(${from})` }, { transform: 'translate3d(0,0,0) scale(1)' }], { duration: params.onMs, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'none' }));
-        main = tube.animate([
-          { transform: `scale(0.6, ${params.lineScale})`, easing: 'cubic-bezier(.3,.7,.4,1)' },
-          { transform: `scale(1, ${params.lineScale})`, offset: 0.4, easing: 'cubic-bezier(.2,.8,.2,1)' },
+        list.push(outer.animate([{ transform: `translate3d(0,0,0) scale(${from})` }, { transform: 'translate3d(0,0,0) scale(1)' }], { duration: onMs, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'none' }));
+        const ls = params.lineScale, os = calm ? 0 : params.overshoot;
+        main = tube.animate(os ? [
+          { transform: `scale(0.02, ${ls})`, easing: 'cubic-bezier(.2,.9,.3,1)' },
+          { transform: `scale(${1 + os}, ${ls})`, offset: 0.3, easing: 'cubic-bezier(.4,0,.2,1)' },
+          { transform: `scale(${1 + os * 0.4}, ${1 + os})`, offset: 0.72, easing: 'cubic-bezier(.4,0,.4,1)' },
           { transform: 'scale(1, 1)' },
-        ], { duration: params.onMs, fill: 'none' });
+        ] : [
+          { transform: `scale(0.6, ${ls})`, easing: 'cubic-bezier(.3,.7,.4,1)' },
+          { transform: `scale(1, ${ls})`, offset: 0.4, easing: 'cubic-bezier(.4,0,.2,1)' },
+          { transform: 'scale(1, 1)' },
+        ], { duration: onMs, fill: 'none' });
         list.push(main);
+        /* the line opens white-hot and cools in the first few percent of its opening, while it is still a sliver */
+        const lineAt = os ? 0.3 : 0.4;
+        if (flash) list.push(flash.animate([{ opacity: 1 }, { opacity: 1, offset: lineAt }, { opacity: 0, offset: lineAt + 0.06 }, { opacity: 0 }], { duration: onMs, easing: 'linear', fill: 'none' }));
       } else {
-        const total = params.lineMs + params.dotMs + params.recedeMs;
+        const total = lineMs + dotMs + recedeMs;
         const dx = (ctx.vp.x - 0.5) * innerWidth, dy = (ctx.vp.y - 0.5) * innerHeight;
+        const oLine = lineMs / total, oDot = (lineMs + dotMs) / total;
         main = tube.animate([
-          { transform: 'translate(0px, 0px) scale(1, 1)', easing: 'cubic-bezier(.4,0,.6,1)' },
-          { transform: `translate(0px, 0px) scale(1, ${params.lineScale})`, offset: params.lineMs / total, easing: 'cubic-bezier(.4,0,.8,1)' },
-          { transform: `translate(0px, 0px) scale(${params.lineScale}, ${params.lineScale})`, offset: (params.lineMs + params.dotMs) / total, easing: 'cubic-bezier(.3,0,.7,1)' },
+          { transform: 'translate(0px, 0px) scale(1, 1)', easing: calm ? 'cubic-bezier(.4,0,.6,1)' : 'cubic-bezier(.6,0,1,.6)' },
+          { transform: `translate(0px, 0px) scale(${calm ? 1 : 1.03}, ${params.lineScale})`, offset: oLine, easing: 'cubic-bezier(.5,0,.9,.5)' },
+          { transform: `translate(0px, 0px) scale(${params.lineScale}, ${params.lineScale})`, offset: oDot, easing: 'cubic-bezier(.3,0,.7,1)' },
           { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(0.0001, 0.0001)` },
         ], { duration: total, fill: 'forwards' });
         list.push(main);
-        if (opts.flash && flash) list.push(flash.animate([{ opacity: 0.85 }, { opacity: 0 }], { duration: params.flashMs, easing: 'ease-out', fill: 'none' }));
+        /* one keyframe list on the flash layer: the single flash frame (Full, core-granted), dark again within
+           flashMs, then white-hot only once the tube is a sliver: through the line and the dot, out as it recedes */
+        if (flash) {
+          const oF = Math.min(oLine * 0.5, params.flashMs / total), oHeat = oLine * 0.86;
+          list.push(flash.animate([
+            { opacity: flashNow ? 0.9 : 0 },
+            { opacity: 0, offset: oF },
+            { opacity: 0, offset: oHeat },
+            { opacity: 1, offset: oLine },
+            { opacity: 1, offset: oDot + (1 - oDot) * 0.45 },
+            { opacity: 0 },
+          ], { duration: total, easing: 'linear', fill: 'none' }));
+        }
       }
       live.set(room, list);
       return main.finished.then(() => { done(room); return true; }, () => { done(room); return false; });
@@ -1900,12 +2434,14 @@ else bootBoneyardRide();
  * lineage     the Star Wars jump (1977); the demoscene 1/z starfields (early 1990s); Windows 3.1 Starfield Simulation (1992)
  * original    it draws the SAME points THE SKY publishes on ctx.share.stars, so the jump is continuous with the sky you
  *             were resting under; warp is a function of scroll progress through the corridor (scroll is the only clock,
- *             and warp is exactly zero at rest and at the room's threshold),
- *             eased 350 ms so a stopped scroll holds a designed mid-warp instead of freezing mid-frame; writes
- *             ctx.share.warp so the sky dims its dots as the streaks take over; clipped above the horizon
- * not         a random speed loop, a tunnel, a lens flare. It never moves unless you do.
+ *             and warp is exactly zero at rest and at the room's threshold), eased 350 ms so a stopped scroll holds a
+ *             designed mid-warp; at peak warp in Full the nearest streaks burn amber, the cores split into red, green
+ *             and blue about the vanishing point (drawn additively), and the camera shakes a few px in proportion to
+ *             how fast you are scrolling (published as ctx.share.shake, so every layer shakes together, and as
+ *             ctx.share.punch 0..1 for the sound); clipped above the horizon
+ * not         a random speed loop, a tunnel, a lens flare, a flash. It never moves unless you do.
  * deps        none · Canvas 2D · 2026-09
- * budget      see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD
+ * budget      0.13 ms/frame JS avg (0.7 max) @ 1440x900 dpr 1, headless desktop Chromium (2026-09-30); raster not in this number; phone TBD
  * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
  * license     MIT, Desert Data Labs LLC
  */
@@ -1914,46 +2450,65 @@ else bootBoneyardRide();
  * raised sine over that range (quiet at both ends, full in the middle) with a floor so the first scroll already
  * stretches the stars. For each star (x, y, z) the head is (vpX + f x / z, vpY - f y / z) and the tail is the same
  * projection at z + warp * streakLen: the tail sits closer to the vanishing point, so every streak points at it.
- * Two passes per plane, a wide dim halo under a thin bright core, batched into one Path2D each. If no sky has
- * published stars (the parts page), the module seeds its own field with the same distribution.
+ * Stars nearer than hotZ are the hot set once warp passes hotFrom: an amber halo under a white core.
+ *
+ * The punch is a transient: it jumps to 1 when warp climbs through 0.6 and to 0.7 when it climbs through 0.9, and
+ * decays with a 110 ms time constant (gone in about 350 ms); ctx.share.warp is the sustained level. In Full the
+ * punch drives three things over a small sustained rumble (peak warp times scroll speed): the
+ * chromatic split (the hot set's core path stroked three more times in pure red, green and blue, scaled about the vanishing
+ * point by 1 + c, 1 and 1 - c, composited with 'lighter' so they sum to white where they overlap), the camera shake
+ * (a sum of two incommensurate sines, a few px), and ctx.share.punch. Calm and Still get none of it. When warp
+ * climbs through 0.6 the module dispatches a window event 'boneyard:warp' with detail.level; it re-arms below 0.45.
+ * If no sky has published stars (the parts page), the module seeds its own field with the same distribution.
  */
 (() => {
   'use strict';
   const PARAMS = {
-    streakLen: 5.5,     /* world units at full warp */
+    streakLen: 10.5,    /* world units at full warp */
     warpFloor: 0.12,
     warpPeak: 1.0,
     rampIn: 0.1,        /* fraction of the gap over which warp rises from zero (and falls back to zero) */
     settle: 0.35,       /* seconds to ease toward the scroll-driven warp */
-    haloWidth: 3.2, coreWidth: 1.1,
-    haloAlpha: 0.22, coreAlpha: 0.9,
+    haloWidth: 3.0, coreWidth: 1.3,
+    haloAlpha: 0.26, coreAlpha: 0.95,
     focalK: 0.62,
-    stillWarp: 0.45,
+    hotZ: 7,            /* stars nearer than this burn amber at peak */
+    hotFrom: 0.45,      /* warp at which the hot set starts */
+    chromaK: 0.012,     /* radial RGB split at full punch, fraction of the distance from the vanishing point */
+    shakePx: 4,         /* css px of camera shake at full punch */
+    kickTau: 0.11,      /* seconds: the punch transient's decay */
+    speedRef: 16,       /* ride camera units per second that reads as full speed */
+    stillWarp: 0.62,
     ownStars: 360,      /* only when no sky is present (parts page) */
   };
+  const RGB = ['rgb(255,40,40)', 'rgb(40,255,90)', 'rgb(60,90,255)'];
   function seedOwn(n) {
     const a = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) { a[i * 3] = (Math.random() * 2 - 1) * 10; a[i * 3 + 1] = (Math.random() * 2 - 1) * 7; a[i * 3 + 2] = 1.2 + Math.random() * 38; }
     return a;
   }
+  const smooth = (a, b, x) => { const u = Math.max(0, Math.min(1, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
   function mount(canvas, params, ctx) {
     const g = canvas.getContext('2d', { alpha: true });
-    let w = canvas.width, h = canvas.height, f = h * params.focalK, px = 1, warp = 0, own = null;
+    let w = canvas.width, h = canvas.height, f = h * params.focalK, px = 1, bd = 1, warp = 0, own = null, speed = 0, armed = true, armed9 = true, kick = 0, clock = 0;
     function planes() {
       const s = ctx.share.stars;
       if (s) return [[s.far, s.far.length / 3, 0.6], [s.near, s.near.length / 3, 1]];
       if (!own) own = seedOwn(params.ownStars);
       return [[own, params.ownStars, 1]];
     }
-    function draw(wv) {
+    function draw(wv, chroma, sx, sy) {
       const T = ctx.tokens;
       const vpX = ctx.vp.x * w, vpY = ctx.vp.y * h;
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.clearRect(0, 0, w, h);
       if (wv <= 0.001) return;
       g.save();
-      if (ctx.share.stars) { g.beginPath(); g.rect(0, 0, w, Math.ceil(vpY)); g.clip(); }
+      g.setTransform(1, 0, 0, 1, sx, sy);
+      if (ctx.share.stars) { g.beginPath(); g.rect(-16, -16, w + 32, Math.ceil(vpY) + 16); g.clip(); }
       g.lineCap = 'round';
+      const hot = new Path2D(), cores = [];
+      const heat = smooth(params.hotFrom, 1, wv);
       for (const [a, n, k] of planes()) {
         const path = new Path2D();
         const L = wv * params.streakLen * k;
@@ -1962,26 +2517,61 @@ else bootBoneyardRide();
           const hx = vpX + f * x / z, hy = vpY - f * y / z;
           if (hx < -4 || hx > w + 4 || hy < -4 || hy > h + 4) continue;
           const z2 = z + L;
-          path.moveTo(vpX + f * x / z2, vpY - f * y / z2); path.lineTo(hx, hy);
+          const p = heat > 0 && z < params.hotZ ? hot : path;
+          p.moveTo(vpX + f * x / z2, vpY - f * y / z2); p.lineTo(hx, hy);
         }
         g.strokeStyle = T.phosphor; g.globalAlpha = params.haloAlpha * k; g.lineWidth = params.haloWidth * px; g.stroke(path);
         g.strokeStyle = T.phosphorCore; g.globalAlpha = params.coreAlpha * k; g.lineWidth = params.coreWidth * px; g.stroke(path);
+      }
+      if (heat > 0) {
+        g.strokeStyle = T.amber; g.globalAlpha = 0.6 * heat; g.lineWidth = params.haloWidth * 1.7 * px; g.stroke(hot);
+        g.strokeStyle = T.phosphorCore; g.globalAlpha = params.coreAlpha; g.lineWidth = params.coreWidth * 1.6 * px; g.stroke(hot);
+        cores.push([hot, 1]);
+      }
+      if (chroma > 0.01) {
+        g.globalCompositeOperation = 'lighter';
+        g.lineWidth = params.coreWidth * 1.2 * px;
+        for (let c = 0; c < 3; c++) {
+          const s = 1 + (1 - c) * params.chromaK * chroma;
+          g.setTransform(s, 0, 0, s, vpX * (1 - s) + sx, vpY * (1 - s) + sy);
+          g.strokeStyle = RGB[c];
+          for (const [p, k] of cores) { g.globalAlpha = 0.6 * chroma * k; g.stroke(p); }
+        }
+        g.globalCompositeOperation = 'source-over';
       }
       g.restore();
       g.globalAlpha = 1;
     }
     return {
       tick(dt, t, progress) {
+        const S = ctx.share, full = ctx.dial === 'full';
         const p = Math.max(0, Math.min(1, progress));
         const ends = Math.min(1, p / params.rampIn) * Math.min(1, (1 - p) / params.rampIn);   /* zero at rest and at the threshold */
         const target = ends * (params.warpFloor + (params.warpPeak - params.warpFloor) * Math.pow(Math.sin(Math.PI * p), 0.8));
         warp += (target - warp) * (1 - Math.exp(-dt / Math.max(0.02, params.settle)));
-        ctx.share.warp = warp;
-        draw(warp);
+        const now = performance.now();
+        S.warp = warp; S.warpAt = now;
+        kick *= Math.exp(-dt / Math.max(0.02, params.kickTau));
+        if (armed && warp > 0.6) { armed = false; kick = 1; window.dispatchEvent(new CustomEvent('boneyard:warp', { detail: { level: warp } })); }
+        else if (!armed && warp < 0.45) armed = true;
+        if (armed9 && warp > 0.9) { armed9 = false; kick = Math.max(kick, 0.7); } else if (!armed9 && warp < 0.75) armed9 = true;
+        if (kick < 0.01) kick = 0;
+        /* speed: fast attack, slower release, so a flick lands and a stop settles */
+        const sp = Math.min(1, Math.abs((ctx.camera && ctx.camera.v) || 0) / params.speedRef);
+        speed += (sp - speed) * (1 - Math.exp(-dt / (sp > speed ? 0.06 : 0.35)));
+        const peak = smooth(0.55, 0.95, warp);
+        const rumble = peak * speed;
+        const punch = full ? kick : 0;
+        const chroma = full ? Math.max(0.3 * rumble, kick) : 0;
+        clock += dt;
+        const amp = full ? params.shakePx * Math.max(0.3 * rumble, kick) : 0;
+        const sh = amp > 0.05 ? { x: amp * (0.62 * Math.sin(clock * 53.1) + 0.38 * Math.sin(clock * 91.7 + 1.3)), y: amp * (0.62 * Math.sin(clock * 61.3 + 0.7) + 0.38 * Math.sin(clock * 83.9 + 2.1)) } : null;
+        S.punch = punch; S.shake = sh; S.punchAt = now;
+        draw(warp, chroma, sh ? sh.x * bd : 0, sh ? sh.y * bd : 0);
       },
-      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); f = h * params.focalK; },
-      still() { warp = params.stillWarp; ctx.share.warp = warp; draw(warp); },
-      destroy() { ctx.share.warp = 0; g.clearRect(0, 0, w, h); },
+      resize(nw, nh, ndpr) { w = nw; h = nh; bd = ndpr; px = Math.max(0.75, ndpr); f = h * params.focalK; },
+      still() { warp = params.stillWarp; ctx.share.warp = warp; draw(warp, 0, 0, 0); },
+      destroy() { const S = ctx.share; S.warp = 0; S.punch = 0; S.shake = null; S.punchAt = 0; S.warpAt = 0; g.clearRect(0, 0, w, h); },
       params(p) { params = p; f = h * params.focalK; },
     };
   }
@@ -1996,7 +2586,9 @@ else bootBoneyardRide();
  *             starfield of the era
  * original    scroll is the only clock: the camera's depth is a function of progress through the gap, eased so a
  *             stopped scroll holds a still tunnel; the tunnel fades in and out at the gap's ends, so it says "a
- *             machine bay is next" and never covers the bays themselves; it converges on the one vanishing point
+ *             machine bay is next" and never covers the bays themselves; it converges on the one vanishing point;
+ *             in Full the camera covers the tunnel faster, the front rings burn amber in proportion to scroll speed,
+ *             and a light shake rides ctx.share.shake (punch stays 0: the tunnel has no loud moment; Calm travels slower, no shake)
  * not         a time-looping screensaver, a raster tunnel, a texture-mapped tube. It never moves unless you do.
  * deps        none · Canvas 2D · 2026-09
  * budget      0.17 to 0.24 ms/frame @ 1440x900 internal (dpr 1), headless desktop Chromium, parts page counter
@@ -2012,7 +2604,8 @@ else bootBoneyardRide();
  * from zero over the last few units before the camera (the
  * mouth), so the nearest rings fade out instead of scattering past the screen edge like stars. Dots are sorted into
  * six brightness bins; each bin is one Path2D of small squares, stroked once for a halo and filled once for the core.
- * The tunnel's opacity is zero at both ends of the gap and full in the middle.
+ * The tunnel's opacity is zero at both ends of the gap and full in the middle. Speed is the ride camera's eased
+ * velocity; in Full it tints the two brightest bins' halos toward amber and drives a shake of up to shakePx.
  */
 (() => {
   'use strict';
@@ -2021,7 +2614,8 @@ else bootBoneyardRide();
     dotsPerSide: 14,
     radius: 1.35,         /* square half-size, world units */
     spacing: 0.8,         /* depth between rings */
-    travel: 26,           /* depth the camera covers across the whole gap */
+    travel: 42,           /* depth the camera covers across the whole gap (Full; Calm takes calmTravel of it) */
+    calmTravel: 0.6,
     twist: 0.09,          /* radians of turn per unit of depth */
     zNear: 0.55,
     focalK: 0.62,
@@ -2030,16 +2624,19 @@ else bootBoneyardRide();
     rampIn: 0.12,
     mouth: 1.8,           /* depth over which a ring fades in as it nears the camera, so the tunnel has a clean mouth */
     stillProgress: 0.5,
+    shakePx: 2,           /* css px at full speed, Full only */
+    speedRef: 16,
   };
   const BINS = 6;
   function mount(canvas, params, ctx) {
     const g = canvas.getContext('2d', { alpha: true });
-    let w = canvas.width, h = canvas.height, f = h * params.focalK, px = 1, cam = -1, env = 0;
-    function draw(camZ, envelope) {
+    let w = canvas.width, h = canvas.height, f = h * params.focalK, px = 1, bd = 1, cam = -1, env = 0, speed = 0, clock = 0;
+    function draw(camZ, envelope, hot, sx, sy) {
       const T = ctx.tokens;
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.clearRect(0, 0, w, h);
       if (envelope <= 0.002) return;
+      g.setTransform(1, 0, 0, 1, sx || 0, sy || 0);
       const vpX = ctx.vp.x * w, vpY = ctx.vp.y * h;
       const n = params.rings | 0, m = Math.max(2, params.dotsPerSide | 0), R = params.radius, sp = params.spacing;
       const span = n * sp;
@@ -2069,10 +2666,12 @@ else bootBoneyardRide();
       }
       for (let b = BINS - 1; b >= 0; b--) {
         const a = envelope * (b / (BINS - 1));
-        g.globalAlpha = a * 0.3; g.fillStyle = T.phosphor; g.lineWidth = 3 * px; g.strokeStyle = T.phosphor; g.stroke(paths[b]);
+        const amber = hot > 0.02 && b >= BINS - 2;
+        g.globalAlpha = a * (amber ? 0.3 + 0.35 * hot : 0.3); g.lineWidth = (amber ? 3 + 2 * hot : 3) * px; g.strokeStyle = amber ? T.amber : T.phosphor; g.stroke(paths[b]);
         g.globalAlpha = a; g.fillStyle = b === BINS - 1 ? T.phosphorCore : T.phosphor; g.fill(paths[b]);
       }
       g.globalAlpha = 1;
+      g.setTransform(1, 0, 0, 1, 0, 0);
     }
     function envelopeAt(p) {
       const r = Math.max(0.01, params.rampIn);
@@ -2081,16 +2680,24 @@ else bootBoneyardRide();
     }
     return {
       tick(dt, t, progress) {
+        const S = ctx.share, full = ctx.dial === 'full';
         const p = Math.max(0, Math.min(1, progress));
-        const target = p * params.travel, k = 1 - Math.exp(-dt / Math.max(0.02, params.settle));
+        const target = p * params.travel * (full ? 1 : params.calmTravel), k = 1 - Math.exp(-dt / Math.max(0.02, params.settle));
         if (cam < 0) cam = target; else cam += (target - cam) * k;
         env += (envelopeAt(p) - env) * k;
-        ctx.share.warp = env * 0.5;                                       /* the sky dims its dots a little under the tunnel */
-        draw(cam, env);
+        const now = performance.now();
+        S.warp = env * 0.5; S.warpAt = now;                               /* the sky dims its dots a little under the tunnel */
+        const sp = full ? Math.min(1, Math.abs((ctx.camera && ctx.camera.v) || 0) / params.speedRef) : 0;
+        speed += (sp - speed) * (1 - Math.exp(-dt / (sp > speed ? 0.06 : 0.35)));
+        clock += dt;
+        const amp = params.shakePx * env * speed;
+        const sh = amp > 0.05 ? { x: amp * Math.sin(clock * 57.3), y: amp * Math.sin(clock * 71.9 + 1.1) } : null;
+        S.punch = 0; S.shake = sh; S.punchAt = now;
+        draw(cam, env, env * speed, sh ? sh.x * bd : 0, sh ? sh.y * bd : 0);
       },
-      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); f = h * params.focalK; },
-      still() { const p = params.stillProgress; draw(p * params.travel, envelopeAt(p)); },
-      destroy() { ctx.share.warp = 0; g.clearRect(0, 0, w, h); },
+      resize(nw, nh, ndpr) { w = nw; h = nh; bd = ndpr; px = Math.max(0.75, ndpr); f = h * params.focalK; },
+      still() { const p = params.stillProgress; draw(p * params.travel, envelopeAt(p), 0, 0, 0); },
+      destroy() { const S = ctx.share; S.warp = 0; S.warpAt = 0; S.punch = 0; S.shake = null; S.punchAt = 0; g.clearRect(0, 0, w, h); },
       params(p) { params = p; f = h * params.focalK; },
     };
   }
@@ -2104,24 +2711,33 @@ else bootBoneyardRide();
  * lineage     the Star Wars jump (1977); the demoscene 1/z starfields (early 1990s); Windows 3.1 Starfield Simulation (1992)
  * original    the hold room for HYPERSPACE: the same projection and the same vanishing point as the corridor and the row
  *             (pointer parallax on the point is the core's, so the whole world shifts together); warp is a time
- *             constant, not a keyframe, so a tap flickers and a hold builds; a translucent field fill gives cheap
- *             persistence without the tube; the still is mid-warp with short streaks, the frame that reads as
- *             "hyperspace" in a screenshot
- * not         random speed changes, a tunnel, a lens flare, autoplay warp. Cruise is quiet; only a hold raises it.
+ *             constant, not a keyframe, so a tap flickers and a hold builds; the hold is punching it: warp ramps in
+ *             about half a second, the nearest streaks go white-hot over an amber halo, an amber core blooms at the
+ *             vanishing point, and in Full the cores split red, green and blue and the camera shakes a few px
+ *             (published as ctx.share.punch for the sound); a translucent field fill gives cheap persistence without
+ *             the tube; the still is mid-warp phosphor streaks, the frame that reads as "hyperspace" (amber is for the hold)
+ * not         random speed changes, a tunnel, a lens flare, a flash, autoplay warp. Cruise is quiet; only a hold raises it.
  * deps        none · Canvas 2D · 2026-09
- * budget      see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD
+ * budget      0.12 ms/frame JS avg (0.7 max) @ 1440x900 dpr 1, headless desktop Chromium (2026-09-30); raster not in this number; phone TBD
  * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
  * license     MIT, Desert Data Labs LLC
  */
 /* HOW IT WORKS
  * count stars live in camera space with x and y spread around the line of flight and z between zNear and zFar. Each
- * frame every z decreases by (drift + warp * warpDrift) * dt; a star that passes zNear respawns at zFar with new x, y.
- * A star projects to (vpX + f x / z, vpY + f y / z) with f = focalK * height; its streak runs from that head back to
- * the projection at z + warp * streakLen, so all streaks point at the vanishing point and lengthen with warp.
+ * frame every z decreases by (drift + warp^2 * warpDrift) * dt; a star that passes zNear respawns at zFar with new
+ * x, y. A star projects to (vpX + f x / z, vpY + f y / z) with f = focalK * height; its streak runs from that head
+ * back to the projection at z + warp * streakLen, so all streaks point at the vanishing point and lengthen with warp.
  *
  * Warp eases toward holdWarp while the pointer, a finger or Space is held and toward cruiseWarp otherwise, each with
  * its own time constant (riseTime up, settleTime down). Instead of clearing, the frame is washed with the field colour
- * at trailAlpha, which leaves a short persistence trail. still() clears and draws one frame at stillWarp.
+ * at trailAlpha (less at high warp, so trails lengthen), which leaves a persistence trail. Stars nearer than hotZ are
+ * the hot set: an amber halo under a white core. An amber radial glow at the vanishing point grows with warp squared.
+ * In Full, above warp 0.55, the hot set's core strokes are repeated in pure red, green and blue, scaled about the vanishing
+ * point and added with 'lighter' (the chromatic split), and the draw offset shakes; both are written to ctx.share.
+ * The split and the shake ride a transient kick (1 on the press, 0.8 when warp crosses 0.6, 110 ms decay) over a
+ * small sustained level; ctx.share.punch is the kick alone, ctx.share.warp the sustained warp.
+ * Calm halves the speeds and drops the split and the shake. Changing count, spread, ySpread, zNear or zFar rebuilds
+ * the field (compared against a snapshot taken at build, because the harness mutates the params object in place).
  */
 (() => {
   'use strict';
@@ -2130,57 +2746,118 @@ else bootBoneyardRide();
     spread: 9, ySpread: 6.5,
     zNear: 0.9, zFar: 42,
     focalK: 0.62,
-    drift: 1.6,          /* units per second at cruise */
-    warpDrift: 14,       /* extra units per second at warp 1 */
-    cruiseWarp: 0.16,
+    drift: 2.4,          /* units per second at cruise */
+    warpDrift: 40,       /* extra units per second at warp 1 (scaled by warp squared: the kick lands late and hard) */
+    cruiseWarp: 0.18,
     holdWarp: 1.0,
-    riseTime: 1.2,       /* seconds to ~95% of hold */
+    riseTime: 0.55,      /* seconds to ~95% of hold */
     settleTime: 0.9,
-    streakLen: 6,
-    trailAlpha: 0.5,     /* field wash per frame: lower = longer trails */
-    haloWidth: 3.4, coreWidth: 1.15,
-    haloAlpha: 0.2, coreAlpha: 0.92,
-    stillWarp: 0.42,
+    streakLen: 10,
+    trailAlpha: 0.5,     /* field wash per frame at cruise: lower = longer trails */
+    trailHot: 0.28,      /* field wash per frame at full warp */
+    haloWidth: 3.6, coreWidth: 1.3,
+    haloAlpha: 0.22, coreAlpha: 0.95,
+    hotZ: 8,             /* stars nearer than this burn white over amber */
+    coreGlow: 0.5,       /* amber bloom at the vanishing point, alpha at warp 1 */
+    chromaK: 0.014,
+    shakePx: 5,
+    kickTau: 0.11,       /* seconds: the punch transient's decay */
+    stillWarp: 0.5,
   };
+  const RGB = ['rgb(255,40,40)', 'rgb(40,255,90)', 'rgb(60,90,255)'];
+  const smooth = (a, b, x) => { const u = Math.max(0, Math.min(1, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
+  const FIELD_KEYS = ['count', 'spread', 'ySpread', 'zNear', 'zFar'];
   function mount(canvas, params, ctx) {
     const g = canvas.getContext('2d', { alpha: true });
-    let w = canvas.width, h = canvas.height, f = h * params.focalK, px = 1, warp = params.cruiseWarp;
-    const n = params.count, a = new Float32Array(n * 3);
-    const spawn = (i, anyZ) => { a[i * 3] = (Math.random() * 2 - 1) * params.spread; a[i * 3 + 1] = (Math.random() * 2 - 1) * params.ySpread; a[i * 3 + 2] = anyZ ? params.zNear + Math.random() * (params.zFar - params.zNear) : params.zFar; };
-    for (let i = 0; i < n; i++) spawn(i, true);
-    function draw(clear) {
+    let w = canvas.width, h = canvas.height, f = h * params.focalK, px = 1, bd = 1, warp = params.cruiseWarp, armed = true, clock = 0, kick = 0, wasDown = false;
+    let n = 0, a = null, snap = null;
+    const spawn = (i, anyZ) => { a[i * 3] = (Math.random() * 2 - 1) * snap.spread; a[i * 3 + 1] = (Math.random() * 2 - 1) * snap.ySpread; a[i * 3 + 2] = anyZ ? snap.zNear + Math.random() * (snap.zFar - snap.zNear) : snap.zFar; };
+    function build() {
+      snap = {}; for (const k of FIELD_KEYS) snap[k] = params[k];
+      n = Math.max(1, params.count | 0); a = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) spawn(i, true);
+    }
+    build();
+    function draw(clear, chroma, sx, sy) {
       const T = ctx.tokens;
       const vpX = ctx.vp.x * w, vpY = ctx.vp.y * h;
       g.setTransform(1, 0, 0, 1, 0, 0);
-      if (clear) g.clearRect(0, 0, w, h);
-      else { g.globalAlpha = params.trailAlpha; g.fillStyle = T.field; g.fillRect(0, 0, w, h); }
+      if (clear) { g.globalAlpha = 1; g.clearRect(0, 0, w, h); }
+      else { g.globalAlpha = params.trailAlpha + (params.trailHot - params.trailAlpha) * warp * warp; g.fillStyle = T.field; g.fillRect(0, 0, w, h); }
+      g.setTransform(1, 0, 0, 1, sx, sy);
+      /* the amber core: white-hot streaks, amber heart */
+      const glow = params.coreGlow * smooth(0.5, 1, warp);           /* only a real hold lights the heart; the still (and the far room) stays clean */
+      if (glow > 0.01) {
+        const r = h * (0.1 + 0.34 * warp * warp);
+        const gr = g.createRadialGradient(vpX, vpY, 0, vpX, vpY, r);
+        gr.addColorStop(0, ctx.rgba(T.amber, 1)); gr.addColorStop(0.35, ctx.rgba(T.amber, 0.35)); gr.addColorStop(1, ctx.rgba(T.amber, 0));
+        g.globalCompositeOperation = 'lighter'; g.globalAlpha = glow * (clear ? 1 : 0.5); g.fillStyle = gr; g.fillRect(vpX - r, vpY - r, 2 * r, 2 * r);
+        g.globalCompositeOperation = 'source-over';
+      }
       g.lineCap = 'round';
-      const path = new Path2D();
+      const path = new Path2D(), hot = new Path2D();
       const L = warp * params.streakLen;
+      const heat = smooth(0.56, 0.95, warp);                          /* only a hold burns: cruise and the still stay phosphor */
       for (let i = 0; i < n; i++) {
         const x = a[i * 3], y = a[i * 3 + 1], z = a[i * 3 + 2];
         const hx = vpX + f * x / z, hy = vpY + f * y / z;
         if (hx < -4 || hx > w + 4 || hy < -4 || hy > h + 4) continue;
         const z2 = z + L + 0.15;
-        path.moveTo(vpX + f * x / z2, vpY + f * y / z2); path.lineTo(hx, hy);
+        const p = heat > 0 && z < params.hotZ ? hot : path;
+        p.moveTo(vpX + f * x / z2, vpY + f * y / z2); p.lineTo(hx, hy);
       }
       g.strokeStyle = T.phosphor; g.globalAlpha = params.haloAlpha; g.lineWidth = params.haloWidth * px; g.stroke(path);
       g.strokeStyle = T.phosphorCore; g.globalAlpha = params.coreAlpha; g.lineWidth = params.coreWidth * px; g.stroke(path);
+      if (heat > 0) {
+        g.strokeStyle = T.amber; g.globalAlpha = 0.65 * heat; g.lineWidth = params.haloWidth * 1.6 * px; g.stroke(hot);
+        g.strokeStyle = T.phosphorCore; g.globalAlpha = params.coreAlpha; g.lineWidth = params.coreWidth * (1 + 0.8 * heat) * px; g.stroke(hot);
+      }
+      if (chroma > 0.01 && heat > 0) {
+        g.globalCompositeOperation = 'lighter';
+        g.lineWidth = params.coreWidth * 1.2 * px;
+        for (let c = 0; c < 3; c++) {
+          const s = 1 + (1 - c) * params.chromaK * chroma;
+          g.setTransform(s, 0, 0, s, vpX * (1 - s) + sx, vpY * (1 - s) + sy);
+          g.strokeStyle = RGB[c]; g.globalAlpha = 0.55 * chroma;
+          g.stroke(hot);
+        }
+        g.globalCompositeOperation = 'source-over';
+      }
+      g.setTransform(1, 0, 0, 1, 0, 0);
       g.globalAlpha = 1;
     }
     return {
       tick(dt, t, progress, pointer) {
-        const target = pointer && pointer.down ? params.holdWarp : params.cruiseWarp;
+        const S = ctx.share, full = ctx.dial === 'full', calm = ctx.dial === 'calm';
+        const down = !!(pointer && pointer.down);
+        kick *= Math.exp(-dt / Math.max(0.02, params.kickTau));
+        if (down && !wasDown) kick = 1;                                   /* the surge: the moment you punch it */
+        wasDown = down;
+        const target = down ? params.holdWarp : params.cruiseWarp;
         const tau = (target > warp ? params.riseTime : params.settleTime) / 3;
         warp += (target - warp) * (1 - Math.exp(-dt / tau));
-        const dz = (params.drift + warp * params.warpDrift) * dt;
-        for (let i = 0; i < n; i++) { let z = a[i * 3 + 2] - dz; if (z < params.zNear) { spawn(i, false); z = params.zFar - (params.zNear - z); } a[i * 3 + 2] = z; }
-        draw(false);
+        const now = performance.now();
+        S.warp = warp; S.warpAt = now;
+        if (armed && warp > 0.6) { armed = false; kick = Math.max(kick, 0.8); window.dispatchEvent(new CustomEvent('boneyard:warp', { detail: { level: warp } })); }
+        else if (!armed && warp < 0.45) armed = true;
+        const dz = (params.drift + warp * warp * params.warpDrift) * dt * (calm ? 0.5 : 1);
+        for (let i = 0; i < n; i++) { let z = a[i * 3 + 2] - dz; if (z < snap.zNear) { spawn(i, false); z = snap.zFar - (snap.zNear - z) % (snap.zFar - snap.zNear); } a[i * 3 + 2] = z; }
+        const peak = full ? smooth(0.55, 1, warp) : 0;
+        clock += dt;
+        if (kick < 0.01) kick = 0;
+        const k = full ? kick : 0;
+        const amp = params.shakePx * Math.max(0.25 * peak, k);
+        const sh = amp > 0.05 ? { x: amp * (0.62 * Math.sin(clock * 53.1) + 0.38 * Math.sin(clock * 91.7 + 1.3)), y: amp * (0.62 * Math.sin(clock * 61.3 + 0.7) + 0.38 * Math.sin(clock * 83.9 + 2.1)) } : null;
+        S.punch = k; S.shake = sh; S.punchAt = now;
+        draw(false, Math.max(0.3 * peak, k), sh ? sh.x * bd : 0, sh ? sh.y * bd : 0);
       },
-      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); f = h * params.focalK; },
-      still() { warp = params.stillWarp; draw(true); },
-      destroy() { g.clearRect(0, 0, w, h); },
-      params(p) { params = p; f = h * params.focalK; },
+      resize(nw, nh, ndpr) { w = nw; h = nh; bd = ndpr; px = Math.max(0.75, ndpr); f = h * params.focalK; },
+      still() { warp = params.stillWarp; draw(true, 0, 0, 0); },
+      destroy() { const S = ctx.share; if (S.punchAt) { S.punch = 0; S.shake = null; S.punchAt = 0; } g.clearRect(0, 0, w, h); },
+      params(p) {
+        params = p; f = h * params.focalK;
+        if (FIELD_KEYS.some((k) => p[k] !== snap[k])) build();
+      },
     };
   }
   BAYS.push({ slug: 'jump', title: 'Jump', order: 1, role: 'bay', params: PARAMS, mount });
@@ -2197,10 +2874,11 @@ else bootBoneyardRide();
  *             1 x 1024 (assets/sunset-strip.png, provenance in sunset-strip.json); the photo itself never ships.
  *             Scroll past the hold sets the dolly speed, the pointer shoves the lanes, and every lane keeps its
  *             own phase and pace, so the corridor is the one real sky smeared into many moments
- * not         a film recreation, a video, a photo. No hue is invented: every lit texel is a strip colour times fog.
+ * not         a film recreation, a video, a photo. No hue is invented: every lit texel is a strip colour, fogged toward
+ *             a core mixed from the strip's own brightest tones and the tube's phosphor core.
  * deps        none · Canvas 2D ImageData · 2026-09
- * budget      1.1 to 1.5 ms/frame @ 320x200 internal (pixel 320), headless desktop Chromium, parts page counter
- *             (2026-09-29); phone TBD
+ * budget      1.2 to 2.0 ms/frame @ 320x200 internal (pixel 320), headless desktop Chromium, parts page counter
+ *             (2026-09-30); 390x844 at 4x CPU: 8.0 ms JS, part page holds 60 fps; JS time only, not a real-GPU frame
  * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
  * license     MIT, Desert Data Labs LLC
  */
@@ -2212,16 +2890,19 @@ else bootBoneyardRide();
  * texel colour is the strip sampled at offset + (z + dolly * pace) * stripPerUnit, mirrored so the strip never
  * seams. As the dolly advances, colour travels down every lane toward you: that is the slit-scan smear.
  *
- * Depth fog fades each row toward the field colour; where a lane gets narrower than about two pixels the row
- * blends toward the strip's mean colour instead of aliasing. Dolly speed eases toward cruise times a gain on
- * how far past the hold you have scrolled; Calm halves it and drops the pointer shove. The still is the dolly
- * frozen mid-corridor.
+ * Depth fog does not fade to black: it fades each row toward a hot band, the saturated brightest quarter of the
+ * strip, which turns white-hot near the vanishing point (a core mixed from the strip's top 3% by brightness and
+ * the phosphor core). Two separable Gaussians centred on the vanishing point shape it: a tight one for the core,
+ * a wide one for the bloom that spills over the nearest lanes. Where a lane gets narrower than about two pixels
+ * the row blends toward the strip's mean colour instead of aliasing. Dolly speed eases toward cruise times a
+ * gain on how far past the hold you have scrolled; Calm halves it, drops the pointer shove and the core's slow
+ * breathing. The still is the dolly frozen mid-corridor, core lit.
  */
 (() => {
   'use strict';
   const PARAMS = {
-    cruise: 5,           /* world units per second at the hold */
-    scrollGain: 9,       /* extra speed factor per bay length scrolled past the hold (progress 0..0.3) */
+    cruise: 9,           /* world units per second at the hold */
+    scrollGain: 12,      /* extra speed factor per bay length scrolled past the hold (progress 0..0.3) */
     settle: 0.45,        /* seconds to ease toward the target speed */
     lanes: 5,            /* lanes per world unit */
     lanePool: 64,        /* distinct lane personalities before the pattern repeats (rounded to a power of two) */
@@ -2230,15 +2911,24 @@ else bootBoneyardRide();
     floorH: 1, ceilH: 1.15,
     focalK: 0.62,        /* focal length as a fraction of internal width */
     fog: 20,             /* depth (world units) where fog reaches about 63% */
-    gain: 1.45,          /* exposure on the strip colours */
-    sat: 1.3,            /* saturation lift about each texel's own luma (1 = the photo's own) */
-    edge: 0.78,          /* lane edge darkening: 0 flat, 1 black seams */
+    gain: 1.5,           /* exposure on the strip colours */
+    sat: 2.0,            /* saturation lift about each texel's own luma (1 = the photo's own) */
+    edge: 0.85,          /* lane edge darkening: 0 flat, 1 black seams */
     shove: 0.9,          /* lateral world units of shove at the pointer's edge */
+    haze: 1.05,          /* brightness of the fog band the corridor fades into */
+    coreW: 0.11, coreH: 0.05,   /* the white-hot core: Gaussian sigma as a share of width and height */
+    bloomW: 0.26, bloomH: 0.14, /* the bloom: a wider Gaussian added over the lanes */
+    bloom: 0.32,
     stillDolly: 23.5,
   };
   /* one small seeded hash, so the lane personalities are the same on every visit */
   function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
-  function assetUrl(name) { return new URL((location.pathname.includes('/parts/') ? '../assets/' : 'assets/') + name, document.baseURI).href; }
+  /* asset bases in order: the harness passes ctx.assetBases; otherwise try both, likelier first, and fall back on error */
+  function assetUrls(ctx, name) {
+    const bases = (ctx.assetBases && ctx.assetBases.length) ? ctx.assetBases.slice()
+      : (location.pathname.includes('/parts/') ? ['../assets/', 'assets/'] : ['assets/', '../assets/']);
+    return bases.map((b) => new URL(b + name, document.baseURI).href);
+  }
 
   function mount(canvas, params, ctx) {
     const g = canvas.getContext('2d', { alpha: false });
@@ -2247,6 +2937,8 @@ else bootBoneyardRide();
     let dolly = params.stillDolly, speed = params.cruise, shove = 0;
     let laneOff, lanePace, laneLit;
     const edgeLut = new Float32Array(64);
+    let hotR = 255, hotG = 240, hotB = 220, bandR = 255, bandG = 140, bandB = 90, breath = 1;
+    let gxT = null, gxW = null;
 
     function lanesFrom(p) {
       const r = rng(20250301), n = 1 << Math.max(2, Math.min(10, Math.round(Math.log2(Math.max(4, p.lanePool)))));
@@ -2272,11 +2964,39 @@ else bootBoneyardRide();
       meanR = meanG = meanB = 0;
       for (let i = 0; i < 1024; i++) { meanR += raw[i * 3]; meanG += raw[i * 3 + 1]; meanB += raw[i * 3 + 2]; }
       meanR /= 1024; meanG /= 1024; meanB /= 1024;
+      heat();
       buildMips();
       ready = true;
       if (ctx.dial === 'still' || !lastTick) { draw(); ctx.readout('gate', 'strip 2025-03-01 sunset · still'); }
     };
-    pic.src = assetUrl('sunset-strip.png');
+    const urls = assetUrls(ctx, 'sunset-strip.png');
+    let tryAt = 0;
+    pic.onerror = () => { if (!dead && ++tryAt < urls.length) pic.src = urls[tryAt]; };
+    pic.src = urls[0];
+
+    /* the hot colours, both from the strip: the band is the brightest quarter weighted toward saturation, the core
+       is the top 3% by brightness mixed half and half with the phosphor core, then scaled up to white-hot */
+    function heat() {
+      const idx = [];
+      for (let i = 0; i < 1024; i++) idx.push(i);
+      const lum = (i) => 0.2126 * raw[i * 3] + 0.7152 * raw[i * 3 + 1] + 0.0722 * raw[i * 3 + 2];
+      idx.sort((a, b) => lum(b) - lum(a));
+      let r = 0, gg = 0, b = 0;
+      const n = Math.max(1, Math.round(1024 * 0.03));
+      for (let k = 0; k < n; k++) { const q = idx[k] * 3; r += raw[q]; gg += raw[q + 1]; b += raw[q + 2]; }
+      const [pr, pg, pb] = BONEYARD.toRgb(ctx.tokens.phosphorCore);
+      r = 0.5 * r / n + 0.5 * pr; gg = 0.5 * gg / n + 0.5 * pg; b = 0.5 * b / n + 0.5 * pb;
+      let m = Math.max(r, gg, b, 1); hotR = r * 255 / m; hotG = gg * 255 / m; hotB = b * 255 / m;
+      r = gg = b = 0; let wsum = 0;
+      for (let k = 0; k < 256; k++) {
+        const q = idx[k] * 3, R = raw[q], G = raw[q + 1], B = raw[q + 2], mx = Math.max(R, G, B), mn = Math.min(R, G, B);
+        const wt = Math.pow((mx - mn) / Math.max(1, mx), 2) + 1e-3; r += R * wt; gg += G * wt; b += B * wt; wsum += wt;
+      }
+      r /= wsum; gg /= wsum; b /= wsum;
+      const y = 0.2126 * r + 0.7152 * gg + 0.0722 * b, sat = params.sat * 1.2;
+      r = Math.max(0, y + (r - y) * sat); gg = Math.max(0, y + (gg - y) * sat); b = Math.max(0, y + (b - y) * sat);
+      m = Math.max(r, gg, b, 1); bandR = r * 235 / m; bandG = gg * 235 / m; bandB = b * 235 / m;
+    }
     let lastTick = 0;
 
     /* mip levels of the mirrored strip: level L is a circular box blur 2^L texels wide, with the saturation lift
@@ -2300,6 +3020,7 @@ else bootBoneyardRide();
     function alloc() {
       img = g.createImageData(w, h);
       buf = new Uint32Array(img.data.buffer);
+      gxT = new Float32Array(w); gxW = new Float32Array(w);
     }
     alloc();
 
@@ -2310,18 +3031,24 @@ else bootBoneyardRide();
       const f = w * params.focalK, vpX = ctx.vp.x * w, vpY = ctx.vp.y * h;
       const nl = laneOff.length, mask = nl - 1, K = params.lanes, spu = params.stripPerUnit, fogZ = Math.max(0.5, params.fog), gn = params.gain;
       const off = laneOff, pace = lanePace, lit = laneLit, E = edgeLut;
+      /* separable Gaussians about the vanishing point: x factors once per frame, y factors once per row */
+      const sxT = Math.max(1, params.coreW * w), sxW = Math.max(1, params.bloomW * w);
+      for (let x = 0; x < w; x++) { const d = x + 0.5 - vpX; gxT[x] = Math.exp(-(d * d) / (2 * sxT * sxT)); gxW[x] = Math.exp(-(d * d) / (2 * sxW * sxW)); }
+      const syT = Math.max(1, params.coreH * h), syW = Math.max(1, params.bloomH * h);
+      const hz = params.haze, bl = params.bloom * breath;
+      const cR = hotR - bandR, cG = hotG - bandG, cB = hotB - bandB;
       for (let y = 0; y < h; y++) {
         const dy = y + 0.5 - vpY, row = y * w;
         const below = dy > 0, ady = Math.abs(dy);
         const z = f * (below ? params.floorH : params.ceilH) / Math.max(0.35, ady);
-        const fog = Math.exp(-z / fogZ) * gn;
+        const vis = Math.exp(-z / fogZ), fog = vis * gn, haze = (1 - vis) * hz;
+        const gyT = Math.exp(-(dy * dy) / (2 * syT * syT)) * breath, gyW = Math.exp(-(dy * dy) / (2 * syW * syW)) * bl;
         const lanePx = f / (z * K);                                  /* on-screen lane width at this row */
         const sharp = Math.max(0, Math.min(1, (lanePx - 2.5) / 3.5));
         const ew = Math.max(0, Math.min(1, (lanePx - 4) / 6));        /* lane seams only where a lane is wide enough to hold one */
         const mix = 1 - sharp;
-        const mr = meanR * 0.62 * fog * mix, mg = meanG * 0.62 * fog * mix, mb = meanB * 0.62 * fog * mix;
+        const mr = meanR * 0.62 * fog * mix + fr, mg = meanG * 0.62 * fog * mix + fg, mb = meanB * 0.62 * fog * mix + fb;
         const kf = sharp * fog;
-        if (kf < 0.004 && mr < 1 && mg < 1 && mb < 1) { buf.fill(field, row, row + w); continue; }
         const du = z / f * K, zs = z * spu + 2048 * 64, ds = dolly * spu;
         const step = spu * z / Math.max(0.35, ady) * 1.5;           /* strip texels crossed between this row and the next */
         const S = mips[Math.max(0, Math.min(9, Math.ceil(Math.log2(Math.max(1, step)))))];
@@ -2331,7 +3058,11 @@ else bootBoneyardRide();
           const lf = Math.floor(lu), fr2 = lu - lf;
           const li = (lf + laneBias) & mask;
           const s = ((off[li] + zs + ds * pace[li]) & 2047) * 3, a = kf * lit[li] * (1 - ew + ew * E[(fr2 * 64) | 0]);
-          let r = S[s] * a + mr + fr, gg = S[s + 1] * a + mg + fg, b = S[s + 2] * a + mb + fb;
+          /* the fog colour: band at the sides, white-hot core at the vanishing point; then the bloom on top */
+          const kc = gxT[x] * gyT, kb = gxW[x] * gyW, hs = haze * (0.3 + 0.7 * gxW[x]);
+          let r = S[s] * a + mr + (bandR + cR * kc) * hs + hotR * kb;
+          let gg = S[s + 1] * a + mg + (bandG + cG * kc) * hs + hotG * kb;
+          let b = S[s + 2] * a + mb + (bandB + cB * kc) * hs + hotB * kb;
           r = r > 255 ? 255 : r; gg = gg > 255 ? 255 : gg; b = b > 255 ? 255 : b;
           buf[row + x] = (255 << 24) | ((b | 0) << 16) | ((gg | 0) << 8) | (r | 0);
         }
@@ -2353,13 +3084,14 @@ else bootBoneyardRide();
         const p = pointer || ctx.pointer;
         const want = !calm && p && p.present && !p.coarse ? (p.nx - 0.5) * 2 * params.shove : 0;
         shove += (want - shove) * (1 - Math.exp(-dt / 0.25));
+        breath = calm ? 1 : 1 + 0.07 * Math.sin((t || 0) * 1.2);    /* about 0.19 Hz: a slow swell, never a flash */
         draw();
         if (ready) ctx.readout('gate', stripLine());
       },
       resize(nw, nh) { w = nw; h = nh; alloc(); },
-      still() { dolly = params.stillDolly; shove = 0; speed = params.cruise; draw(); if (ready) ctx.readout('gate', 'strip 2025-03-01 sunset · still'); },
-      destroy() { dead = true; pic.onload = null; img = null; buf = null; raw = null; mips = []; },
-      params(p) { params = p; lanesFrom(p); buildMips(); },
+      still() { dolly = params.stillDolly; shove = 0; speed = params.cruise; breath = 1; draw(); if (ready) ctx.readout('gate', 'strip 2025-03-01 sunset · still'); },
+      destroy() { dead = true; pic.onload = null; pic.onerror = null; img = null; buf = null; raw = null; mips = []; },
+      params(p) { params = p; lanesFrom(p); if (raw) heat(); buildMips(); if (ctx.dial === 'still' || !lastTick) draw(); },
     };
   }
   BAYS.push({ slug: 'gate', title: 'Gate', order: 2, role: 'bay', params: PARAMS, mount, pixel: 320 });
@@ -3017,14 +3749,15 @@ else bootBoneyardRide();
  * original    the scanlines are a real terrain grid (AWS Terrain Tiles, 768 x 768 at about 64 m), block-averaged to
  *             96 lines by 192 samples and held as an object in perspective on the site's one vanishing point; the
  *             curtains are parallel planes, so sorting them by distance along their normal makes the painter's
- *             order exact from every orbit angle; a slow orbit that a horizontal drag takes over and that comes back
- *             to the three-quarter view from the southwest (the Tucson side)
+ *             order exact from every orbit angle; a low flyover camera (orbit plus a slow swell in height and distance)
+ *             that a horizontal drag takes over and that comes back to the three-quarter view from the
+ *             southwest (the Tucson side)
  * not         true scale: height is exaggerated (the factor is in the readout, never hidden) and the base sits at the
  *             grid's lowest cell, not sea level; block means soften the peaks, so the summit figure comes from the
  *             full-resolution grid, not from the drawn lines
  * deps        none · Canvas 2D · 2026-09
- * budget      1.6 to 2.4 ms/frame on the parts counter @ 2160x1350 internal (1440x900 x1.5), 1.3 to 2.8 ms per still() redraw;
- *             headless Chromium, software raster, not a real-GPU frame time (2026-09-29); phone TBD
+ * budget      1.6 to 2.0 ms/frame on the parts counter @ 1440x900 x1 internal, headless Chromium (2026-09-30); 390x844 at
+ *             4x CPU (lite path): 8.0 to 8.4 ms JS, part page 44 to 47 fps; JS time only, not a real-GPU frame time
  * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
  * license     MIT, Desert Data Labs LLC
  */
@@ -3033,11 +3766,15 @@ else bootBoneyardRide();
  * block the mean of every cell inside it), and each sample becomes a 3D point: x east and z south in a box two units
  * across (the real 49.6 by 49.3 km footprint), y the height above the lowest cell times the vertical factor.
  *
- * A camera orbits the box at a fixed elevation and looks at a point just above it, so the look point lands on the
- * shared vanishing point and the range sits below the horizon line like an object on a table. Every frame the
+ * A camera circles the box low, like a flyover of the scan: its elevation and distance swell slowly on two
+ * unrelated periods while it orbits, and it always looks at a point just above the range, so the look point lands
+ * on the shared vanishing point and the range fills the frame below the horizon line. Every frame the
  * 18,432 points are projected (one 3x3 rotation and a divide each). Lines are drawn from the farthest to the nearest:
  * first the curtain under the wire is filled with the field colour, which erases any farther wire it covers, then
- * the wire is stroked twice (a wide dim halo, a thin bright core), dimmer with distance.
+ * the wire is stroked three times with additive light (a wide phosphor halo, a mid glow, a thin white-hot core),
+ * dimmer with distance (on a phone-sized screen: fewer samples per line and two plain strokes, which keeps the
+ * frame rate). The grid is rebuilt only when lines, samples or the vertical factor actually change, and
+ * the readout always prints the factor the drawn mesh was built with.
  *
  * Horizontal drag (a touch drag only once it is clearly sideways, so vertical scrolling is never stolen) turns the
  * range. Let go and it waits, eases to the nearest three-quarter view, rests there, then resumes the slow orbit.
@@ -3048,18 +3785,21 @@ else bootBoneyardRide();
     lines: 96,           /* scanlines, north to south */
     samples: 192,        /* samples along each line, west to east */
     exaggeration: 4,     /* vertical factor, printed in the readout */
-    elevationDeg: 31,    /* camera elevation above the base plane */
-    distance: 3.3,       /* camera distance, box half-widths */
-    lookY: 0.5,           /* height of the look point, which projects onto the vanishing point */
-    fit: 0.66,           /* focal length as a fraction of min(1.7 x width, 1.5 x height) */
-    orbitDegPerSec: 5,   /* slow auto-orbit */
+    elevationDeg: 21,    /* camera elevation above the base plane (the middle of the swell) */
+    elevSwing: 6,        /* +- degrees of the slow elevation swell, Full and Calm */
+    distance: 2.55,      /* camera distance, box half-widths (the middle of the swell) */
+    distSwing: 0.22,     /* +- box half-widths of the slow distance swell */
+    lookY: 0.34,         /* height of the look point, which projects onto the vanishing point */
+    fit: 0.98,           /* focal length as a fraction of min(1.7 x width, 1.5 x height) */
+    orbitDegPerSec: 7,   /* slow auto-orbit (Calm halves) */
     homeDeg: -45,        /* the three-quarter view: camera to the southwest */
     returnAfter: 2.5,    /* seconds after a drag before it eases home */
     restAt: 7,           /* seconds resting at the three-quarter view before orbiting again */
     dragDegPerPx: 0.35,
-    haloWidth: 3.2, coreWidth: 1.05,
-    haloAlpha: 0.16, coreAlpha: 0.9,
-    farAlpha: 0.22,      /* alpha of the farthest line relative to the nearest */
+    haloWidth: 5, glowWidth: 2.2, coreWidth: 1.1,
+    haloAlpha: 0.2, glowAlpha: 0.45, coreAlpha: 1,
+    farAlpha: 0.3,       /* alpha of the farthest line relative to the nearest */
+    liteSamples: 112,    /* samples per line when the smaller side is under 600 css px (phones) */
   };
   const COMPASS = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'];   /* camera bearing from the centre, yaw 0 = south, +90 = east */
 
@@ -3068,10 +3808,12 @@ else bootBoneyardRide();
     let w = canvas.width, h = canvas.height, px = 1, dead = false;
     let grid = null, pts = null, scr = null, L = 0, S = 0, vScale = 1, summitFt = 0, dem = null;
     let yaw = params.homeDeg, mode = 'orbit', idle = 0, drag = null, lastReadout = '', sinceReadout = 0;
+    let swell = 0, built = null, lite = false;   /* lite: a small screen, fewer samples per line and two plain strokes */   /* built: the lines, samples and factor the current mesh was made with */
 
     function build() {
       if (!dem) return;
-      L = Math.max(8, Math.round(params.lines)); S = Math.max(16, Math.round(params.samples));
+      built = { lines: params.lines, samples: params.samples, exaggeration: params.exaggeration };
+      L = Math.max(8, Math.round(params.lines)); S = Math.max(16, Math.round(lite ? Math.min(params.samples, params.liteSamples) : params.samples));
       const W = dem.width, H = dem.height, e = dem.elev;
       /* the real footprint from catalinas-meta.json: 64.59 m per column, 64.16 m per row */
       const spanX = W * 64.5925, spanZ = H * 64.1593, half = spanX / 2;
@@ -3100,7 +3842,9 @@ else bootBoneyardRide();
     }
 
     function view() {
-      const A = yaw * Math.PI / 180, E = params.elevationDeg * Math.PI / 180, D = params.distance;
+      const A = yaw * Math.PI / 180;
+      const E = (params.elevationDeg + params.elevSwing * Math.sin(swell * 0.27)) * Math.PI / 180;
+      const D = params.distance + params.distSwing * Math.sin(swell * 0.19 + 1.3);
       const tx = 0, ty = params.lookY, tz = 0;
       const cx = tx + D * Math.cos(E) * Math.sin(A), cy = ty + D * Math.sin(E), cz = tz + D * Math.cos(E) * Math.cos(A);
       let fx = tx - cx, fy = ty - cy, fz = tz - cz; const fl = Math.hypot(fx, fy, fz); fx /= fl; fy /= fl; fz /= fl;
@@ -3135,7 +3879,7 @@ else bootBoneyardRide();
       order.sort((a, b) => Math.abs(zOf(b) - V.cz) - Math.abs(zOf(a) - V.cz));
       const dNear = Math.abs(zOf(order[L - 1]) - V.cz), dFar = Math.max(dNear + 1e-3, Math.abs(zOf(order[0]) - V.cz));
       g.lineJoin = 'round'; g.lineCap = 'round';
-      const halo = params.haloWidth * px, core = params.coreWidth * px;
+      const halo = params.haloWidth * px, glow = params.glowWidth * px, core = params.coreWidth * px;
       for (let o = 0; o < L; o++) {
         const i = order[o], z = zOf(i), row = i * S * 2;
         const line = new Path2D();
@@ -3145,19 +3889,21 @@ else bootBoneyardRide();
         const curtain = new Path2D(line);
         const bE = base(pts[(i * S + S - 1) * 3], z), bW = base(pts[(i * S) * 3], z);
         curtain.lineTo(bE[0], bE[1]); curtain.lineTo(bW[0], bW[1]); curtain.closePath();
-        g.globalAlpha = 1; g.fillStyle = T.field; g.fill(curtain);
+        g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.fillStyle = T.field; g.fill(curtain);
         const q = (Math.abs(z - V.cz) - dNear) / (dFar - dNear);           /* 0 near, 1 far */
         const a = 1 - (1 - params.farAlpha) * q;
+        if (!lite) g.globalCompositeOperation = 'lighter';
         g.strokeStyle = T.phosphor; g.lineWidth = halo; g.globalAlpha = a * params.haloAlpha; g.stroke(line);
+        if (!lite) { g.lineWidth = glow; g.globalAlpha = a * params.glowAlpha; g.stroke(line); }
         g.strokeStyle = T.phosphorCore; g.lineWidth = core; g.globalAlpha = a * params.coreAlpha; g.stroke(line);
       }
-      g.globalAlpha = 1;
+      g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
     }
 
     function readout() {
-      if (!dem) return;
+      if (!dem || !built) return;
       const a = ((yaw % 360) + 360 + 22.5) % 360;
-      const text = `${L} scanlines · ${dem.width} x ${dem.height} grid · summit ${summitFt.toLocaleString('en-US')} ft · ${params.exaggeration}x vertical · seen from the ${COMPASS[Math.floor(a / 45)]}`;
+      const text = `${L} scanlines · ${dem.width} x ${dem.height} grid · summit ${summitFt.toLocaleString('en-US')} ft · ${built.exaggeration}x vertical · seen from the ${COMPASS[Math.floor(a / 45)]}`;
       if (text !== lastReadout || sinceReadout > 0.5) { lastReadout = text; sinceReadout = 0; ctx.readout('relief', text); }
     }
 
@@ -3171,6 +3917,7 @@ else bootBoneyardRide();
     return {
       tick(dt, t, progress, pointer) {
         const calm = ctx.dial === 'calm' ? 0.5 : 1;
+        swell += dt * calm;
         /* drag: arms only when the move is clearly sideways (|dx| > 8 and |dx| > |dy|) */
         if (pointer.down) {
           if (!drag) drag = { x0: pointer.x, y0: pointer.y, yaw0: yaw, armed: false, dead: false };
@@ -3196,12 +3943,18 @@ else bootBoneyardRide();
         }
         sinceReadout += dt; draw(); readout();
       },
-      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); },
-      still() { yaw = params.homeDeg; mode = 'rest'; idle = 0; draw(); readout(); flushLater(); },
+      resize(nw, nh, ndpr) {
+        w = nw; h = nh; px = Math.max(0.75, ndpr);
+        const was = lite; lite = Math.min(w, h) / px < 600;
+        if (was !== lite && dem) build();
+      },
+      still() { yaw = params.homeDeg; mode = 'rest'; idle = 0; swell = 0; draw(); readout(); flushLater(); },
       destroy() { dead = true; clearTimeout(flushT); g.clearRect(0, 0, w, h); grid = pts = scr = null; dem = null; },
       params(p) {
-        const rebuild = p.lines !== params.lines || p.samples !== params.samples || p.exaggeration !== params.exaggeration;
-        params = p; if (rebuild) build(); lastReadout = ''; readout(); draw();
+        /* compare against what the mesh was BUILT with: the harness and ?dev=1 mutate the params object in place */
+        params = p;
+        if (!built || p.lines !== built.lines || p.samples !== built.samples || p.exaggeration !== built.exaggeration) build();
+        lastReadout = ''; readout(); draw();
       },
     };
   }
@@ -3493,35 +4246,41 @@ else bootBoneyardRide();
 
 
 /* BONEYARD PART · 07 · SCOPE
- * technique   an oscilloscope in XY mode: X against Y traces a Lissajous figure on a phosphor that is faded, never
- *             cleared; press-and-hold starts two WebAudio oscillators (left = X, right = Y) and the trace switches to
- *             the actual samples read back from two AnalyserNodes
+ * technique   an oscilloscope in XY mode: X against Y traces a Lissajous figure; the phosphor's persistence is drawn
+ *             as five explicit copies of the recent trace at falling brightness, each a wide phosphor halo under a
+ *             white-hot core; press-and-hold starts two WebAudio oscillators (left = X, right = Y) and the trace
+ *             switches to the actual samples read back from two AnalyserNodes
  * lineage     Lissajous figures (Jules Antoine Lissajous, 1857); the oscilloscope's XY mode; oscilloscope music
  *             (the 2010s practice of composing stereo sound whose two channels draw pictures on an XY scope)
  * original    what you hear is exactly what you see: the held trace is the post-envelope signal on its way to your
  *             speakers, so the attack grows the figure and the release shrinks it to a dot; pointer X detunes the
- *             ratio and snaps gently toward 4:3, 3:2, 5:3 and 2:1; the site's only voice is one you are holding down
+ *             ratio and snaps gently toward 4:3, 3:2, 5:3 and 2:1, and the halo warms to amber while the ratio sits
+ *             on one; the site's only voice is one you are holding down
  * not         a synthesizer, a music player, an autoplay tone. No AudioContext exists until a hold; nothing sounds
  *             without one; peak gain 0.08. If audio is blocked the trace stays computed and says so.
  * deps        none · Canvas 2D + Web Audio · 2026-09
- * budget      0.16 ms/frame idle, 0.24 held (one-period sample trace) @ 1440x900 x1 internal; 0.14 / 0.17 @ 390x844; headless desktop
- *             Chromium (2026-09-29), harness counter; phone TBD
+ * budget      0.21 to 0.27 ms/frame idle @ 1440x900 x1 internal, headless desktop Chromium, harness counter (2026-09-30);
+ *             390x844 at 4x CPU: 1.1 ms JS, part page 60 fps; JS time only, the additive strokes raster on the GPU
  * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
  * license     MIT, Desert Data Labs LLC
  */
 /* HOW IT WORKS
  * Idle, the beam is computed: x = sin(2 pi r s + phase), y = sin(2 pi s), where r is the frequency ratio X:Y. Pointer X
- * maps to r = 1.5 * 2^((x - 0.5) * span), so the middle of the screen (or no pointer at all) is exactly 3:2; within snapWidth of a simple ratio the value is pulled most of the way onto it,
- * never all the way, so the figure still turns slowly. Each frame the canvas is washed with the field colour at a
- * low alpha instead of cleared, the whole figure is laid down faintly, and a bright beam sweeps along it: the wash is
- * the phosphor's persistence.
+ * maps to r = 1.5 * 2^((x - 0.5) * span), so the middle of the screen (or no pointer at all) is exactly 3:2; within
+ * snapWidth of a simple ratio the value is pulled most of the way onto it, never all the way, so the figure still
+ * turns. The canvas is cleared every frame (no 8-bit fade, so no ghost that never quite dies); persistence is a
+ * short history of the trace, sampled every few hundredths of a second, redrawn oldest first at falling alpha with
+ * additive light, so a moving figure leaves a real trail and a still one burns brighter. The newest copy gets a
+ * wide halo, a mid glow and a thin white-hot core, and a bright beam head sweeps along it.
  *
- * Holding the pointer (or Space) creates or resumes an AudioContext inside that gesture, then starts two
- * OscillatorNodes at base * r and base Hz into a ChannelMerger (X left, Y right), through one GainNode envelope
- * (soft attack to about 0.08, soft release to zero), to the speakers. A ChannelSplitter after the envelope feeds two
- * AnalyserNodes; while the voice lives, the trace is their time-domain samples plotted X against Y. Release ramps
- * the gain down and stops the oscillators. A watchdog stops the voice if the ride stops ticking the room (switched
- * off, hidden tab) while a hold is still down. destroy() closes the context.
+ * Holding the pointer (or Space) creates or resumes an AudioContext inside that gesture (a mouse press or a key;
+ * on touch, where only the release counts as a user gesture, the first release after a hold unlocks it), then
+ * starts two OscillatorNodes at base * r and base Hz into a ChannelMerger (X left, Y right), through one GainNode
+ * envelope (soft attack to about 0.08, soft release to zero), to the speakers. A ChannelSplitter after the envelope
+ * feeds two AnalyserNodes; while the voice lives, the trace is their time-domain samples plotted X against Y. The
+ * voice waits for a short hold before starting, so a scroll swipe never chirps. Release ramps the gain down and
+ * stops the oscillators. A watchdog stops the voice if the ride stops ticking the room (switched off, hidden tab)
+ * while a hold is still down. destroy() closes the context.
  */
 (() => {
   'use strict';
@@ -3530,14 +4289,16 @@ else bootBoneyardRide();
     span: 0.83,           /* pointer X across the screen = this many octaves of ratio, centred on 3:2 */
     snapWidth: 0.055,     /* ratio distance inside which the pull starts */
     snapPull: 0.88,       /* how far onto the simple ratio (1 would lock it) */
-    drift: 0.16,          /* idle phase drift, radians per second (Calm halves) */
-    sweep: 0.9,           /* idle beam: full figures per second (Calm halves) */
-    fade: 0.085,          /* field wash per frame: lower = longer persistence, but an 8-bit wash stalls about 0.5 / fade levels above the field */
-    radius: 0.3,          /* of the smaller canvas side */
-    haloWidth: 3.2, coreWidth: 1.1,
-    haloAlpha: 0.14, coreAlpha: 0.7,
-    ghostAlpha: 0.05,     /* the whole figure, laid down every frame */
-    gridAlpha: 0.03,
+    drift: 0.5,           /* idle phase drift, radians per second (Calm halves) */
+    sweep: 0.9,           /* idle beam head: full figures per second (Calm halves) */
+    radius: 0.39,         /* of the smaller canvas side */
+    copies: 5,            /* persistent copies of the trace, newest included (3 to 5) */
+    copyEvery: 0.05,      /* seconds between history samples */
+    decay: 0.58,          /* alpha of each older copy relative to the next newer one */
+    haloWidth: 16, glowWidth: 5, coreWidth: 1.8,
+    haloAlpha: 0.13, glowAlpha: 0.42, coreAlpha: 1,
+    gridAlpha: 0.07,
+    minHold: 0.06,        /* seconds a hold must last before the voice starts (touch: at least 0.18) */
     peak: 0.08, attack: 0.07, release: 0.28,
     fftSize: 2048,
   };
@@ -3547,7 +4308,9 @@ else bootBoneyardRide();
   function mount(canvas, params, ctx) {
     const g = canvas.getContext('2d', { alpha: true });
     let w = canvas.width, h = canvas.height, px = 1;
-    let phase = 0.35, sweepS = 0, ratio = 1.5, lastTick = -1e9, lastText = '', sentAt = 0;
+    let phase = 0.35, sweepS = 0, ratio = 1.5, lastTick = -1e9, lastText = '', sentAt = -1e9;
+    let lockK = 0, histT = 0, heldFor = 0, heldAt = -1e9;
+    const hist = [];      /* newest last: { path } */
     const AC = window.AudioContext || window.webkitAudioContext;
     let ac = null, chain = null, voice = null, blocked = false, dog = 0, dead = false;
     let bufX = null, bufY = null;
@@ -3566,31 +4329,37 @@ else bootBoneyardRide();
       const k = 1 - d / params.snapWidth;
       return raw + (target - raw) * params.snapPull * k * k * (3 - 2 * k);
     }
-    function label(r) {
-      const s = nearest(r);
-      return Math.abs(r - s[0] / s[1]) < 0.0045 ? `${s[0]}:${s[1]}` : r.toFixed(3);
-    }
+    const locked = (r) => { const s = nearest(r); return Math.abs(r - s[0] / s[1]) < 0.0045; };
+    function label(r) { const s = nearest(r); return locked(r) ? `${s[0]}:${s[1]}` : r.toFixed(3); }
 
-    /* ---------- audio: created only inside the hold gesture ---------- */
+    /* ---------- audio: created only inside a hold gesture ---------- */
     function unlock() {
       if (!AC || dead) return;
       try { if (!ac) ac = new AC({ latencyHint: 'interactive' }); } catch (_) { blocked = true; return; }
       if (ac.state === 'suspended') ac.resume().then(() => { blocked = false; }, () => { blocked = true; });
     }
     function onGesture(e) {
-      if (performance.now() - lastTick > 250 || ctx.dial === 'still') return;   /* only while this room is live */
+      const now = performance.now();
+      if (now - lastTick > 250 || ctx.dial === 'still') return;   /* only while this room is live */
       const tg = e.target && e.target.closest ? e.target : null;
       if (e.type === 'keydown') {
         if (e.key !== ' ' || e.repeat || e.altKey || e.ctrlKey || e.metaKey) return;
         if (tg && tg.closest('input, select, textarea, button, a')) return;
-      } else {
-        if (e.button !== 0) return;
-        if (tg && tg.closest(inParts ? 'main, a, button, input' : '#hud, #dev, a, button, input')) return;
+        unlock(); return;
       }
-      unlock();
+      if (tg && tg.closest(inParts ? 'main, a, button, input' : '#hud, #dev, a, button, input')) return;
+      const touch = e.type === 'touchend' || (e.pointerType && e.pointerType !== 'mouse');
+      if (e.type === 'pointerdown') {
+        /* a mouse press is a user gesture; a touch press is not (the browser only counts the release) */
+        if (!touch && e.button === 0) unlock();
+        return;
+      }
+      /* pointerup / touchend: the release is the gesture on touch (iOS and the HTML spec). Only after a real hold,
+         so a scroll swipe never creates a context; a context that already exists just gets resumed. */
+      if (ac && ac.state === 'suspended') { unlock(); return; }
+      if (!ac && now - heldAt < 800) unlock();
     }
-    addEventListener('pointerdown', onGesture, { capture: true, passive: true });
-    addEventListener('keydown', onGesture, { capture: true, passive: true });
+    for (const type of ['pointerdown', 'pointerup', 'touchend', 'keydown']) addEventListener(type, onGesture, { capture: true, passive: true });
 
     function build() {
       const merger = ac.createChannelMerger(2);
@@ -3628,24 +4397,26 @@ else bootBoneyardRide();
     function watchdog() { clearTimeout(dog); if (voice && !voice.releasedAt) dog = setTimeout(releaseVoice, 300); }
 
     /* ---------- drawing ---------- */
-    const geom = () => ({ cx: w / 2, cy: h * 0.46, R: Math.min(w, h) * params.radius });
-    function wash(a) {
-      g.globalCompositeOperation = 'source-over';
-      g.globalAlpha = a; g.fillStyle = ctx.tokens.field; g.fillRect(0, 0, w, h);
-      g.globalAlpha = 1;
+    const geom = () => ({ cx: w / 2, cy: h * (w > h ? 0.5 : 0.45), R: Math.min(w, h) * params.radius });
+    function clear() {
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
+      g.fillStyle = ctx.tokens.field; g.fillRect(0, 0, w, h);
     }
     function graticule(a) {
-      const { cx, cy, R } = geom(), T = ctx.tokens, p = new Path2D(), step = R / 4, span = R * 1.25;
-      for (let i = -5; i <= 5; i++) { const o = i * step; p.moveTo(cx + o, cy - span); p.lineTo(cx + o, cy + span); }
-      for (let i = -5; i <= 5; i++) { const o = i * step; if (Math.abs(o) > span) continue; p.moveTo(cx - R * 1.25, cy + o); p.lineTo(cx + R * 1.25, cy + o); }
+      const { cx, cy, R } = geom(), T = ctx.tokens, p = new Path2D(), step = R / 4, span = R * 1.12;
+      for (let i = -4; i <= 4; i++) { const o = i * step; p.moveTo(cx + o, cy - span); p.lineTo(cx + o, cy + span); p.moveTo(cx - span, cy + o); p.lineTo(cx + span, cy + o); }
       g.globalAlpha = a; g.strokeStyle = T.phosphorDim || T.phosphor; g.lineWidth = Math.max(1, px * 0.8); g.stroke(p);
       g.globalAlpha = 1;
     }
-    function beam(path, halo, core) {
+    /* one pass of light: k scales every layer; full adds the white-hot core */
+    function beam(path, k, full) {
       const T = ctx.tokens;
       g.globalCompositeOperation = 'lighter'; g.lineCap = 'round'; g.lineJoin = 'round';
-      g.strokeStyle = T.phosphor; g.globalAlpha = halo; g.lineWidth = params.haloWidth * px; g.stroke(path);
-      g.strokeStyle = T.phosphorCore; g.globalAlpha = core; g.lineWidth = params.coreWidth * px; g.stroke(path);
+      g.strokeStyle = T.phosphor; g.globalAlpha = params.haloAlpha * k * (1 - 0.6 * lockK); g.lineWidth = params.haloWidth * px; g.stroke(path);
+      if (lockK > 0.01 && T.amber) { g.strokeStyle = T.amber; g.globalAlpha = params.haloAlpha * k * lockK; g.stroke(path); }
+      g.strokeStyle = T.phosphor; g.globalAlpha = Math.min(1, params.glowAlpha * k); g.lineWidth = params.glowWidth * px; g.stroke(path);
+      if (full) { g.strokeStyle = T.phosphorCore; g.globalAlpha = params.coreAlpha * Math.min(1, k); g.lineWidth = params.coreWidth * px; g.stroke(path); }
       g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
     }
     function curve(r, ph, s0, s1, n) {
@@ -3662,18 +4433,32 @@ else bootBoneyardRide();
       chain.ax.getFloatTimeDomainData(bufX); chain.ay.getFloatTimeDomainData(bufY);
       /* the newest samples covering one period of the nearest simple figure (q cycles of Y), a little over */
       const q = nearest(ratio)[1], n = Math.min(bufX.length, Math.ceil(ac.sampleRate * q / params.base * 1.04));
-      let amp = 0;
       for (let i = bufX.length - n; i < bufX.length; i++) {
         const x = cx + bufX[i] * k, y = cy - bufY[i] * k;
         if (i > bufX.length - n) p.lineTo(x, y); else p.moveTo(x, y);
-        amp = Math.max(amp, Math.abs(bufX[i]), Math.abs(bufY[i]));
       }
-      return { p, amp };
+      return p;
+    }
+    /* the persistence: every copy but the newest, oldest first, then the newest at full heat */
+    function layers(newest) {
+      const n = Math.max(1, Math.min(5, Math.round(params.copies)));
+      const m = Math.min(hist.length, n - 1), ks = [];
+      let k = 1;
+      for (let i = 0; i < m; i++) { k *= params.decay; ks.push(k); }
+      for (let i = m - 1; i >= 0; i--) beam(hist[hist.length - 1 - i].path, ks[i], false);
+      beam(newest, 1, true);
+    }
+    function remember(path, dt) {
+      histT += dt;
+      if (histT < params.copyEvery && hist.length) return;
+      histT = 0; hist.push({ path });
+      while (hist.length > 4) hist.shift();
     }
     function say(held) {
       const r = ratio, fx = params.base * r;
       let tail = 'hold to hear it';
       if (held && voice && ac && ac.state === 'running') tail = 'sounding, trace is the live signal';
+      else if (held && !ac && AC && ctx.pointer && ctx.pointer.coarse) tail = 'lift and hold again to hear it';
       else if (held && (!AC || blocked || (ac && ac.state !== 'running'))) tail = 'audio blocked, trace is computed';
       const text = `ratio ${label(r)} · X ${fx.toFixed(1)} Hz · Y ${params.base} Hz · ${tail}`;
       const now = performance.now();   /* re-send twice a second: the HUD throttle drops, it does not defer */
@@ -3687,54 +4472,51 @@ else bootBoneyardRide();
         const held = !!(pointer && pointer.down);
         const target = ratioFrom(pointer && pointer.present ? pointer.nx : 0.5);
         ratio += (target - ratio) * (1 - Math.exp(-dt / 0.12));
-        /* audio follows the hold, and only the hold */
-        if (held && !voice && ac && ac.state !== 'closed') startVoice();
+        lockK += ((locked(ratio) ? 1 : 0) - lockK) * (1 - Math.exp(-dt / 0.25));   /* a crossfade, never a flash */
+        /* audio follows the hold, and only a hold that has lasted a moment */
+        heldFor = held ? heldFor + dt : 0;
+        if (held) heldAt = lastTick;
+        const minHold = pointer && pointer.coarse ? Math.max(0.18, params.minHold) : params.minHold;
+        if (held && heldFor >= minHold && !voice && ac && ac.state !== 'closed') startVoice();
         if (!held && voice) releaseVoice();
-        if (voice && !voice.releasedAt) {
-          const now = ac.currentTime;
-          voice.ox.frequency.setTargetAtTime(params.base * ratio, now, 0.04);
-        }
+        if (voice && !voice.releasedAt) voice.ox.frequency.setTargetAtTime(params.base * ratio, ac.currentTime, 0.04);
         if (voice && voice.releasedAt && performance.now() > voice.until) voice = null;
         watchdog();
         /* idle phase: a slow drift, plus the residual detune off the nearest simple ratio */
         const s = nearest(ratio);
         phase += (params.drift * calm + (ratio - s[0] / s[1]) * 2.2) * dt;
-        wash(params.fade);
+        clear();
         graticule(params.gridAlpha);
         const live = voice && ac && ac.state === 'running';
-        if (live) {
-          const { p } = samples();
-          beam(p, params.haloAlpha * 1.2, params.coreAlpha);
-        } else {
-          beam(curve(ratio, phase, 0, CYCLES, 900), params.ghostAlpha * 0.4, params.ghostAlpha);
+        const path = live ? samples() : curve(ratio, phase, 0, CYCLES, 720);
+        layers(path);
+        remember(path, dt);
+        if (!live) {
           const s0 = sweepS, s1 = sweepS + params.sweep * calm * CYCLES * dt;
           sweepS = s1 % CYCLES;
-          beam(curve(ratio, phase, s0, s1, 48), params.haloAlpha, params.coreAlpha);
+          beam(curve(ratio, phase, s0 - 0.05, s1, 40), 1.6, true);
         }
         say(held);
       },
-      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); },
+      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); hist.length = 0; },
       still() {
-        /* the designed frame: a 3:2 figure at full persistence, older passes fainter */
-        g.setTransform(1, 0, 0, 1, 0, 0);
-        g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
-        g.clearRect(0, 0, w, h); g.fillStyle = ctx.tokens.field; g.fillRect(0, 0, w, h);
-        graticule(0.16);
-        const N = 14;
-        for (let i = N; i >= 1; i--) { const a = Math.pow(1 - i / (N + 1), 2); beam(curve(1.5, 0.35 - i * 0.012, 0, 2, 480), params.haloAlpha * a * 0.6, params.coreAlpha * a * 0.35); }
-        beam(curve(1.5, 0.35, 0, 2, 480), params.haloAlpha * 1.3, params.coreAlpha);
-        ratio = 1.5; phase = 0.35;
+        /* the designed frame: a 3:2 figure at full heat with its four older copies trailing */
+        ratio = 1.5; phase = 0.35; lockK = 1; hist.length = 0;
+        clear();
+        graticule(params.gridAlpha * 1.6);
+        for (let i = 4; i >= 1; i--) hist.push({ path: curve(1.5, 0.35 - i * 0.07, 0, 2, 480) });
+        layers(curve(1.5, 0.35, 0, 2, 480));
+        hist.length = 0;
         const text = `ratio 3:2 · X ${(params.base * 1.5).toFixed(1)} Hz · Y ${params.base} Hz · still frame`;
         lastText = text; ctx.readout('scope', text);
       },
       destroy() {
         dead = true;
         clearTimeout(dog);
-        removeEventListener('pointerdown', onGesture, { capture: true });
-        removeEventListener('keydown', onGesture, { capture: true });
+        for (const type of ['pointerdown', 'pointerup', 'touchend', 'keydown']) removeEventListener(type, onGesture, { capture: true });
         if (voice) { try { voice.ox.stop(); voice.oy.stop(); } catch (_) {} voice = null; }
         if (ac) { try { ac.close(); } catch (_) {} ac = null; }
-        chain = null; bufX = bufY = null;
+        chain = null; bufX = bufY = null; hist.length = 0;
         g.clearRect(0, 0, w, h);
       },
       params(p) { params = p; if (chain) { try { chain.ax.fftSize = chain.ay.fftSize = p.fftSize; } catch (_) { return; } bufX = new Float32Array(p.fftSize); bufY = new Float32Array(p.fftSize); } },
@@ -3751,11 +4533,13 @@ else bootBoneyardRide();
  * original    the solid is the Desert Data Labs chip mark from ddl-cactus-mark.svg: the rounded square as a slab,
  *             with the saguaro circuit (trunk, the two arms that close into a diamond, the node, the ground rail)
  *             extruded off its face; 57 faces; projected toward the shared vanishing point so the keepsake sits in
- *             the same space as every pylon on the way in; drag to turn it, and it eases back to its slow spin
+ *             the same space as every pylon on the way in; it sways face-on (yaw within about 55 degrees of
+ *             square, never edge-on) and its front edges flare amber as it swings through facing you; drag to
+ *             turn it, and it eases back to its sway
  * not         a textured logo render, a physics toy, a Boing ball. No lighting model beyond facing, no text.
  * deps        none · Canvas 2D · 2026-09
- * budget      0.30 ms/frame @ 1440x900 x1 internal; 0.37 @ 390x844; headless desktop Chromium (2026-09-29), harness counter;
- *             phone TBD
+ * budget      0.29 to 0.45 ms/frame @ 1440x900 x1 internal, headless desktop Chromium, harness counter (2026-09-30);
+ *             390x844 at 4x CPU: 1.9 ms JS, part page 60 fps; phone device TBD
  * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
  * license     MIT, Desert Data Labs LLC
  */
@@ -3765,24 +4549,36 @@ else bootBoneyardRide();
  * units off the slab's face (the node is an octagonal prism that stands a little proud). Every face keeps an outward
  * winding, so after the spin (yaw about Y, a fixed pitch about X) its normal says whether it faces the viewer.
  *
+ * The motion is a sway, not a spin: yaw is amp * sin(phase) about the face-on pose, with a gentle pitch on a
+ * second, slower sine, so the chip never turns edge-on. The object sits a little below the vanishing point (a
+ * translation in camera space, so its perspective still converges there) and spans about two thirds of the
+ * smaller side.
+ *
  * Each frame the faces are sorted far to near by mean depth and filled with 'lighter' compositing at a low alpha:
  * front faces in phosphor, back faces dimmer, so wherever faces overlap the light adds up. Hard edges are then
- * stroked, back edges faint and front edges bright; the slab's rounded rim gets no seam lines. Horizontal drag turns
- * the solid (on touch only once the finger has moved more than 8 px and more sideways than down, so scrolling
- * still scrolls); on release the spin eases back to the slow cruise. still() draws the 30 degree pose.
+ * stroked, back edges faint, front edges with a wide glow under a bright core, and an amber pass whose strength
+ * is (cos yaw x cos pitch)^4, so the edges run hot exactly when the face is squarest to you; the slab's rounded
+ * rim gets no seam lines. Horizontal drag turns the solid freely (on touch only once the finger has moved more
+ * than 8 px and more sideways than down, so scrolling still scrolls); on release the extra turn coasts, then eases
+ * to the nearest whole turn, back into the sway. still() draws the 30 degree pose.
  */
 (() => {
   'use strict';
   const PARAMS = {
-    spin: 0.42,          /* radians per second at cruise (Calm halves) */
-    pitch: 0.24,         /* radians, fixed tilt toward the viewer */
-    sway: 0.05,          /* pitch sway amplitude, Full only */
-    size: 0.24,          /* half-width of the chip, as a share of the smaller canvas side (portrait: of the width) */
+    spin: 0.62,          /* sway phase, radians per second (Calm halves) */
+    swayDeg: 55,         /* yaw sway amplitude about face-on, degrees */
+    pitch: 0.2,          /* radians, base tilt toward the viewer */
+    sway: 0.12,          /* pitch sway amplitude, radians (Calm: none) */
+    size: 0.33,          /* half-width of the chip, as a share of the smaller canvas side (portrait: of the width) */
+    drop: 0.12,          /* chip centre below the vanishing point, share of height (landscape; portrait 0.04) */
     camDist: 5.2,        /* camera distance in chip half-widths */
     slab: 5,             /* half thickness, SVG units */
     relief: 4.5,         /* glyph height off the face, SVG units */
-    frontAlpha: 0.17, backAlpha: 0.09, glyphAlpha: 0.34,
-    edgeFront: 0.75, edgeBack: 0.22, edgeWidth: 1.1,
+    frontAlpha: 0.13, backAlpha: 0.07, glyphAlpha: 0.55,
+    edgeFront: 1, edgeBack: 0.26, edgeWidth: 1.4,
+    glowWidth: 6, glowAlpha: 0.2,   /* the wide additive glow under the front edges */
+    amber: 1,            /* peak alpha of the amber edge pass at face-on */
+    backGlow: 0.22,      /* the soft light behind the chip, additive */
     settle: 1.4,         /* seconds for a flicked spin to ease back */
     stillYaw: 30,        /* degrees */
   };
@@ -3828,8 +4624,9 @@ else bootBoneyardRide();
   function mount(canvas, params, ctx) {
     const g = canvas.getContext('2d', { alpha: true });
     let w = canvas.width, h = canvas.height, px = 1;
-    let faces = build(params), yaw = params.stillYaw * Math.PI / 180, vel = params.spin, pitch = params.pitch;
-    let drag = null, lastText = '', sentAt = 0;
+    let faces = build(params), yaw = params.stillYaw * Math.PI / 180, pitch = params.pitch;
+    let ph = Math.asin(Math.min(1, params.stillYaw / params.swayDeg)), off = 0, offVel = 0;
+    let drag = null, lastText = '', curText = '', sentAt = -1e9, flushT = 0, dead = false;   /* sentAt: a still drawn in the first 150 ms of page life must still report */
     const out = [];
 
     function draw() {
@@ -3837,6 +4634,7 @@ else bootBoneyardRide();
       const cx = ctx.vp.x * w, cy = ctx.vp.y * h;
       const R = Math.min(w * params.size * 1.25, h * params.size), D = params.camDist * 42.5, f = R * (D - params.slab) / 42.5;   /* the front face plane projects at R */
       const cyw = Math.cos(yaw), syw = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+      const oy = -h * (w > h ? params.drop : 0.04) * 42.5 / R;          /* below the eye line, in camera space */
       out.length = 0;
       let away = 0;
       for (const fc of faces) {
@@ -3845,7 +4643,7 @@ else bootBoneyardRide();
         for (let i = 0; i < n; i++) {
           const [x, y, z] = fc.v[i];
           const x1 = x * cyw + z * syw, z1 = -x * syw + z * cyw;          /* yaw about Y */
-          const y2 = y * cp + z1 * sp, z2 = -y * sp + z1 * cp;            /* pitch about X: top leans away */
+          const y2 = y * cp + z1 * sp + oy, z2 = -y * sp + z1 * cp;       /* pitch about X: top leans away */
           cam[i] = [x1, y2, z2]; zs += z2;
           const k = f / (D - z2);
           sx[i] = cx + x1 * k; sy[i] = cy - y2 * k;
@@ -3864,6 +4662,17 @@ else bootBoneyardRide();
       g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
       g.clearRect(0, 0, w, h); g.fillStyle = T.field; g.fillRect(0, 0, w, h);
       g.globalCompositeOperation = 'lighter';
+      const heat = Math.pow(Math.max(0, cyw * cp), 4) * params.amber;
+      /* the chip's own light on the field behind it: phosphor, warming toward amber as the face squares up */
+      const gy = cy - oy * R / 42.5, gl = g.createRadialGradient(cx, gy, R * 0.1, cx, gy, R * 1.45);
+      gl.addColorStop(0, ctx.rgba(T.phosphor, params.backGlow * (1 - 0.5 * heat)));
+      gl.addColorStop(1, ctx.rgba(T.phosphor, 0));
+      g.fillStyle = gl; g.fillRect(0, 0, w, h);
+      if (heat > 0.01 && T.amber) {
+        const ga = g.createRadialGradient(cx, gy, R * 0.1, cx, gy, R * 1.3);
+        ga.addColorStop(0, ctx.rgba(T.amber, params.backGlow * 0.6 * heat)); ga.addColorStop(1, ctx.rgba(T.amber, 0));
+        g.fillStyle = ga; g.fillRect(0, 0, w, h);
+      }
       const front = new Path2D(), back = new Path2D();
       for (const o of out) {
         const p = new Path2D();
@@ -3880,10 +4689,15 @@ else bootBoneyardRide();
       g.lineJoin = 'round';
       g.lineWidth = params.edgeWidth * px;
       g.strokeStyle = T.phosphorDim || T.phosphor; g.globalAlpha = params.edgeBack; g.stroke(back);
-      g.strokeStyle = T.phosphorCore; g.globalAlpha = params.edgeFront; g.stroke(front);
+      g.lineWidth = params.glowWidth * px; g.strokeStyle = T.phosphor; g.globalAlpha = params.glowAlpha * (1 - 0.8 * heat); g.stroke(front);
+      if (heat > 0.01 && T.amber) { g.strokeStyle = T.amber; g.globalAlpha = heat * 0.45; g.stroke(front); }
+      g.lineWidth = params.edgeWidth * px;
+      g.strokeStyle = T.phosphorCore; g.globalAlpha = params.edgeFront * (1 - 0.85 * heat); g.stroke(front);
+      if (heat > 0.01 && T.amber) { g.strokeStyle = T.amber; g.globalAlpha = heat; g.stroke(front); }
       g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
-      const deg = ((yaw * 180 / Math.PI) % 360 + 360) % 360;
+      const deg = (((yaw * 180 / Math.PI) + 180) % 360 + 360) % 360 - 180;   /* signed: 0 is face-on */
       const text = `yaw ${Math.round(deg)}° · ${faces.length} faces · ${away} facing away`;
+      curText = text;
       const now = performance.now();   /* re-send twice a second: the HUD throttle drops, it does not defer */
       if (text !== lastText && now - sentAt > 150 || now - sentAt > 500) { lastText = text; sentAt = now; ctx.readout('mark', text); }
     }
@@ -3891,8 +4705,10 @@ else bootBoneyardRide();
     return {
       tick(dt, t, progress, pointer) {
         const calm = ctx.dial === 'calm';
-        const cruise = params.spin * (calm ? 0.5 : 1);
-        const cssW = Math.max(1, w / px);
+        const cssW = Math.max(1, w / px), TAU = Math.PI * 2;
+        ph += params.spin * (calm ? 0.5 : 1) * dt;
+        if (ph > TAU * 64) ph -= TAU * 64;
+        const amp = params.swayDeg * Math.PI / 180;
         if (pointer && pointer.down) {
           if (!drag) drag = { x0: pointer.x, y0: pointer.y, last: pointer.x, armed: !pointer.coarse };
           if (!drag.armed) {
@@ -3902,25 +4718,33 @@ else bootBoneyardRide();
           if (drag.armed) {
             const d = (pointer.x - drag.last) / cssW * Math.PI * 1.6;
             drag.last = pointer.x;
-            yaw += d;
+            off += d;
             const v = dt > 0 ? d / dt : 0;
-            vel += (v - vel) * (1 - Math.exp(-dt / 0.06));
-          } else {
-            vel += (cruise - vel) * (1 - Math.exp(-dt / (params.settle / 3)));
-            yaw += vel * dt;
+            offVel += (v - offVel) * (1 - Math.exp(-dt / 0.06));
           }
-        } else {
-          drag = null;
-          vel = Math.max(-12, Math.min(12, vel));
-          vel += (cruise - vel) * (1 - Math.exp(-dt / (params.settle / 3)));
-          yaw += vel * dt;
         }
-        pitch = params.pitch + (calm ? 0 : params.sway * Math.sin(t * 0.37));
+        if (!drag || !drag.armed) {
+          if (!(pointer && pointer.down)) drag = null;
+          /* a flick coasts, then the extra turn eases to the nearest whole turn, back into the sway */
+          offVel = Math.max(-12, Math.min(12, offVel)) * Math.exp(-dt / 0.35);
+          off += offVel * dt;
+          const home = Math.round(off / TAU) * TAU;
+          off += (home - off) * (1 - Math.exp(-dt / (params.settle / 3)));
+          if (Math.abs(home - off) < 1e-4 && Math.abs(offVel) < 1e-3) { off = 0; offVel = 0; }
+        }
+        yaw = amp * Math.sin(ph) + off;
+        pitch = params.pitch + (calm ? 0 : params.sway * Math.sin(ph * 0.61 + 0.8));
         draw();
       },
       resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); },
-      still() { yaw = params.stillYaw * Math.PI / 180; pitch = params.pitch; vel = params.spin; draw(); },
-      destroy() { g.clearRect(0, 0, w, h); faces = []; out.length = 0; },
+      still() {
+        yaw = params.stillYaw * Math.PI / 180; pitch = params.pitch; off = 0; offVel = 0;
+        ph = Math.asin(Math.max(-1, Math.min(1, params.stillYaw / params.swayDeg)));
+        draw();
+        /* the host throttles readouts on the leading edge; one trailing emit makes sure the Still line lands */
+        clearTimeout(flushT); flushT = setTimeout(() => { if (!dead && curText) { lastText = curText; ctx.readout('mark', curText); } }, 400);
+      },
+      destroy() { dead = true; clearTimeout(flushT); g.clearRect(0, 0, w, h); faces = []; out.length = 0; },
       params(p) { params = p; faces = build(p); },
     };
   }

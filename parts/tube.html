@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The tube · BONEYARD parts · Desert Data Labs</title>
-<meta name="description" content="The tube: WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a quarter-res two-pass bloom added back, a very slight barrel, a vignette. One standalone BONEYARD part with its PARAMS, note and provenance.">
+<meta name="description" content="The tube: WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a two-scale bloom (quarter-res tight, eighth-res wide) added back, overdriven white-hot cores, a very slight barrel, a vignette, and a light chromatic fringe only at peak warp or a punch. One standalone BONEYARD part with its PARAMS, note and provenance.">
 <meta property="og:title" content="The tube · a BONEYARD part">
-<meta property="og:description" content="The tube: WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a quarter-res two-pass bloom added back, a very slight barrel, a vignette. One standalone BONEYARD part with its PARAMS, note and provenance.">
+<meta property="og:description" content="The tube: WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a two-scale bloom (quarter-res tight, eighth-res wide) added back, overdriven white-hot cores, a very slight barrel, a vignette, and a light chromatic fringe only at peak warp or a punch. One standalone BONEYARD part with its PARAMS, note and provenance.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tgilbert14.github.io/ddl-boneyard/parts/tube.html">
 <meta property="og:image" content="https://tgilbert14.github.io/ddl-boneyard/parts/stills/tube.webp">
@@ -15,7 +15,7 @@
 <meta property="og:image:height" content="270">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="The tube · a BONEYARD part">
-<meta name="twitter:description" content="The tube: WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a quarter-res two-pass bloom added back, a very slight barrel, a vignette. One standalone BONEYARD part with its PARAMS, note and provenance.">
+<meta name="twitter:description" content="The tube: WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a two-scale bloom (quarter-res tight, eighth-res wide) added back, overdriven white-hot cores, a very slight barrel, a vignette, and a light chromatic fringe only at peak warp or a punch. One standalone BONEYARD part with its PARAMS, note and provenance.">
 <meta name="twitter:image" content="https://tgilbert14.github.io/ddl-boneyard/parts/stills/tube.webp">
 <link rel="canonical" href="https://tgilbert14.github.io/ddl-boneyard/parts/tube.html">
 <meta name="theme-color" content="#030509">
@@ -74,6 +74,7 @@
 @property --ink-dim        { syntax: "<color>"; inherits: true; initial-value: #99b7bf; }
 @property --line           { syntax: "<color>"; inherits: true; initial-value: #193a47; }
 @property --horizon-tint   { syntax: "<color>"; inherits: true; initial-value: #1b2850; }
+@property --amber-hot      { syntax: "<color>"; inherits: true; initial-value: #ffd474; }
 @property --room-s         { syntax: "<number>"; inherits: false; initial-value: 1; }
 @property --room-o         { syntax: "<number>"; inherits: false; initial-value: 1; }
 
@@ -89,6 +90,10 @@
 
   /* ONE accent: desert amber */
   --amber: #fab048;          /* oklch(0.81 0.145 72) */
+  /* the accent's LOUD twin (the bad-ass pass): same hue family, hotter and whiter. Loud moments only:
+     warp peak, the pull glyph's lit ring, MARK's hot edges, visited ticks. Never body type and never a
+     second meaning: still "yours / pull / sun", turned up. 12.9:1 on field. */
+  --amber-hot: #ffd474;      /* oklch(0.90 0.13 80) */
 
   /* type ink */
   --ink: #dbf0f3;            /* oklch(0.94 0.022 208) */
@@ -104,6 +109,8 @@
   --glow: color-mix(in srgb, var(--phosphor) 42%, transparent);      /* near halo */
   --glow-far: color-mix(in srgb, var(--phosphor) 14%, transparent);  /* far halo */
   --amber-wash: color-mix(in srgb, var(--amber) 14%, transparent);   /* pull glyph hover */
+  --amber-glow: color-mix(in srgb, var(--amber) 45%, transparent);   /* the amber halo on loud moments */
+  --white-hot: color-mix(in srgb, var(--phosphor-core) 55%, white);  /* the ignition's one overdriven instant, never a resting color */
   --halo-text: 0 0 1px var(--field), 0 0 3px var(--field), 0 0 10px var(--field);          /* HUD text over live scenery */
 
   /* type: Eurostile-family display, humanist mono */
@@ -197,7 +204,7 @@ nav.back { margin-top: 1rem; font-size: 12px; letter-spacing: .06em; text-transf
     <h2>How it works</h2>
     <div class="note"><p>Each frame the ride hands the tube its three stacked 2D canvases (sky, row, corridor). They are uploaded as textures and composited over the field gradient, then combined with the previous tube frame by keeping the brighter of &quot;now&quot; and &quot;last frame times a decay&quot;. That is phosphor persistence without the blow-out a plain sum gives a static line: anything that moves leaves a short tail, anything still stays exactly as bright as it is. A 4x4 box downsample to quarter resolution (four bilinear taps) keeps one-pixel lines from falling between samples; a horizontal then a vertical 9-tap blur makes the bloom, which is added back. The last pass samples through a barrel of k = 0.04 centered on the vanishing point (so the one vanishing point never moves), scaled so the farthest corner samples its own corner (no black rim), and darkens the corners. The rooms are CSS-transformed canvases in the DOM, animated by the core and by SWITCH. Rebuilding their transforms, opacities and flashes inside WebGL every frame would cost a texture upload per room plus a style read per frame, well past 4 ms, so the rooms sit ABOVE the tube and carry their own static halo (a box-shadow on the frame, rasterized once and then only transformed). Every room already looks right without the tube. The adaptive budget drops it first: below internal scale 1 the bloom goes; at 0.5 the tube goes. It turns itself off under the dial's Still (the layers underneath are the still). Without WebGL it reports enabled: false and the page never knows. On this parts page it draws its own vector test card so the pass has something to hold.</p></div>
     <h2>Provenance</h2>
-    <dl class="prov"><dt>technique</dt><dd>WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a quarter-res two-pass bloom added back, a very slight barrel, a vignette</dd><dt>lineage</dt><dd>the vector CRT: the oscilloscope; Asteroids (Atari, 1979); Battlezone (Atari, 1980); Tempest (Atari, 1981); Vectrex (1982)</dd><dt>original</dt><dd>one skin over the whole row that no room depends on: it takes the sky, the row and the corridor canvases as textures, and the rooms stay crisp DOM above it with a static CSS halo on their frames</dd><dt>not</dt><dd>scanlines (vector tubes drew lines, not rasters, so they had none), a curvature gimmick, a blocking dependency; it does not skin the rooms (see HOW IT WORKS)</dd><dt>deps</dt><dd>none · WebGL1 when present, a clean no-op otherwise · 2026-09</dd><dt>budget</dt><dd>0.24 ms/frame JS (3 uploads + 5 passes) @ 2160x1350 internal (1440x900 x1.5), desktop Chromium 149 on an AMD RX 5600M (D3D11), 2026-09-29; A/B over 5 s of scroll, frame work with the tube 4.7 to 5.5 ms vs 4.2 to 5.7 ms without (inside the noise); 390x844 x1: 0.21 ms JS, +0.6 to 1.4 ms frame work. A readPixels-synced upper bound (?tubeprobe=1) reads 10 to 14 ms because it also waits on the layers' own 2D raster; on SwiftShader (software GL) the adaptive budget drops it within seconds; phone TBD</dd><dt>api</dt><dd>mount(canvas, params, ctx) -&gt; { enabled, tick(dt, t, sources), resize(w, h, dpr), still(t), destroy(), bloom(on), params(p) }</dd><dt>license</dt><dd>MIT, Desert Data Labs LLC</dd></dl>
+    <dl class="prov"><dt>technique</dt><dd>WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a two-scale bloom (quarter-res tight, eighth-res wide) added back, overdriven white-hot cores, a very slight barrel, a vignette, and a light chromatic fringe only at peak warp or a punch</dd><dt>lineage</dt><dd>the vector CRT: the oscilloscope; Asteroids (Atari, 1979); Battlezone (Atari, 1980); Tempest (Atari, 1981); Vectrex (1982)</dd><dt>original</dt><dd>one skin over the whole row that no room depends on: it takes the sky, the row and the corridor canvases as textures, and the rooms stay crisp DOM above it with a static CSS halo on their frames</dd><dt>not</dt><dd>scanlines (vector tubes drew lines, not rasters, so they had none), a curvature gimmick, a blocking dependency; it does not skin the rooms (see HOW IT WORKS)</dd><dt>deps</dt><dd>none · WebGL1 when present, a clean no-op otherwise · 2026-09</dd><dt>budget</dt><dd>0.24 ms/frame JS (3 uploads + 5 passes) @ 2160x1350 internal (1440x900 x1.5), desktop Chromium 149 on an AMD RX 5600M (D3D11), 2026-09-29; A/B over 5 s of scroll, frame work with the tube 4.7 to 5.5 ms vs 4.2 to 5.7 ms without (inside the noise); 390x844 x1: 0.21 ms JS, +0.6 to 1.4 ms frame work. A readPixels-synced upper bound (?tubeprobe=1) reads 10 to 14 ms because it also waits on the layers' own 2D raster; on SwiftShader (software GL) the adaptive budget drops it within seconds; phone TBD</dd><dt>api</dt><dd>mount(canvas, params, ctx) -&gt; { enabled, tick(dt, t, sources), resize(w, h, dpr), still(t), destroy(), bloom(on), params(p) }</dd><dt>license</dt><dd>MIT, Desert Data Labs LLC</dd></dl>
     <p class="budget">Budget: 0.24 ms/frame JS (3 uploads + 5 passes) @ 2160x1350 internal (1440x900 x1.5), desktop Chromium 149 on an AMD RX 5600M (D3D11), 2026-09-29; A/B over 5 s of scroll, frame work with the tube 4.7 to 5.5 ms vs 4.2 to 5.7 ms without (inside the noise); 390x844 x1: 0.21 ms JS, +0.6 to 1.4 ms frame work. A readPixels-synced upper bound (?tubeprobe=1) reads 10 to 14 ms because it also waits on the layers' own 2D raster; on SwiftShader (software GL) the adaptive budget drops it within seconds; phone TBD</p>
     <nav class="back" aria-label="Back">
       <a href="../#tube">Ride it</a>
@@ -401,7 +408,7 @@ const BONEYARD = (() => {
 </script>
 <script>
 /* BONEYARD PART · L1 · THE TUBE
- * technique   WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a quarter-res two-pass bloom added back, a very slight barrel, a vignette
+ * technique   WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a two-scale bloom (quarter-res tight, eighth-res wide) added back, overdriven white-hot cores, a very slight barrel, a vignette, and a light chromatic fringe only at peak warp or a punch
  * lineage     the vector CRT: the oscilloscope; Asteroids (Atari, 1979); Battlezone (Atari, 1980); Tempest (Atari, 1981); Vectrex (1982)
  * original    one skin over the whole row that no room depends on: it takes the sky, the row and the corridor canvases as textures, and the rooms stay crisp DOM above it with a static CSS halo on their frames
  * not         scanlines (vector tubes drew lines, not rasters, so they had none), a curvature gimmick, a blocking dependency; it does not skin the rooms (see HOW IT WORKS)
@@ -434,9 +441,12 @@ const BONEYARD = (() => {
   'use strict';
   const PARAMS = {
     persistence: 0.72,     /* last-frame weight at 60 fps (frame-rate corrected) */
-    bloom: 0.9,            /* bloom add-back gain */
-    knee: 0.22,            /* bloom starts above this luma, per 2x2 tap */
-    radius: 1.4,           /* blur step in quarter-res texels */
+    bloom: 1.3,            /* tight bloom add-back gain (quarter res): the arcade glow */
+    wide: 0.85,            /* wide halo add-back gain (eighth res) */
+    knee: 0.17,            /* bloom starts above this luma, per 2x2 tap */
+    radius: 1.8,           /* blur step in quarter-res texels */
+    hot: 0.55,             /* overdrive: how far the brightest strokes whiten toward a white-hot core */
+    fringe: 0.006,         /* chromatic split at the far corner (uv) at full warp or punch; 0 at the vanishing point */
     barrel: 0.04,          /* barrel distortion k */
     vignette: 0.30,        /* corner darkening */
   };
@@ -464,14 +474,34 @@ const BONEYARD = (() => {
   /* E: barrel CENTERED ON THE VANISHING POINT (so the one vanishing point never moves and the DOM rooms still
      converge on it), normalized so the farthest corner samples its own corner: no black rim, nothing sampled
      off the edge. Then the bloom add-back and a vignette about the screen center. */
-  const FS_OUT = 'precision mediump float;varying vec2 v;uniform sampler2D s,b;uniform float k,gain,vig,aspect;uniform vec2 vp;' +
+  /* Hot cores: the brightest strokes are pushed toward their own max channel (a white-hot core inside a cyan
+     stroke, the overdriven vector beam), then the tight and wide blooms are added. Fringe: R and B are sampled
+     a hair apart ALONG the ray from the vanishing point, so the split is 0 at the vanishing point and grows
+     outward; the uniform is 0 unless warp is near peak or a punch lands (Full only). */
+  const FS_OUT = 'precision mediump float;varying vec2 v;uniform sampler2D s,b,w;uniform float k,gain,wgain,hot,fr,vig,aspect;uniform vec2 vp;' +
     'void main(){vec2 d=v-vp;vec2 da=vec2(d.x*aspect,d.y);vec2 fc=vec2(max(vp.x,1.-vp.x)*aspect,max(vp.y,1.-vp.y));' +
     'float r2=dot(da,da)/dot(fc,fc);vec2 u=vp+d*(1.+k*r2)/(1.+k);' +
-    'vec3 c=texture2D(s,u).rgb+texture2D(b,u).rgb*gain;' +
+    'vec3 c=texture2D(s,u).rgb;if(fr>0.){vec2 o=d*fr;c.r=texture2D(s,u+o).r;c.b=texture2D(s,u-o).b;}' +
+    'float l=dot(c,vec3(.2126,.7152,.0722));c=mix(c,vec3(max(c.r,max(c.g,c.b))),hot*smoothstep(.55,.95,l));' +
+    'c+=texture2D(b,u).rgb*gain+texture2D(w,u).rgb*wgain;' +
     'vec2 q=(v*2.-1.)*vec2(aspect,1.);float rv=dot(q,q)/(1.+aspect*aspect);' +
     'c*=1.-vig*pow(rv,1.6);gl_FragColor=vec4(c,1.);}';
 
+  /* The yard's ignition is CSS (01-tube.css, keyed on html.tube-on, which the core adds at boot). This latch is
+     its only JavaScript: once it has played (about 1.2 s) html.ignited retires it, so a later dial change never
+     replays the flash; on a deep link (the ride did not start at the yard) it is retired at once. It runs before
+     the WebGL check on purpose: the ignition does not need the tube. Ride only (the parts page has no #title). */
+  function latchIgnition(canvas) {
+    const html = document.documentElement;
+    if (canvas.id !== 'c-tube' || !document.getElementById('title') || html.classList.contains('ignited')) return;
+    const hash = location.hash.split('?')[0];
+    const deep = (hash && hash !== '#' && hash !== '#yard') || window.scrollY > window.innerHeight * 0.3;
+    if (deep) { html.classList.add('ignited'); return; }
+    setTimeout(() => html.classList.add('ignited'), 1500);
+  }
+
   function mount(canvas, params, ctx) {
+    latchIgnition(canvas);
     const OFF = { enabled: false, tick() {}, resize() {}, still() {}, destroy() {}, bloom() {}, params() {} };
     let gl = null;
     try {
@@ -496,7 +526,7 @@ const BONEYARD = (() => {
         comp: prog(FS_COMP, ['s0', 's1', 's2', 'sp', 'top', 'bot', 'vpY', 'decay', 'n']),
         down: prog(FS_DOWN, ['s', 'px', 'knee']),
         blur: prog(FS_BLUR, ['s', 'd']),
-        out: prog(FS_OUT, ['s', 'b', 'k', 'gain', 'vig', 'aspect', 'vp']),
+        out: prog(FS_OUT, ['s', 'b', 'w', 'k', 'gain', 'wgain', 'hot', 'fr', 'vig', 'aspect', 'vp']),
       };
     } catch (e) { return OFF; }
 
@@ -522,7 +552,7 @@ const BONEYARD = (() => {
     function free(T) { if (T) { gl.deleteTexture(T.t); gl.deleteFramebuffer(T.f); } }
 
     const src = [tex(), tex(), tex()];
-    let acc = [null, null], q = [null, null], iw = 0, ih = 0, cur = 0;
+    let acc = [null, null], q = [null, null], e = [null, null], iw = 0, ih = 0, cur = 0;
     let bloomOn = true, lost = false, shown = false, fresh = true, age = 0, W = canvas.width, H = canvas.height;
     let col = { top: [0, 0, 0], bot: [0, 0, 0] };
     const stats = { ms: 0, n: 0, avg: 0, w: 0, h: 0 };
@@ -538,10 +568,12 @@ const BONEYARD = (() => {
     function ensure(w, h) {
       if (w === iw && h === ih && acc[0]) return;
       iw = w; ih = h;
-      free(acc[0]); free(acc[1]); free(q[0]); free(q[1]);
+      free(acc[0]); free(acc[1]); free(q[0]); free(q[1]); free(e[0]); free(e[1]);
       acc = [target(w, h), target(w, h)];
       const qw = Math.max(1, Math.ceil(w / 4)), qh = Math.max(1, Math.ceil(h / 4));
       q = [target(qw, qh), target(qw, qh)];
+      const ew = Math.max(1, Math.ceil(qw / 2)), eh = Math.max(1, Math.ceil(qh / 2));
+      e = [target(ew, eh), target(ew, eh)];
       fresh = true;
     }
 
@@ -581,7 +613,8 @@ const BONEYARD = (() => {
     function bindTex(unit, t) { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t); }
     function draw() { gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); }
 
-    function render(list, decay, useBloom) {
+    function render(list, decay, useBloom, fx) {
+      fx = fx || { gain: 1, fr: 0 };
       const base = list[0];
       ensure(base.width, base.height);
       gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -605,12 +638,17 @@ const BONEYARD = (() => {
         gl.useProgram(P.blur.p); gl.uniform1i(P.blur.u.s, 0);
         gl.bindFramebuffer(gl.FRAMEBUFFER, q[1].f); bindTex(0, q[0].t); gl.uniform2f(P.blur.u.d, params.radius / q[0].w, 0); draw();
         gl.bindFramebuffer(gl.FRAMEBUFFER, q[0].f); bindTex(0, q[1].t); gl.uniform2f(P.blur.u.d, 0, params.radius / q[0].h); draw();
+        /* the wide halo: the blurred quarter-res bloom, halved again (bilinear) and blurred at eighth res */
+        gl.viewport(0, 0, e[0].w, e[0].h);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, e[1].f); bindTex(0, q[0].t); gl.uniform2f(P.blur.u.d, params.radius * 1.5 / e[0].w, 0); draw();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, e[0].f); bindTex(0, e[1].t); gl.uniform2f(P.blur.u.d, 0, params.radius * 1.5 / e[0].h); draw();
       }
       /* E */
       gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, W, H);
       gl.useProgram(P.out.p); const o = P.out.u;
-      gl.uniform1i(o.s, 0); gl.uniform1i(o.b, 1); bindTex(0, next.t); bindTex(1, q[0].t);
-      gl.uniform1f(o.k, params.barrel); gl.uniform1f(o.gain, useBloom ? params.bloom : 0); gl.uniform1f(o.vig, params.vignette);
+      gl.uniform1i(o.s, 0); gl.uniform1i(o.b, 1); gl.uniform1i(o.w, 2); bindTex(0, next.t); bindTex(1, q[0].t); bindTex(2, e[0].t);
+      gl.uniform1f(o.k, params.barrel); gl.uniform1f(o.gain, useBloom ? params.bloom * fx.gain : 0); gl.uniform1f(o.wgain, useBloom ? params.wide * fx.gain : 0);
+      gl.uniform1f(o.hot, params.hot); gl.uniform1f(o.fr, fx.fr); gl.uniform1f(o.vig, params.vignette);
       gl.uniform1f(o.aspect, W / Math.max(1, H)); gl.uniform2f(o.vp, ctx.vp.x, 1 - ctx.vp.y);
       draw();
     }
@@ -647,8 +685,13 @@ const BONEYARD = (() => {
         age += dt;
         if (age < 0.6 && onRide) { fresh = true; return; }     /* hold until the 500 ms switch-on is done, then warm up */
         readColorsMaybe();
-        const decay = Math.pow(params.persistence, Math.max(0, dt) * 60) * (ctx.dial === 'calm' ? 0.85 : 1);
-        timed(() => render(list, decay, bloomOn && ctx.scale >= 1));
+        const calm = ctx.dial === 'calm';
+        const decay = Math.pow(params.persistence, Math.max(0, dt) * 60) * (calm ? 0.85 : 1);
+        /* the fringe: only in Full, only near peak warp (above 0.6) or on a punch; share.punch is optional (0 when absent) */
+        const S = ctx.share || {};
+        const heat = calm ? 0 : Math.min(1, Math.max(0, ((+S.warp || 0) - 0.6) / 0.4) * 0.7 + Math.max(0, Math.min(1, +S.punch || 0)));
+        const fx = { gain: calm ? 0.7 : 1, fr: params.fringe * heat };
+        timed(() => render(list, decay, bloomOn && ctx.scale >= 1, fx));
         show(true);
       },
       resize(w, h) { W = w; H = h; fresh = true; readColors(); },
@@ -662,7 +705,7 @@ const BONEYARD = (() => {
       destroy() {
         canvas.removeEventListener('webglcontextlost', onLost);
         show(false);
-        free(acc[0]); free(acc[1]); free(q[0]); free(q[1]);
+        free(acc[0]); free(acc[1]); free(q[0]); free(q[1]); free(e[0]); free(e[1]);
         for (const t of src) gl.deleteTexture(t);
         for (const k in P) gl.deleteProgram(P[k].p);
         gl.deleteBuffer(quad);

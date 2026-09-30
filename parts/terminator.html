@@ -74,6 +74,7 @@
 @property --ink-dim        { syntax: "<color>"; inherits: true; initial-value: #99b7bf; }
 @property --line           { syntax: "<color>"; inherits: true; initial-value: #193a47; }
 @property --horizon-tint   { syntax: "<color>"; inherits: true; initial-value: #1b2850; }
+@property --amber-hot      { syntax: "<color>"; inherits: true; initial-value: #ffd474; }
 @property --room-s         { syntax: "<number>"; inherits: false; initial-value: 1; }
 @property --room-o         { syntax: "<number>"; inherits: false; initial-value: 1; }
 
@@ -89,6 +90,10 @@
 
   /* ONE accent: desert amber */
   --amber: #fab048;          /* oklch(0.81 0.145 72) */
+  /* the accent's LOUD twin (the bad-ass pass): same hue family, hotter and whiter. Loud moments only:
+     warp peak, the pull glyph's lit ring, MARK's hot edges, visited ticks. Never body type and never a
+     second meaning: still "yours / pull / sun", turned up. 12.9:1 on field. */
+  --amber-hot: #ffd474;      /* oklch(0.90 0.13 80) */
 
   /* type ink */
   --ink: #dbf0f3;            /* oklch(0.94 0.022 208) */
@@ -104,6 +109,8 @@
   --glow: color-mix(in srgb, var(--phosphor) 42%, transparent);      /* near halo */
   --glow-far: color-mix(in srgb, var(--phosphor) 14%, transparent);  /* far halo */
   --amber-wash: color-mix(in srgb, var(--amber) 14%, transparent);   /* pull glyph hover */
+  --amber-glow: color-mix(in srgb, var(--amber) 45%, transparent);   /* the amber halo on loud moments */
+  --white-hot: color-mix(in srgb, var(--phosphor-core) 55%, white);  /* the ignition's one overdriven instant, never a resting color */
   --halo-text: 0 0 1px var(--field), 0 0 3px var(--field), 0 0 10px var(--field);          /* HUD text over live scenery */
 
   /* type: Eurostile-family display, humanist mono */

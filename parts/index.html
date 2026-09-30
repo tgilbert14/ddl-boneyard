@@ -73,6 +73,7 @@
 @property --ink-dim        { syntax: "<color>"; inherits: true; initial-value: #99b7bf; }
 @property --line           { syntax: "<color>"; inherits: true; initial-value: #193a47; }
 @property --horizon-tint   { syntax: "<color>"; inherits: true; initial-value: #1b2850; }
+@property --amber-hot      { syntax: "<color>"; inherits: true; initial-value: #ffd474; }
 @property --room-s         { syntax: "<number>"; inherits: false; initial-value: 1; }
 @property --room-o         { syntax: "<number>"; inherits: false; initial-value: 1; }
 
@@ -88,6 +89,10 @@
 
   /* ONE accent: desert amber */
   --amber: #fab048;          /* oklch(0.81 0.145 72) */
+  /* the accent's LOUD twin (the bad-ass pass): same hue family, hotter and whiter. Loud moments only:
+     warp peak, the pull glyph's lit ring, MARK's hot edges, visited ticks. Never body type and never a
+     second meaning: still "yours / pull / sun", turned up. 12.9:1 on field. */
+  --amber-hot: #ffd474;      /* oklch(0.90 0.13 80) */
 
   /* type ink */
   --ink: #dbf0f3;            /* oklch(0.94 0.022 208) */
@@ -103,6 +108,8 @@
   --glow: color-mix(in srgb, var(--phosphor) 42%, transparent);      /* near halo */
   --glow-far: color-mix(in srgb, var(--phosphor) 14%, transparent);  /* far halo */
   --amber-wash: color-mix(in srgb, var(--amber) 14%, transparent);   /* pull glyph hover */
+  --amber-glow: color-mix(in srgb, var(--amber) 45%, transparent);   /* the amber halo on loud moments */
+  --white-hot: color-mix(in srgb, var(--phosphor-core) 55%, white);  /* the ignition's one overdriven instant, never a resting color */
   --halo-text: 0 0 1px var(--field), 0 0 3px var(--field), 0 0 10px var(--field);          /* HUD text over live scenery */
 
   /* type: Eurostile-family display, humanist mono */
@@ -168,15 +175,15 @@ h2 { font: 600 12px/1.2 var(--font-mono); letter-spacing: .14em; text-transform:
   <th scope="row"><a href="sky.html">The sky</a><span class="role">layer</span></th>
   <td>two-plane 1/z starfield drifting with camera z, plus a 24-stop horizon band tinted by the visitor's local hour</td>
   <td>Star Raiders (Atari, 1979) and Galaga (Namco, 1981) multi-plane stars</td>
-  <td class="num">6.8 KB</td>
-  <td>see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD</td>
+  <td class="num">9.6 KB</td>
+  <td>0.12 ms/frame JS avg (1.2 max) @ 1440x900 dpr 1, headless desktop Chromium (2026-09-30); raster not in this number; phone TBD</td>
   <td><a href="sky.html" class="still"><img src="stills/sky.webp" width="120" height="68" loading="lazy" decoding="async" alt="The sky, the still frame"></a></td>
 </tr>
 <tr>
   <th scope="row"><a href="tube.html">The tube</a><span class="role">layer</span></th>
-  <td>WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a quarter-res two-pass bloom added back, a very slight barrel, a vignette</td>
+  <td>WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a two-scale bloom (quarter-res tight, eighth-res wide) added back, overdriven white-hot cores, a very slight barrel, a vignette, and a light chromatic fringe only at peak warp or a punch</td>
   <td>the vector CRT: the oscilloscope; Asteroids (Atari, 1979); Battlezone (Atari, 1980); Tempest (Atari, 1981); Vectrex (1982)</td>
-  <td class="num">16.6 KB</td>
+  <td class="num">19.8 KB</td>
   <td>0.24 ms/frame JS (3 uploads + 5 passes) @ 2160x1350 internal (1440x900 x1.5), desktop Chromium 149 on an AMD RX 5600M (D3D11), 2026-09-29; A/B over 5 s of scroll, frame work with the tube 4.7 to 5.5 ms vs 4.2 to 5.7 ms without (inside the noise); 390x844 x1: 0.21 ms JS, +0.6 to 1.4 ms frame work. A readPixels-synced upper bound (?tubeprobe=1) reads 10 to 14 ms because it also waits on the layers' own 2D raster; on SwiftShader (software GL) the adaptive budget drops it within seconds; phone TBD</td>
   <td><a href="tube.html" class="still"><img src="stills/tube.webp" width="120" height="68" loading="lazy" decoding="async" alt="The tube, the still frame"></a></td>
 </tr>
@@ -184,8 +191,8 @@ h2 { font: 600 12px/1.2 var(--font-mono); letter-spacing: .14em; text-transform:
   <th scope="row"><a href="row.html">The row</a><span class="role">layer</span></th>
   <td>1/z perspective light-grid with billboard vector pylons, all projected to one shared vanishing point</td>
   <td>the Tron light-grid (Disney, 1982); the Battlezone horizon (Atari, 1980); the per-scanline perspective floor (Sega, Space Harrier, 1985; Super Nintendo Mode 7, 1990)</td>
-  <td class="num">7.4 KB</td>
-  <td>see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD</td>
+  <td class="num">9.6 KB</td>
+  <td>0.09 ms/frame JS avg (1.4 max) @ 1440x900 dpr 1, headless desktop Chromium (2026-09-30); raster not in this number; phone TBD</td>
   <td><a href="row.html" class="still"><img src="stills/row.webp" width="120" height="68" loading="lazy" decoding="async" alt="The row, the still frame"></a></td>
 </tr>
 <tr>
@@ -198,9 +205,9 @@ h2 { font: 600 12px/1.2 var(--font-mono); letter-spacing: .14em; text-transform:
 </tr>
 <tr>
   <th scope="row"><a href="switch.html">Switch</a><span class="role">corridor</span></th>
-  <td>the CRT switch-off as compositor-only transforms on a room's wrapper: scaleY to a 2 px line (200 ms), scaleX to a dot (150 ms), the dot recedes to the vanishing point (600 ms); switch-on is the reverse</td>
+  <td>the CRT switch-off as compositor-only transforms on a room's wrapper: an accelerating slam of scaleY to a white-hot line (110 ms in Full, 200 in Calm), scaleX to a white dot (100 / 150 ms), the dot recedes to the vanishing point (420 / 600 ms); switch-on is the reverse with a small overshoot in Full</td>
   <td>every CRT television's power-off, formalised by 1980s title sequences</td>
-  <td class="num">5.2 KB</td>
+  <td class="num">8.6 KB</td>
   <td>0.0 ms/frame of JavaScript during the transition (compositor animations); measured in docs/BUILD-LOG.md, desktop Chromium, 2026-09-29</td>
   <td><a href="switch.html" class="still"><img src="stills/switch.webp" width="120" height="68" loading="lazy" decoding="async" alt="Switch, the still frame"></a></td>
 </tr>
@@ -208,15 +215,15 @@ h2 { font: 600 12px/1.2 var(--font-mono); letter-spacing: .14em; text-transform:
   <th scope="row"><a href="hyperspace.html">Hyperspace</a><span class="role">corridor</span></th>
   <td>the sky's own stars streaked along their 1/z rays: each star drawn as a line from its projection at z to its projection at z + warp * streakLen, scrubbed by scroll position through the gap between two bays</td>
   <td>the Star Wars jump (1977); the demoscene 1/z starfields (early 1990s); Windows 3.1 Starfield Simulation (1992)</td>
-  <td class="num">5.2 KB</td>
-  <td>see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD</td>
+  <td class="num">9.4 KB</td>
+  <td>0.13 ms/frame JS avg (0.7 max) @ 1440x900 dpr 1, headless desktop Chromium (2026-09-30); raster not in this number; phone TBD</td>
   <td><a href="hyperspace.html" class="still"><img src="stills/hyperspace.webp" width="120" height="68" loading="lazy" decoding="async" alt="Hyperspace, the still frame"></a></td>
 </tr>
 <tr>
   <th scope="row"><a href="rings.html">Rings</a><span class="role">corridor</span></th>
   <td>the dot tunnel: concentric squares of dots at fixed depths, projected by 1/z onto the shared vanishing point, each ring rotated by an angle that grows with its depth, so the far end of the tunnel twists</td>
   <td>the demoscene dot tunnel (Amiga and PC intros, about 1991); the 1/z projection it shares with every starfield of the era</td>
-  <td class="num">5.9 KB</td>
+  <td class="num">7.4 KB</td>
   <td>0.17 to 0.24 ms/frame @ 1440x900 internal (dpr 1), headless desktop Chromium, parts page counter (2026-09-29); phone TBD</td>
   <td><a href="rings.html" class="still"><img src="stills/rings.webp" width="120" height="68" loading="lazy" decoding="async" alt="Rings, the still frame"></a></td>
 </tr>
@@ -224,16 +231,16 @@ h2 { font: 600 12px/1.2 var(--font-mono); letter-spacing: .14em; text-transform:
   <th scope="row"><a href="jump.html">Jump</a><span class="role">bay</span></th>
   <td>1/z starfield in warp: stars flow toward the camera along rays from the vanishing point and are drawn as streaks whose length is the warp; press-and-hold raises warp, release settles to cruise</td>
   <td>the Star Wars jump (1977); the demoscene 1/z starfields (early 1990s); Windows 3.1 Starfield Simulation (1992)</td>
-  <td class="num">5.1 KB</td>
-  <td>see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD</td>
+  <td class="num">10.2 KB</td>
+  <td>0.12 ms/frame JS avg (0.7 max) @ 1440x900 dpr 1, headless desktop Chromium (2026-09-30); raster not in this number; phone TBD</td>
   <td><a href="jump.html" class="still"><img src="stills/jump.webp" width="120" height="68" loading="lazy" decoding="async" alt="Jump, the still frame"></a></td>
 </tr>
 <tr>
   <th scope="row"><a href="gate.html">Gate</a><span class="role">bay</span></th>
   <td>slit-scan corridor: two planes (floor and ceiling) receding to the shared vanishing point, cut into lanes that run along the line of flight; every texel samples a 1-D strip of artwork at an index that slides with the dolly, so colour rushes down each lane toward the viewer</td>
   <td>Douglas Trumbull's slit-scan for 2001: A Space Odyssey (1968), itself after John Whitney's slit-scan experiments (1950s and 1960s); the polar variant is the stargate</td>
-  <td class="num">10.9 KB</td>
-  <td>1.1 to 1.5 ms/frame @ 320x200 internal (pixel 320), headless desktop Chromium, parts page counter (2026-09-29); phone TBD</td>
+  <td class="num">15.0 KB</td>
+  <td>1.2 to 2.0 ms/frame @ 320x200 internal (pixel 320), headless desktop Chromium, parts page counter (2026-09-30); 390x844 at 4x CPU: 8.0 ms JS, part page holds 60 fps; JS time only, not a real-GPU frame</td>
   <td><a href="gate.html" class="still"><img src="stills/gate.webp" width="120" height="68" loading="lazy" decoding="async" alt="Gate, the still frame"></a></td>
 </tr>
 <tr>
@@ -256,8 +263,8 @@ h2 { font: 600 12px/1.2 var(--font-mono); letter-spacing: .14em; text-transform:
   <th scope="row"><a href="relief.html">Relief</a><span class="role">bay</span></th>
   <td>scan-processor relief: 96 scanlines of the real Santa Catalina elevation grid, each lifted by height and drawn as double-stroked phosphor wire; hidden lines removed by filling each line's curtain (the vertical strip from the wire down to the base) with the field colour, far to near, the Unknown Pleasures way</td>
   <td>the Rutt/Etra scan processor (Steve Rutt and Bill Etra, 1973), which bent each video scanline by its brightness; the CP 1919 pulsar stack (Harold Craft, 1970) that became the Unknown Pleasures cover (1979)</td>
-  <td class="num">12.0 KB</td>
-  <td>1.6 to 2.4 ms/frame on the parts counter @ 2160x1350 internal (1440x900 x1.5), 1.3 to 2.8 ms per still() redraw; headless Chromium, software raster, not a real-GPU frame time (2026-09-29); phone TBD</td>
+  <td class="num">13.8 KB</td>
+  <td>1.6 to 2.0 ms/frame on the parts counter @ 1440x900 x1 internal, headless Chromium (2026-09-30); 390x844 at 4x CPU (lite path): 8.0 to 8.4 ms JS, part page 44 to 47 fps; JS time only, not a real-GPU frame time</td>
   <td><a href="relief.html" class="still"><img src="stills/relief.webp" width="120" height="68" loading="lazy" decoding="async" alt="Relief, the still frame"></a></td>
 </tr>
 <tr>
@@ -270,18 +277,18 @@ h2 { font: 600 12px/1.2 var(--font-mono); letter-spacing: .14em; text-transform:
 </tr>
 <tr>
   <th scope="row"><a href="scope.html">Scope</a><span class="role">bay</span></th>
-  <td>an oscilloscope in XY mode: X against Y traces a Lissajous figure on a phosphor that is faded, never cleared; press-and-hold starts two WebAudio oscillators (left = X, right = Y) and the trace switches to the actual samples read back from two AnalyserNodes</td>
+  <td>an oscilloscope in XY mode: X against Y traces a Lissajous figure; the phosphor's persistence is drawn as five explicit copies of the recent trace at falling brightness, each a wide phosphor halo under a white-hot core; press-and-hold starts two WebAudio oscillators (left = X, right = Y) and the trace switches to the actual samples read back from two AnalyserNodes</td>
   <td>Lissajous figures (Jules Antoine Lissajous, 1857); the oscilloscope's XY mode; oscilloscope music (the 2010s practice of composing stereo sound whose two channels draw pictures on an XY scope)</td>
-  <td class="num">14.0 KB</td>
-  <td>0.16 ms/frame idle, 0.24 held (one-period sample trace) @ 1440x900 x1 internal; 0.14 / 0.17 @ 390x844; headless desktop Chromium (2026-09-29), harness counter; phone TBD</td>
+  <td class="num">16.5 KB</td>
+  <td>0.21 to 0.27 ms/frame idle @ 1440x900 x1 internal, headless desktop Chromium, harness counter (2026-09-30); 390x844 at 4x CPU: 1.1 ms JS, part page 60 fps; JS time only, the additive strokes raster on the GPU</td>
   <td><a href="scope.html" class="still"><img src="stills/scope.webp" width="120" height="68" loading="lazy" decoding="async" alt="Scope, the still frame"></a></td>
 </tr>
 <tr>
   <th scope="row"><a href="mark.html">Mark</a><span class="role">bay</span></th>
   <td>glenz vectors: a low-poly solid whose faces are translucent, painter-sorted by depth and filled additively, so the back faces show through the front ones and pile up as light; edges stroked on top</td>
   <td>Amiga demoscene glenz vectors (about 1989 to 1990)</td>
-  <td class="num">10.9 KB</td>
-  <td>0.30 ms/frame @ 1440x900 x1 internal; 0.37 @ 390x844; headless desktop Chromium (2026-09-29), harness counter; phone TBD</td>
+  <td class="num">14.4 KB</td>
+  <td>0.29 to 0.45 ms/frame @ 1440x900 x1 internal, headless desktop Chromium, harness counter (2026-09-30); 390x844 at 4x CPU: 1.9 ms JS, part page 60 fps; phone device TBD</td>
   <td><a href="mark.html" class="still"><img src="stills/mark.webp" width="120" height="68" loading="lazy" decoding="async" alt="Mark, the still frame"></a></td>
 </tr>
 <tr>
