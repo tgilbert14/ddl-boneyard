@@ -21,6 +21,7 @@ const SITE_URL = 'https://tgilbert14.github.io/ddl-boneyard/';
 const parts = [
   '00-tokens.css',
   '01-tube.css',
+  '03-salvage.css',
   '02-body.html',
   '09-runtime.js',
   '10-core.js',
@@ -29,6 +30,7 @@ const parts = [
   '22-sky.js',
   '23-greetings.js',
   '24-sound.js',
+  '25-yard.js',
   '30-switch.js',
   '31-hyperspace.js',
   '32-rings.js',
@@ -116,7 +118,7 @@ const page = `<!doctype html>
    The page is one ~240 KB file; its first paint lands long before the core boots, and flipping html.js then
    moved the whole main (measured CLS 1.0 at 4x CPU / slow 4G). JS off never runs this: the index layout. */
 (function(h){h.classList.add('js');var d=null;try{d=localStorage.getItem('boneyard_dial')}catch(_){}
-h.dataset.dial=(d==='full'||d==='calm'||d==='still')?d:(matchMedia('(prefers-reduced-motion: reduce)').matches?'still':'full');})(document.documentElement);</script>
+h.dataset.dial=(d==='full'||d==='calm'||d==='still')?d:(matchMedia('(prefers-reduced-motion: reduce)').matches?'still':navigator.connection&&navigator.connection.saveData?'calm':'full');})(document.documentElement);</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect x='6' y='6' width='84' height='84' rx='22' fill='%23030509' stroke='%238ef3ff' stroke-width='4'/%3E%3Cg fill='none' stroke='%238ef3ff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M48 22V76'/%3E%3Cpath d='M48 31L59 41 48 51 37 41Z'/%3E%3Cpath d='M36 76H60'/%3E%3C/g%3E%3C/svg%3E">
 <style>
 ${css}
@@ -194,6 +196,7 @@ for (const m of modules) {
     .replace(/__OG_W__/g, String(og.w))
     .replace(/__OG_H__/g, String(og.h))
     .replace(/__OG_TYPE__/g, og.type)
+    .replace('__STATIC_FRAME__', () => hasStill(m.slug) ? '<img class="static-frame" src="data:image/webp;base64,' + fs.readFileSync(path.join(STILLS, m.slug + '.webp')).toString('base64') + '" alt="' + esc(m.title) + ', the designed still">' : '<p>Designed frame unavailable. Open the part with JavaScript enabled.</p>')
     .replace(/__TITLE__/g, esc(m.title))
     .replace(/__NAME__/g, esc(m.name))
     .replace(/__SLUG__/g, esc(m.slug))
@@ -213,86 +216,28 @@ for (const m of modules) {
 
 /* The shelf: bay, technique, era (lineage), file size, measured cost, still. The still is the captured
    reduced-motion frame (tools/capture.mjs) once it exists; until then a plain link (no fake thumbnails). */
-const byOrder = [...modules].sort((a, b) => (a.role === b.role ? a.order - b.order : ['layer', 'corridor', 'bay', 'placeholder'].indexOf(a.role) - ['layer', 'corridor', 'bay', 'placeholder'].indexOf(b.role)));
-const rows = byOrder.map((m) => `<tr>
-  <th scope="row"><a href="${esc(m.slug)}.html">${esc(m.title)}</a><span class="role">${esc(m.role)}</span></th>
-  <td>${esc(m.technique)}</td>
-  <td>${esc(m.lineage)}</td>
-  <td class="num">${(m.bytes / 1024).toFixed(1)} KB</td>
-  <td>${esc(m.budget)}</td>
-  <td>${hasStill(m.slug)
-    ? `<a href="${esc(m.slug)}.html" class="still"><img src="stills/${esc(m.slug)}.webp" width="120" height="68" loading="lazy" decoding="async" alt="${esc(m.title)}, the still frame"></a>`
-    : `<a href="${esc(m.slug)}.html" class="still">open</a>`}</td>
-</tr>`).join('\n');
-const SHELF_DESC = 'Every BONEYARD effect as one plain file: technique, lineage, size and measured cost. Pull any part.';
-const pageList = byOrder.map((m) => `<li><a href="${esc(m.slug)}.html">${esc(m.title)}</a> <span class="role">${esc(m.role)}</span> <code>parts/${esc(m.slug)}.html</code></li>`).join('\n');
-const shelf = `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The shelf · BONEYARD parts · Desert Data Labs</title>
-<meta name="description" content="${esc(SHELF_DESC)}">
-<meta property="og:title" content="The shelf · BONEYARD parts">
-<meta property="og:description" content="${esc(SHELF_DESC)}">
-<meta property="og:type" content="website">
-<meta property="og:url" content="${SITE_URL}parts/">
-<meta property="og:image" content="${SITE_URL}og-yard.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="The shelf · BONEYARD parts">
-<meta name="twitter:description" content="${esc(SHELF_DESC)}">
-<meta name="twitter:image" content="${SITE_URL}og-yard.png">
-<link rel="canonical" href="${SITE_URL}parts/">
-<meta name="theme-color" content="#030509">
-<style>
-${tokens}
-body { margin: 0; background: var(--field); color: var(--ink); font: 15px/1.5 var(--font-mono); padding: clamp(1rem, 4vw, 3rem); }
-h1 { font: 600 clamp(1.4rem, 4vw, 2.2rem)/1.1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: var(--phosphor); margin: 0 0 .4rem; }
-p { max-width: 62ch; color: var(--ink-dim); }
-a { color: var(--phosphor); }
-a:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
-table { border-collapse: collapse; width: 100%; margin-top: 1.5rem; font-size: 14px; }
-th, td { text-align: left; vertical-align: top; padding: .6rem .7rem; border-top: 1px solid var(--line); }
-thead th { color: var(--ink-dim); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; font-size: 12px; }
-tbody th { font-weight: 600; white-space: nowrap; }
-.role { display: block; font-size: 11px; color: var(--ink-dim); letter-spacing: .08em; text-transform: uppercase; }
-.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.wrap { overflow-x: auto; }
-nav { margin-top: 2rem; }
-.still { display: inline-block; line-height: 0; }
-.still img { display: block; width: 120px; height: auto; aspect-ratio: 16 / 9; background: var(--field-2); outline: 1px solid var(--line); }
-.still:hover img, .still:focus-visible img { outline-color: var(--phosphor); }
-h2 { font: 600 12px/1.2 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-dim); margin: 2.2rem 0 0; }
-.pages { list-style: none; padding: 0; margin: .6rem 0 0; columns: 18rem; font-size: 13px; }
-.pages li { break-inside: avoid; padding: .15rem 0; }
-.pages .role { display: inline; margin-left: .3rem; }
-.pages code { display: block; color: var(--ink-dim); font-size: 12px; }
-</style>
-</head>
-<body>
-<main>
-<h1>The shelf</h1>
-<p>Every effect on the BONEYARD row is one plain file: a provenance header, a PARAMS block, and one mount() factory. Each part below runs on its own page with its tweak row and a note on how it works.</p>
-<div class="wrap">
-<table>
-<thead><tr><th scope="col">Part</th><th scope="col">Technique</th><th scope="col">Lineage</th><th scope="col">Size</th><th scope="col">Measured cost</th><th scope="col">Still</th></tr></thead>
-<tbody>
-${rows}
-</tbody>
-</table>
-</div>
-<h2 id="h-pages">Every page</h2>
-<ul class="pages" aria-labelledby="h-pages">
-<li><a href="../">The ride</a> <code>index.html</code></li>
-<li><a href="index.html">The shelf</a> <code>parts/index.html</code></li>
-${pageList}
-</ul>
-<nav><a href="../">Ride the row</a> · <a href="https://desertdatalabs.com/">Desert Data Labs</a></nav>
-</main>
-</body>
-</html>`;
+const byOrder = [...modules].sort((a, b) => (a.role === b.role ? a.order - b.order : ['bay', 'corridor', 'layer', 'placeholder'].indexOf(a.role) - ['bay', 'corridor', 'layer', 'placeholder'].indexOf(b.role)));
+const cardNotes = {
+  jump: 'A starfield you can push into warp.', gate: 'A sunset stretched into a slit-scan corridor.',
+  range: 'Fly the real Santa Catalina elevation grid.', wash: 'Rain traces the downhill slopes of the Catalinas.',
+  relief: 'A mountain range, drawn as turning scanlines.', terminator: "A dotted Earth with today's day line.",
+  scope: 'Two tones. One oscilloscope trace.', mark: 'The DDL glyph, drawn as a transparent solid.',
+  row: 'The light-grid beneath the ride.', sky: 'The stars and local-hour horizon.',
+  'yard-scene': 'The machines waiting in the desert.', greetings: 'The rolling names behind the techniques.',
+  switch: 'A tube opens, collapses and recedes.', hyperspace: 'A corridor of light at warp.',
+  rings: 'A tunnel drawn from concentric rings.', tube: 'The phosphor treatment around the scene.',
+  placeholder: 'A fallback when a module is missing.'
+};
+const cards = byOrder.map((m, i) => `<article class="part-card" data-role="${esc(m.role)}" data-search="${esc([m.title, m.role, m.technique, m.lineage].join(' ').toLowerCase())}">
+<a href="${esc(m.slug)}.html" class="part-link">
+<div class="part-preview">${hasStill(m.slug) ? `<img src="stills/${esc(m.slug)}.webp" width="480" height="270" loading="lazy" decoding="async" alt="${esc(m.title)}, designed still">` : '<span class="missing-still">Open the effect ↗</span>'}<span class="part-type">${esc(m.role)}</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">${String(i + 1).padStart(2, '0')}</span><h2>${esc(m.title)}</h2><span class="part-size">${(m.bytes / 1024).toFixed(1)} KB</span></div>
+<p class="part-note">${esc(cardNotes[m.slug] || m.technique)}</p>
+</a></article>`).join('\n');
+const shelf = read('91-shelf.html')
+  .replace('__TOKENS__', () => tokens)
+  .replace('__CARDS__', () => cards)
+  .replace(/__COUNT__/g, String(modules.length));
 ship(shelf, 'parts/index.html');
 fs.writeFileSync(path.join(OUT_PARTS, 'index.html'), shelf);
 

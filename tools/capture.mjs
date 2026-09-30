@@ -15,12 +15,11 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { browserRuntime } from './browser-runtime.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const PW = process.env.BONEYARD_PLAYWRIGHT || 'D:/Git/TG-Data-Apps/tools/visual-regress/node_modules/playwright';
-const { chromium } = createRequire(import.meta.url)(PW);
+const { chromium } = browserRuntime();
 
 const args = process.argv.slice(2);
 const opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
@@ -45,6 +44,7 @@ fs.mkdirSync(path.join(ROOT, 'parts', 'stills'), { recursive: true });
 
 const browser = await chromium.launch();
 const offsite = [];
+const pageErrors = [];
 /* re-encode a PNG screenshot to WebP (or PNG) at a target size, inside Chromium */
 async function encode(page, png, w, h, type, quality) {
   const b64 = await page.evaluate(async ({ src, w, h, type, quality }) => {
@@ -63,12 +63,13 @@ try {
   ctx.on('request', (r) => { const u = new URL(r.url()); if (!['127.0.0.1', ''].includes(u.hostname) && u.protocol !== 'data:') offsite.push(r.url()); });
   const page = await ctx.newPage();
   const errors = [];
-  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('pageerror', (e) => { errors.push(e.message); pageErrors.push(`${page.url()}: ${e.message}`); });
   for (const slug of slugs) {
     errors.length = 0;
     await page.goto(`${BASE}parts/${slug}.html`, { waitUntil: 'networkidle' });
-    await page.addStyleTag({ content: 'main, .skip { display: none !important; }' });
-    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    await page.evaluate(() => document.body.classList.add('capture'));
+    await page.addStyleTag({ content: 'main, .skip, header, #header { display: none !important; } #stage { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; }' });
+    await page.evaluate(() => { dispatchEvent(new Event('resize')); return new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); });
     await page.waitForTimeout(350);                      /* async data (DEM, sunset strip) redraws still() */
     const png = await page.screenshot({ type: 'png' });
     const webp = await encode(page, png, STILL_W, STILL_H, 'image/webp', 0.82);
@@ -83,10 +84,12 @@ try {
   const ogCtx = await browser.newContext({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1, reducedMotion: 'reduce', colorScheme: 'dark' });
   ogCtx.on('request', (r) => { const u = new URL(r.url()); if (!['127.0.0.1', ''].includes(u.hostname) && u.protocol !== 'data:') offsite.push(r.url()); });
   const ogPage = await ogCtx.newPage();
+  ogPage.on('pageerror', (e) => pageErrors.push(`${ogPage.url()}: ${e.message}`));
   for (const slug of slugs) {
     await ogPage.goto(`${BASE}parts/${slug}.html`, { waitUntil: 'networkidle' });
-    await ogPage.addStyleTag({ content: 'main, .skip { display: none !important; }' });
-    await ogPage.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    await ogPage.evaluate(() => document.body.classList.add('capture'));
+    await ogPage.addStyleTag({ content: 'main, .skip, header, #header { display: none !important; } #stage { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important; }' });
+    await ogPage.evaluate(() => { dispatchEvent(new Event('resize')); return new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); });
     await ogPage.waitForTimeout(350);
     const jpg = await ogPage.screenshot({ type: 'jpeg', quality: 84 });
     fs.writeFileSync(path.join(ROOT, 'parts', 'og', `${slug}.jpg`), jpg);
@@ -100,6 +103,7 @@ try {
     const og = await browser.newContext({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1, colorScheme: 'dark' });
     og.on('request', (r) => { const u = new URL(r.url()); if (u.hostname !== '127.0.0.1' && u.protocol !== 'data:') offsite.push(r.url()); });
     const p = await og.newPage();
+    p.on('pageerror', (e) => pageErrors.push(`${p.url()}: ${e.message}`));
     await p.goto(BASE, { waitUntil: 'networkidle' });
     await p.evaluate(() => new Promise((r) => setTimeout(r, 1600)));   /* an in-page await keeps rAF running */
     const png = await p.screenshot({ type: 'png' });
@@ -113,4 +117,5 @@ try {
   server.close();
 }
 if (offsite.length) { console.error(`CAPTURE FAILED: requests to other hosts: ${[...new Set(offsite)].join(', ')}`); process.exit(1); }
+if (pageErrors.length) { console.error(`CAPTURE FAILED: page errors: ${[...new Set(pageErrors)].join(' | ')}`); process.exit(1); }
 console.log('done. now run: node build.js');

@@ -37,8 +37,8 @@ const bootBoneyardRide = () => {
 
   /* ---------- DOM ---------- */
   const $ = (s) => document.querySelector(s);
-  const field = $('#field'), roomsEl = $('#rooms'), cue = $('#cue');
-  const canvases = { sky: $('#c-sky'), row: $('#c-row'), corridor: $('#c-corridor'), tube: $('#c-tube') };
+  const field = $('#field'), roomsEl = $('#rooms'), cue = $('#cue'), progressEl = $('#ride-progress');
+  const canvases = { sky: $('#c-sky'), row: $('#c-row'), 'yard-scene': $('#c-yard-scene'), corridor: $('#c-corridor'), tube: $('#c-tube') };
   const hud = { clock: $('#hud-clock'), dev: $('#hud-dev'), readout: $('#hud-readout'), dial: $('#dial'), autofly: $('#autofly'), index: $('#index'), devRow: $('#dev') };
   const sections = [...document.querySelectorAll('main .bay')];
   const bays = sections.map((el, i) => ({ i, el, slug: el.dataset.slug, holds: el.dataset.holds === 'true', title: (el.querySelector('h1,h2') || {}).textContent || '', m: null, visible: false }));
@@ -62,15 +62,16 @@ const bootBoneyardRide = () => {
   /* the dial attribute goes on early so the CSS stills apply before first paint; the full wiring is below */
   const rmq = matchMedia('(prefers-reduced-motion: reduce)');
   const storedDial = keep.get('boneyard_dial');
-  html.dataset.dial = ['full', 'calm', 'still'].includes(storedDial) ? storedDial : (rmq.matches ? 'still' : 'full');
+  html.dataset.dial = ['full', 'calm', 'still'].includes(storedDial) ? storedDial : (rmq.matches ? 'still' : navigator.connection?.saveData ? 'calm' : 'full');
   ctx.dial = html.dataset.dial;
 
   /* ---------- geometry ---------- */
   let W = innerWidth, H = innerHeight, len = H, dpr = dprCap();
-  let scaleIdx = 0;
+  let scaleIdx = navigator.connection?.saveData ? 1 : 0;
   const cam = ctx.camera;
   let cruise = 0, t = 0, scrollY = window.scrollY, lastScrollY = -1, scrollStill = 0, current = -1, running = false;
   const visited = new Set();
+  const tunedParams = new Map();
 
   /* ---------- layers (sky, row) + DOM modules (greetings, switch) ---------- */
   const layers = [];
@@ -132,7 +133,7 @@ const bootBoneyardRide = () => {
     const canvas = document.createElement('canvas');
     const flash = document.createElement('div'); flash.className = 'room__flash';
     tube.append(canvas, flash); room.append(tube); roomsEl.append(room);
-    const params = Object.assign({}, mod.params);
+    const params = Object.assign({}, mod.params, tunedParams.get(b.slug));
     const s = sizeCanvas(canvas, W, H, dpr, ctx.scale, mod.pixel);
     const handle = mod.mount(canvas, params, ctx);
     handle.resize(s.w, s.h, s.dpr);
@@ -239,9 +240,16 @@ const bootBoneyardRide = () => {
   const indexLinks = [...hud.index.querySelectorAll('a')];
   function setCurrent(i) {
     if (i === current) return;
+    if (current >= 0) up();
     if (current > 0 && current < LAST) visited.add(current);
     current = i;
     const b = bays[i];
+    html.dataset.bay = b.slug;
+    const menuLabel = $('#bay-menu-label');
+    if (menuLabel) menuLabel.textContent = i === 0 || i === LAST ? readoutName(b) : String(i).padStart(2, '0') + ' / ' + readoutName(b);
+    const prev = $('#bay-prev'), next = $('#bay-next');
+    if (prev) prev.disabled = i === 0;
+    if (next) next.disabled = i === LAST;
     hud.readout.innerHTML = `Bay ${String(Math.min(i, BAY_COUNT)).padStart(2, '0')} <span class="dot">/</span> ${String(BAY_COUNT).padStart(2, '0')} <span class="dot">·</span> ${readoutName(b)}<span class="hud__live" id="hud-live"></span>`;
     paintLive();
     for (const a of indexLinks) {
@@ -262,34 +270,67 @@ const bootBoneyardRide = () => {
      starts SCOPE's voice or JUMP's warp. Mouse and pen hold at once. */
   let holdT = 0;
   addEventListener('pointerdown', (e) => {
-    if (e.button !== 0 || e.target.closest('#hud, a, button, input, #dev')) return;
+    if (e.button !== 0 || e.target.closest('#hud, a, button, input, summary, details, #dev')) return;
     ptr.x = e.clientX; ptr.y = e.clientY; ptrTx = e.clientX / W; ptrTy = e.clientY / H;
     clearTimeout(holdT);
     if (e.pointerType === 'touch') holdT = setTimeout(() => { ptr.down = true; wake(); }, 180);
     else ptr.down = true;
     wake();
   }, { passive: true });
-  const up = () => { clearTimeout(holdT); ptr.down = false; };
+  const up = () => { clearTimeout(holdT); ptr.down = false; ctx.keys.clear(); document.querySelectorAll('.bay-hold.is-held').forEach((button) => { button.classList.remove('is-held'); button.setAttribute('aria-pressed', 'false'); }); };
   addEventListener('pointerup', up, { passive: true });
   addEventListener('pointercancel', up, { passive: true });
   addEventListener('blur', up);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) up(); });
   document.addEventListener('pointerleave', () => { ptr.present = false; });
 
   /* ---------- keyboard parity: a bay at a time; Space holds where a bay asks for it ---------- */
   const scrollToBay = (i) => { i = Math.max(0, Math.min(LAST, i)); window.scrollTo({ top: bays[i].el.offsetTop, behavior: ctx.dial === 'still' ? 'auto' : 'smooth' }); };
   addEventListener('keydown', (e) => {
     if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
-    if (e.target.closest('input, select, textarea, button')) return;
+    if (e.target.closest('input, select, textarea, button, summary, details')) return;
     const b = bays[Math.max(0, current)];
+    if (['ArrowLeft', 'ArrowRight'].includes(e.key) && b?.m?.handle.turn) { b.m.handle.turn(e.key === 'ArrowLeft' ? -15 : 15); wake(); e.preventDefault(); return; }
     if (e.key === ' ' && b && b.holds && ctx.dial !== 'still' && !e.repeat) { ptr.down = true; wake(); e.preventDefault(); return; }
     if (e.key === ' ' && e.repeat && b && b.holds && ctx.dial !== 'still') { e.preventDefault(); return; }
     if (e.key === 'ArrowDown' || e.key === 'PageDown') { setAutofly(false); scrollToBay(Math.round(scrollY / len) + 1); e.preventDefault(); }
     else if (e.key === 'ArrowUp' || e.key === 'PageUp') { setAutofly(false); scrollToBay(Math.round(scrollY / len) - 1); e.preventDefault(); }
   });
+  $('#bay-prev')?.addEventListener('click', () => { setAutofly(false); scrollToBay(current - 1); });
+  $('#bay-next')?.addEventListener('click', () => { setAutofly(false); scrollToBay(current + 1); });
+  const menu = $('#bay-menu'), nav = $('.bay-navigation');
+  function closeMenu() { if (!menu || !nav) return; menu.setAttribute('aria-expanded', 'false'); nav.classList.remove('is-open'); }
+  menu?.addEventListener('click', () => { const open = menu.getAttribute('aria-expanded') !== 'true'; menu.setAttribute('aria-expanded', String(open)); nav.classList.toggle('is-open', open); });
+  hud.index.addEventListener('click', (e) => { if (e.target.closest('a')) { closeMenu(); setAutofly(false); } });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const wasOpen = menu?.getAttribute('aria-expanded') === 'true';
+    let returnTo = null;
+    document.querySelectorAll('details[open]').forEach((el) => {
+      if (el.contains(document.activeElement)) returnTo = el.querySelector('summary');
+      el.open = false;
+    });
+    closeMenu(); setAutofly(false);
+    if (returnTo) returnTo.focus({ preventScroll: true });
+    else if (wasOpen) menu.focus({ preventScroll: true });
+  });
+  document.addEventListener('pointerdown', (e) => { if (!e.target.closest('.bay-navigation')) closeMenu(); if (!e.target.closest('.settings')) $('#ride-settings').open = false; }, { passive: true });
+  document.querySelectorAll('.bay-turn').forEach((button) => button.addEventListener('click', () => {
+    const b = bays.find((bay) => bay.slug === button.dataset.slug);
+    b?.m?.handle.turn?.(Number(button.dataset.turn)); wake();
+  }));
+  document.querySelectorAll('.bay-hold').forEach((button) => {
+    const hold = () => { if (ctx.dial === 'still') return; ptr.down = true; button.classList.add('is-held'); button.setAttribute('aria-pressed', 'true'); wake(); };
+    const release = () => { ptr.down = false; { button.classList.remove('is-held'); button.setAttribute('aria-pressed', 'false'); }; wake(); };
+    button.addEventListener('pointerdown', (e) => { if (e.button !== 0) return; button.setPointerCapture(e.pointerId); hold(); });
+    for (const type of ['pointerup', 'pointercancel', 'lostpointercapture', 'blur']) button.addEventListener(type, release);
+    button.addEventListener('keydown', (e) => { if ([' ', 'Enter'].includes(e.key)) { e.preventDefault(); hold(); } });
+    button.addEventListener('keyup', (e) => { if ([' ', 'Enter'].includes(e.key)) { e.preventDefault(); release(); } });
+  });
   addEventListener('keyup', (e) => { if (e.key === ' ') ptr.down = false; ctx.keys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key); });
   /* keys a bay may read: the ride itself never uses ArrowLeft / ArrowRight or letters */
   addEventListener('keydown', (e) => {
-    if (e.altKey || e.ctrlKey || e.metaKey || e.target.closest('input, select, textarea')) return;
+    if (e.altKey || e.ctrlKey || e.metaKey || e.target.closest('input, select, textarea, button, summary')) return;
     const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     if (k === 'ArrowLeft' || k === 'ArrowRight' || /^[a-z]$/.test(k)) { ctx.keys.add(k); wake(); }
   });
@@ -325,7 +366,7 @@ const bootBoneyardRide = () => {
   }
   hud.autofly.addEventListener('click', () => setAutofly(!autofly));
   for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown']) {
-    addEventListener(type, (e) => { if (autofly && !(type === 'pointerdown' && e.target && e.target.closest && e.target.closest('#autofly'))) setAutofly(false); }, { passive: true, capture: true });
+    addEventListener(type, (e) => { if (autofly && !(['pointerdown', 'keydown'].includes(type) && e.target?.closest?.('#autofly'))) setAutofly(false); }, { passive: true, capture: true });
   }
   function flyStep(dt) {
     if (!autofly) return;
@@ -344,7 +385,7 @@ const bootBoneyardRide = () => {
     if (!DEV || !hud.devRow) return;
     const m = b && b.m;
     if (!m) { hud.devRow.textContent = ''; return; }
-    const n = buildTweakRow(hud.devRow, m.params, (k, v) => { m.params[k] = v; if (m.handle.params) m.handle.params(m.params); wake(); });
+    const n = buildTweakRow(hud.devRow, m.params, (k, v) => { m.params[k] = v; tunedParams.set(b.slug, { ...m.params }); if (m.handle.params) m.handle.params(m.params); if (ctx.dial === 'still') m.handle.still(t); wake(); });
     if (!n) hud.devRow.textContent = 'no tunables';
   }
 
@@ -369,17 +410,24 @@ const bootBoneyardRide = () => {
     ctx.dial = v;
     html.dataset.dial = v;
     for (const r of radios) r.checked = r.value === v;
+    document.querySelectorAll('.bay-hold').forEach((button) => button.disabled = v === 'still');
     if (remember) keep.set('boneyard_dial', v);
     hud.autofly.disabled = v === 'still';
     if (v === 'still' && autofly) setAutofly(false);
     if (v !== 'full') { ctx.vp.x = ctx.vpBase.x; ctx.vp.y = ctx.vpBase.y; }
-    for (const b of bays) if (b.m) { if (v === 'still') { b.m.handle.still(t); } }
+    if (v === 'still') up();
+    for (const b of bays) if (b.m) { if (v === 'still') {
+      if (switcher) switcher.handle.cancel(b.m);
+      b.m.room.classList.toggle('is-hidden', b.m.state === 'off');
+      b.m.handle.still(t);
+    } }
     for (const L of layers) { if (v === 'still') L.handle.still(t); }
+    if (corridor && v === 'still') corridor.handle.still(t);
     if (greetings) greetings.handle.setDial(v);
     wake();
   }
   applyDial(html.dataset.dial, false);
-  rmq.addEventListener('change', () => { if (!keep.get('boneyard_dial')) applyDial(rmq.matches ? 'still' : 'full', false); });
+  rmq.addEventListener('change', () => { if (!keep.get('boneyard_dial')) applyDial(rmq.matches ? 'still' : navigator.connection?.saveData ? 'calm' : 'full', false); });
   hud.dial.addEventListener('change', (e) => { if (e.target.checked) applyDial(e.target.value, true); });
 
   /* ---------- the world task ---------- */
@@ -391,6 +439,13 @@ const bootBoneyardRide = () => {
   function world(dt, now) {
     t += dt; frameN++;
     scrollY = liveScrollY;
+    ctx.share.yardProgress = Math.max(0, scrollY / len);
+    html.classList.toggle('departed', scrollY > 16);
+    if (ctx.dial === 'still') {
+      const yard = layers.find((L) => L.m.slug === 'yard-scene');
+      if (yard) yard.handle.still(t);
+    }
+    if (progressEl && scrollY !== lastScrollY) progressEl.style.transform = 'scaleX(' + Math.min(1, scrollY / Math.max(1, bays[LAST].top)).toFixed(4) + ')';
     if (scrollY !== lastScrollY) { scrollStill = 0; lastScrollY = scrollY; } else scrollStill += dt;
     const still = ctx.dial === 'still';
     flyStep(dt);
@@ -454,7 +509,6 @@ const bootBoneyardRide = () => {
   const boot = () => {
     if (ctx.dial === 'still') { html.classList.add('tube-on'); }
     else {
-      field.animate([{ transform: 'scaleY(0.004)' }, { transform: 'scaleY(1)' }], { duration: 500, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'none' });
       html.classList.add('tube-on');
     }
     wake();

@@ -48,7 +48,12 @@
     const live = new Map();   /* room -> Animation[] */
     let lastFlash = -1e9;
     const onAt = new WeakMap();   /* room -> when it last switched on */
-    const done = (room) => { live.delete(room); };
+    const done = (room, list) => {
+      if (live.get(room) !== list) return;
+      live.delete(room);
+      /* Release filled animations too. Core commits the final visible/hidden state. */
+      for (const a of list) { try { a.cancel(); } catch (_) {} }
+    };
     function cancel(room) {
       const list = live.get(room); if (!list) return;
       for (const a of list) { try { a.cancel(); } catch (_) {} }
@@ -118,7 +123,7 @@
         }
       }
       live.set(room, list);
-      return main.finished.then(() => { done(room); return true; }, () => { done(room); return false; });
+      return main.finished.then(() => { done(room, list); return true; }, () => { done(room, list); return false; });
     }
     return {
       play, cancel,

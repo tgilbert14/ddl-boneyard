@@ -1,5 +1,5 @@
 /* BONEYARD SOUND · the opt-in engine room (PUNCH item 7)
- * what        one SOUND button in the HUD. On by default (Tim, 2026-09-29), off once the visitor says so. When on: a low synth engine bed whose pitch and filter
+ * what        one SOUND button in settings. Off until a visitor opts in; an explicit choice is remembered. When on: a low synth engine bed whose pitch and filter
  *             follow scroll speed, a CRT relay clunk plus a high-voltage whine tick on every tube switch, a rising
  *             filtered-noise whoosh with a pitch sweep when a hyperspace warp crosses 0.6. SCOPE keeps its own tone.
  * law         no autoplay before a real gesture. No AudioContext exists until the visitor's first pointerup /
@@ -301,13 +301,13 @@
   document.addEventListener('change', (e) => {
     if (!e.target || e.target.name !== 'dial') return;
     if (e.target.value === 'still') stillOk = false;
-    if (!explicit) pref = !quiet();   /* an untouched default follows the dial */
+    if (!explicit) pref = false;   /* an untouched default follows the dial */
     paint();
     if (!allowed() || document.hidden) { sleep(); return; }
     if (ac && ac.state === 'running') { g.level(true); loop(); } else wake(false);   /* the dial change is itself a gesture */
   });
 
-  const boot = () => { if (!explicit) pref = !quiet(); armed = allowed(); paint(); };
+  const boot = () => { if (!explicit) pref = false; armed = allowed(); paint(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true }); else boot();
 
   /* dev and test surface: the graph builder (for an OfflineAudioContext render) and live numbers */

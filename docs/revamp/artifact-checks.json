@@ -1,0 +1,380 @@
+{
+  "date": "2026-09-30T18:10:21.983Z",
+  "conditions": "Local Chromium, DPR 1, reduced motion, 17 standalone pages plus four exact export API artifacts lifted with adjacent assets. User download buttons are exercised separately in the visible browser.",
+  "results": [
+    {
+      "slug": "gate",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        320,
+        260
+      ],
+      "errors": []
+    },
+    {
+      "slug": "greetings",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        300,
+        150
+      ],
+      "errors": []
+    },
+    {
+      "slug": "hyperspace",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        1050,
+        852
+      ],
+      "errors": []
+    },
+    {
+      "slug": "jump",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        1050,
+        852
+      ],
+      "errors": []
+    },
+    {
+      "slug": "mark",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        1050,
+        852
+      ],
+      "errors": []
+    },
+    {
+      "slug": "placeholder",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        1050,
+        852
+      ],
+      "errors": []
+    },
+    {
+      "slug": "range",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        1050,
+        852
+      ],
+      "errors": []
+    },
+    {
+      "slug": "relief",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        760,
+        617
+      ],
+      "errors": []
+    },
+    {
+      "slug": "rings",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        1050,
+        852
+      ],
+      "errors": []
+    },
+    {
+      "slug": "row",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        1050,
+        852
+      ],
+      "errors": []
+    },
+    {
+      "slug": "scope",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        720,
+        584
+      ],
+      "errors": []
+    },
+    {
+      "slug": "sky",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        1050,
+        852
+      ],
+      "errors": []
+    },
+    {
+      "slug": "switch",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        300,
+        150
+      ],
+      "errors": []
+    },
+    {
+      "slug": "terminator",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        1050,
+        852
+      ],
+      "errors": []
+    },
+    {
+      "slug": "tube",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        1050,
+        852
+      ],
+      "errors": []
+    },
+    {
+      "slug": "wash",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        1050,
+        852
+      ],
+      "errors": []
+    },
+    {
+      "slug": "yard-scene",
+      "mounted": true,
+      "tasks": 0,
+      "overflow": false,
+      "stage": [
+        1050,
+        852
+      ],
+      "canvas": [
+        1050,
+        852
+      ],
+      "errors": []
+    },
+    {
+      "slug": "range",
+      "lift": true,
+      "parameters": {
+        "ve": 3,
+        "speed": 26,
+        "fov": 1,
+        "far": 560,
+        "cruiseAgl": 320,
+        "minAgl": 110,
+        "stillT": 22,
+        "idleResume": 8,
+        "labels": true,
+        "buffer": 384
+      },
+      "htmlBytes": 119160,
+      "errors": []
+    },
+    {
+      "slug": "gate",
+      "lift": true,
+      "parameters": {
+        "cruise": 9,
+        "scrollGain": 12,
+        "settle": 0.45,
+        "lanes": 5,
+        "lanePool": 64,
+        "stripPerUnit": 44,
+        "paceSpread": 0.35,
+        "floorH": 1,
+        "ceilH": 1.15,
+        "focalK": 0.62,
+        "fog": 20,
+        "gain": 1.995,
+        "sat": 2,
+        "edge": 0.85,
+        "shove": 0.9,
+        "haze": 1.05,
+        "coreW": 0.11,
+        "coreH": 0.05,
+        "bloomW": 0.26,
+        "bloomH": 0.14,
+        "bloom": 0.32,
+        "stillDolly": 23.5
+      },
+      "htmlBytes": 134120,
+      "errors": []
+    },
+    {
+      "slug": "yard-scene",
+      "lift": true,
+      "parameters": {
+        "consoleScale": 1.2,
+        "beamGlow": 0.72,
+        "sceneryDensity": 1
+      },
+      "htmlBytes": 120840,
+      "errors": []
+    },
+    {
+      "slug": "scope",
+      "lift": true,
+      "parameters": {
+        "maxBackingWidth": 720,
+        "base": 110,
+        "span": 0.83,
+        "snapWidth": 0.055,
+        "snapPull": 0.88,
+        "drift": 0.5,
+        "sweep": 0.9,
+        "radius": 0.39,
+        "copies": 5,
+        "copyEvery": 0.05,
+        "decay": 0.58,
+        "haloWidth": 16,
+        "glowWidth": 5,
+        "coreWidth": 1.8,
+        "haloAlpha": 0.13,
+        "glowAlpha": 0.42,
+        "coreAlpha": 1,
+        "gridAlpha": 0.07,
+        "minHold": 0.06,
+        "peak": 0.08,
+        "attack": 0.07,
+        "release": 0.28,
+        "fftSize": 256
+      },
+      "htmlBytes": 116292,
+      "errors": []
+    },
+    {
+      "route": "",
+      "noJavaScript": true,
+      "overflow": false,
+      "staticFrames": [],
+      "visibleExportButtons": 0
+    },
+    {
+      "route": "parts/index.html",
+      "noJavaScript": true,
+      "overflow": false,
+      "staticFrames": [],
+      "visibleExportButtons": 0
+    },
+    {
+      "route": "parts/range.html",
+      "noJavaScript": true,
+      "overflow": false,
+      "staticFrames": [
+        {
+          "complete": true,
+          "width": 480,
+          "display": "block"
+        }
+      ],
+      "visibleExportButtons": 0
+    }
+  ],
+  "offsite": [],
+  "failures": []
+}

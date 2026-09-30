@@ -268,6 +268,7 @@
       },
       resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); dirty = true; },
       still() { spin = 0; S = sun(new Date()); draw(); lastReadout = ''; readout(); flushLater(); },
+      turn(degrees) { spin += degrees; idle = 0; dirty = true; draw(); readout(); },
       destroy() { dead = true; clearTimeout(flushT); g.clearRect(0, 0, w, h); land = ocean = oceanKeep = null; },
       params(p) {
         const reseed = p.oceanDots !== params.oceanDots || p.landDots !== params.landDots;

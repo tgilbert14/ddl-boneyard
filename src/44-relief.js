@@ -216,6 +216,7 @@
         if (was !== lite && dem) build();
       },
       still() { yaw = params.homeDeg; mode = 'rest'; idle = 0; swell = 0; draw(); readout(); flushLater(); },
+      turn(degrees) { yaw += degrees; mode = 'held'; idle = 0; draw(); readout(); },
       destroy() { dead = true; clearTimeout(flushT); g.clearRect(0, 0, w, h); grid = pts = scr = null; dem = null; },
       params(p) {
         /* compare against what the mesh was BUILT with: the harness and ?dev=1 mutate the params object in place */

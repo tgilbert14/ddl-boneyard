@@ -96,6 +96,10 @@
       const now = performance.now();
       if (now - lastTick > 250 || ctx.dial === 'still') return;   /* only while this room is live */
       const tg = e.target && e.target.closest ? e.target : null;
+      if (tg && tg.closest('.bay-hold')) {
+        if ((e.type === 'keydown' && [' ', 'Enter'].includes(e.key) && !e.repeat) || e.type === 'pointerdown' || e.type === 'pointerup') unlock();
+        return;
+      }
       if (e.type === 'keydown') {
         if (e.key !== ' ' || e.repeat || e.altKey || e.ctrlKey || e.metaKey) return;
         if (tg && tg.closest('input, select, textarea, button, a')) return;

@@ -304,6 +304,7 @@
         /* the host throttles readouts on the leading edge; one trailing emit makes sure the Still line lands */
         clearTimeout(flushT); flushT = setTimeout(() => { if (!dead && curText) { lastText = curText; ctx.readout('mark', curText); } }, 400);
       },
+      turn(degrees) { const delta = degrees * Math.PI / 180; off += delta; yaw += delta; offVel = 0; draw(); },
       destroy() { dead = true; clearTimeout(flushT); g.clearRect(0, 0, w, h); faces = []; out.length = 0; },
       params(p) { params = p; faces = build(p); },
     };

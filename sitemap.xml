@@ -2,13 +2,6 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://tgilbert14.github.io/ddl-boneyard/</loc></url>
   <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/</loc></url>
-  <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/sky.html</loc></url>
-  <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/tube.html</loc></url>
-  <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/row.html</loc></url>
-  <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/greetings.html</loc></url>
-  <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/switch.html</loc></url>
-  <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/hyperspace.html</loc></url>
-  <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/rings.html</loc></url>
   <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/jump.html</loc></url>
   <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/gate.html</loc></url>
   <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/range.html</loc></url>
@@ -17,5 +10,13 @@
   <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/terminator.html</loc></url>
   <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/scope.html</loc></url>
   <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/mark.html</loc></url>
+  <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/switch.html</loc></url>
+  <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/hyperspace.html</loc></url>
+  <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/rings.html</loc></url>
+  <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/sky.html</loc></url>
+  <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/tube.html</loc></url>
+  <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/row.html</loc></url>
+  <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/greetings.html</loc></url>
+  <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/yard-scene.html</loc></url>
   <url><loc>https://tgilbert14.github.io/ddl-boneyard/parts/placeholder.html</loc></url>
 </urlset>

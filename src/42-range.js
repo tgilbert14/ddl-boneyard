@@ -335,6 +335,7 @@
         fastForward(T0 || P.stillT);
         draw(); readout(true);
       },
+      turn(degrees) { if (!ready) return; yaw += degrees * Math.PI / 180; autopilot = false; idle = 0; draw(); readout(true); },
       params(p) {
         const veChanged = p.ve !== P.ve;
         const bufChanged = p.buffer !== P.buffer;

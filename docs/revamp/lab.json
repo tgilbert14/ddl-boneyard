@@ -1,0 +1,148 @@
+{
+  "date": "2026-09-30T18:08:48.175Z",
+  "conditions": "Local Chromium, deviceScaleFactor 1, CPU slowdown 4x, localhost transport, no network throttle. Observe navigation through network idle plus 3 seconds. blockingMs is a fixed-window long-task proxy, not field INP or Lighthouse TBT.",
+  "sourceBytes": 395299,
+  "gzipBytes": 131068,
+  "results": [
+    {
+      "lcpMs": 80,
+      "cls": 0.0219815515588831,
+      "blockingMs": 0,
+      "longTasks": 0,
+      "viewport": [
+        1440,
+        900
+      ],
+      "overflow": false,
+      "resources": [
+        {
+          "name": "http://127.0.0.1:4186/assets/machine-jump.webp",
+          "encodedBodySize": 14414,
+          "transferSize": 14714
+        },
+        {
+          "name": "http://127.0.0.1:4186/assets/machine-scope.webp",
+          "encodedBodySize": 7686,
+          "transferSize": 7986
+        },
+        {
+          "name": "http://127.0.0.1:4186/assets/machine-relief.webp",
+          "encodedBodySize": 16940,
+          "transferSize": 17240
+        }
+      ],
+      "motion": "full",
+      "canvasBacking": [
+        {
+          "id": "c-sky",
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "id": "c-row",
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "id": "c-yard-scene",
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "id": "c-corridor",
+          "width": 300,
+          "height": 150
+        },
+        {
+          "id": "",
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "id": "c-tube",
+          "width": 300,
+          "height": 150
+        }
+      ],
+      "ticker": {
+        "dt": 15.200000000000273,
+        "work": 1.0999999046325684,
+        "slow": 0,
+        "frames": 220,
+        "tasks": 1
+      },
+      "errors": [],
+      "offsite": []
+    },
+    {
+      "lcpMs": 76,
+      "cls": 0.008216391886369958,
+      "blockingMs": 0,
+      "longTasks": 0,
+      "viewport": [
+        390,
+        844
+      ],
+      "overflow": false,
+      "resources": [
+        {
+          "name": "http://127.0.0.1:4186/assets/machine-relief.webp",
+          "encodedBodySize": 16940,
+          "transferSize": 17240
+        },
+        {
+          "name": "http://127.0.0.1:4186/assets/machine-jump.webp",
+          "encodedBodySize": 14414,
+          "transferSize": 14714
+        },
+        {
+          "name": "http://127.0.0.1:4186/assets/machine-scope.webp",
+          "encodedBodySize": 7686,
+          "transferSize": 7986
+        }
+      ],
+      "motion": "full",
+      "canvasBacking": [
+        {
+          "id": "c-sky",
+          "width": 390,
+          "height": 844
+        },
+        {
+          "id": "c-row",
+          "width": 390,
+          "height": 844
+        },
+        {
+          "id": "c-yard-scene",
+          "width": 390,
+          "height": 844
+        },
+        {
+          "id": "c-corridor",
+          "width": 300,
+          "height": 150
+        },
+        {
+          "id": "",
+          "width": 390,
+          "height": 844
+        },
+        {
+          "id": "c-tube",
+          "width": 300,
+          "height": 150
+        }
+      ],
+      "ticker": {
+        "dt": 6.800000000000182,
+        "work": 0.09999990463256836,
+        "slow": 0,
+        "frames": 416,
+        "tasks": 1
+      },
+      "errors": [],
+      "offsite": []
+    }
+  ]
+}

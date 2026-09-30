@@ -70,6 +70,7 @@ The build fails on a missing field, a duplicate slug, a surviving `__PLACEHOLDER
 - **Still.** `still(t)` must draw the designed reduced-motion frame (brief §3.4) synchronously when
   your data is ready, and draw it again when async data (the DEM) arrives. It is the frame the
   approach shows, the reduced-motion frame, and what the harness's Still box shows.
+- **turn(degrees)** optional: an immediate turn or steering action for left/right buttons and arrow keys. Draw immediately even in Still. This supplements pointer interaction.
 - **params(p)** optional: live re-tune from the tweak row. Without it the harness remounts.
 
 The ride runs ONE ticker; never call `requestAnimationFrame` yourself, never add scroll or
@@ -80,7 +81,7 @@ resize listeners. Pointer and keyboard listeners on `window` are not yours eithe
 | key | type | meaning |
 |---|---|---|
 | `ctx.vp` | `{x, y}` 0..1 | the SHARED vanishing point, parallax already applied. Every room that has depth converges here. Default 0.5, 0.38. |
-| `ctx.dpr`, `ctx.scale` | number | effective backing dpr; adaptive internal scale (1, 0.75, 0.5) |
+| `ctx.dpr`, `ctx.scale` | number | shared vector backing dpr (use the `resize` argument for your actual canvas, especially a `pixel` module); adaptive internal scale (1, 0.75, 0.5) |
 | `ctx.pointer` | `{x, y, nx, ny, down, present, coarse}` | `nx, ny` 0..1 of the viewport; `down` is true while pointer is held OR Space is held on a bay with `data-holds="true"` (jump, scope); `coarse` = touch device |
 | `ctx.keys` | `Set` | held keys routed to bays: `ArrowLeft`, `ArrowRight`, single lowercase letters. ArrowUp/Down and PageUp/Down move between bays and never reach you. |
 | `ctx.dial` | `'full' \| 'calm' \| 'still'` | Calm: halve speeds, no flashes, fewer particles. Still: only `still()` is called. `ctx.reduced` is `dial === 'still'`. |

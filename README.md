@@ -17,6 +17,23 @@ every effect is one plain file with a provenance header, a `PARAMS` block and a 
 Framework-free. No dependencies. No requests to any other host. Real data where the ground is real
 (the Santa Catalina elevation grid, see `assets/catalinas-meta.json`).
 
+## The ride and the workbench
+
+The opening is a procedural desert observatory with CRT machines showing captures of the
+actual effects. Native scrolling carries you through eight full-screen bays. Named navigation
+and previous/next buttons provide a direct path. The phone dock opens a compact bay menu;
+warp and Scope have explicit hold buttons, and rotating objects have tap and keyboard turns.
+Sound is off until chosen. Reduced motion starts in Still; Save-Data starts in Calm at a lower
+canvas resolution. Necessary context and provenance are behind About, leaving the ride visual.
+
+The parts shelf is an image-led library with local search and role filters. Each part opens a
+canvas-first workbench with parameters, reset, a configured URL, a PNG frame export and an HTML
+part download. Data-backed parts still need the adjacent `assets/` folder when lifted. The
+workbench labels that dependency. No libraries, analytics, or remote media run in the page.
+
+The 2026-09-30 local revamp evidence is in [docs/revamp/review.md](docs/revamp/review.md).
+Earlier measured budgets remain dated baseline evidence, not certification of the new revision.
+
 ## Build
 
 ```
@@ -50,10 +67,18 @@ node build.js                               # re-run so the shelf and each og:im
 
 Serves the repo on loopback (port 4187, `--port` to change) and writes `parts/stills/<slug>.webp`
 (480x270, the part's reduced-motion still with the sheet hidden) and `og-yard.png` (1200x630, the
-yard at rest with the title). It fails if any page requests another host. Playwright is borrowed from
-`D:/Git/TG-Data-Apps/tools/visual-regress/node_modules/playwright` (override with
-`BONEYARD_PLAYWRIGHT=/abs/path/to/playwright`); never run `playwright install` here. Until a still
+yard at rest with the title). It fails if any page requests another host or reports a runtime error. Playwright is borrowed from
+an installed `playwright` package or the sibling `TG-Data-Apps` workstation tools (override
+with `BONEYARD_PLAYWRIGHT=/abs/path/to/playwright`); never run `playwright install` here. Until a still
 exists, the shelf shows a plain link and that part's og:image falls back to `og-yard.png`.
+
+## Local verification
+
+With a local preview running, `node tools/measure.mjs` records a CPU-throttled localhost lab
+in `docs/revamp/lab.json`. `node tools/verify-artifacts.mjs` checks every standalone Still mount,
+exports and lifts four exact configured files, and renders the no-JavaScript paths. Both borrow
+the existing workstation Playwright runtime. This tooling is separate from the dependency-free
+shipped page. See the review for actual conditions and untested browsers/devices.
 
 ## Deploy
 
@@ -81,7 +106,7 @@ loads its own file). If any part fails the lift test, the site is not done.
 ## Local preview
 
 ```
-node D:/Git/TG-Data-Apps-voxel-lab/tools/local-guilds/serve-preview.mjs D:/Git/ddl-boneyard 4186
+python3 -m http.server 4186 --bind 127.0.0.1
 ```
 
 `?dev=1` on the ride shows the tweak row for the current bay and the measured js ms/frame.

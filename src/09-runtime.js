@@ -158,33 +158,88 @@ const BONEYARD = (() => {
     return ctx;
   }
 
+  /* ---------- PARAM controls: one coercion path for UI, configured URLs and exports ---------- */
+  function paramRule(key, value, override) {
+    if (typeof value !== 'number') return Object.assign({ maxLength: 512 }, override || {});
+    const mag = Math.abs(value) || 1;
+    return Object.assign({
+      min: value < 0 ? -mag * 4 : 0,
+      max: mag * 4 || 4,
+      step: Number.isInteger(value) && mag >= 4 ? 1 : mag / 100,
+    }, override || {});
+  }
+  function coerceParam(key, raw, fallback, override) {
+    const rule = paramRule(key, fallback, override);
+    if (typeof fallback === 'boolean') {
+      if (raw === true || raw === 1 || raw === '1' || raw === 'true') return { value: true, accepted: true, adjusted: raw !== true };
+      if (raw === false || raw === 0 || raw === '0' || raw === 'false') return { value: false, accepted: true, adjusted: raw !== false };
+      return { value: fallback, accepted: false, adjusted: false };
+    }
+    if (typeof fallback === 'number') {
+      if (typeof raw === 'string' && !raw.trim()) return { value: fallback, accepted: false, adjusted: false };
+      let value = typeof raw === 'number' ? raw : Number(raw);
+      if (!Number.isFinite(value)) return { value: fallback, accepted: false, adjusted: false };
+      const before = value;
+      if (Array.isArray(rule.values) && rule.values.length) {
+        value = rule.values.reduce((best, n) => Math.abs(n - value) < Math.abs(best - value) ? n : best, rule.values[0]);
+      } else {
+        const min = Number.isFinite(rule.min) ? rule.min : -Number.MAX_VALUE;
+        const max = Number.isFinite(rule.max) ? rule.max : Number.MAX_VALUE;
+        value = Math.max(min, Math.min(max, value));
+        if (Number.isFinite(rule.step) && rule.step > 0) {
+          const base = Number.isFinite(rule.min) ? rule.min : 0;
+          value = base + Math.round((value - base) / rule.step) * rule.step;
+          value = Math.max(min, Math.min(max, value));
+          value = Number(value.toPrecision(12));
+        }
+      }
+      return { value, accepted: true, adjusted: value !== before };
+    }
+    if (typeof fallback === 'string') {
+      if (typeof raw !== 'string') return { value: fallback, accepted: false, adjusted: false };
+      const clean = raw.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '');
+      const value = clean.slice(0, Math.max(1, rule.maxLength || 512));
+      return { value, accepted: true, adjusted: value !== raw };
+    }
+    return { value: fallback, accepted: false, adjusted: false };
+  }
+
   /* ---------- the tweak row: PARAMS -> inputs; the harness and ?dev=1 share it ---------- */
-  function buildTweakRow(container, params, onChange) {
+  function buildTweakRow(container, params, onChange, options) {
+    options = options || {};
+    const defaults = options.defaults || params, rules = options.rules || {};
     container.textContent = '';
     const keys = Object.keys(params).filter((k) => ['number', 'boolean', 'string'].includes(typeof params[k]));
     for (const k of keys) {
-      const v = params[k];
+      const v = params[k], base = defaults[k], rule = paramRule(k, base, rules[k]);
       const wrap = document.createElement('label'); wrap.className = 'tweak';
       const name = document.createElement('span'); name.textContent = k; wrap.appendChild(name);
       let input;
       if (typeof v === 'boolean') { input = document.createElement('input'); input.type = 'checkbox'; input.checked = v; }
       else if (typeof v === 'number') {
-        input = document.createElement('input'); input.type = 'range';
-        const mag = Math.abs(v) || 1;
-        input.min = v < 0 ? String(-mag * 4) : '0'; input.max = String(mag * 4 || 4);
-        input.step = Number.isInteger(v) && mag >= 4 ? '1' : String(mag / 100);
+        if (Array.isArray(rule.values) && rule.values.length) {
+          input = document.createElement('select');
+          for (const n of rule.values) { const o = document.createElement('option'); o.value = String(n); o.textContent = String(n); input.appendChild(o); }
+        } else {
+          input = document.createElement('input'); input.type = 'range';
+          input.min = String(rule.min); input.max = String(rule.max); input.step = String(rule.step);
+        }
         input.value = String(v);
       } else { input = document.createElement('input'); input.type = 'text'; input.value = v; input.size = Math.min(24, v.length + 2); }
+      input.name = 'p.' + k; input.dataset.param = k;
       const out = document.createElement('output'); out.textContent = typeof v === 'boolean' ? '' : String(v);
-      input.addEventListener('input', () => {
-        const nv = typeof v === 'boolean' ? input.checked : typeof v === 'number' ? Number(input.value) : input.value;
-        out.textContent = typeof v === 'number' ? String(nv) : '';
-        onChange(k, nv);
+      input.addEventListener(typeof v === 'string' ? 'change' : 'input', () => {
+        const raw = typeof v === 'boolean' ? input.checked : input.value;
+        const result = coerceParam(k, raw, base, rules[k]);
+        if (!result.accepted) return;
+        if (typeof v === 'number' && String(result.value) !== input.value) input.value = String(result.value);
+        out.textContent = typeof v === 'boolean' ? '' : String(result.value);
+        onChange(k, result.value, result);
       });
       wrap.appendChild(input); wrap.appendChild(out); container.appendChild(wrap);
     }
     return keys.length;
   }
 
-  return { Ticker, keep, readTokens, toRgb, rgba, dprCap, sizeCanvas, demLoader, makeCtx, buildTweakRow, coarse };
+  return { Ticker, keep, readTokens, toRgb, rgba, dprCap, sizeCanvas, demLoader, makeCtx, paramRule, coerceParam, buildTweakRow, coarse };
 })();

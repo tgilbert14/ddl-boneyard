@@ -1,23 +1,8 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The shelf · BONEYARD parts · Desert Data Labs</title>
-<meta name="description" content="Every BONEYARD effect as one plain file: technique, lineage, size and measured cost. Pull any part.">
-<meta property="og:title" content="The shelf · BONEYARD parts">
-<meta property="og:description" content="Every BONEYARD effect as one plain file: technique, lineage, size and measured cost. Pull any part.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://tgilbert14.github.io/ddl-boneyard/parts/">
-<meta property="og:image" content="https://tgilbert14.github.io/ddl-boneyard/og-yard.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="The shelf · BONEYARD parts">
-<meta name="twitter:description" content="Every BONEYARD effect as one plain file: technique, lineage, size and measured cost. Pull any part.">
-<meta name="twitter:image" content="https://tgilbert14.github.io/ddl-boneyard/og-yard.png">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>The parts · BONEYARD · Desert Data Labs</title><meta name="description" content="Every BONEYARD effect, ready to tune and take with you. Original standalone parts, real controls and full provenance.">
 <link rel="canonical" href="https://tgilbert14.github.io/ddl-boneyard/parts/">
-<meta name="theme-color" content="#030509">
+<meta property="og:title" content="The parts · BONEYARD"><meta property="og:type" content="website"><meta property="og:url" content="https://tgilbert14.github.io/ddl-boneyard/parts/"><meta property="og:image" content="https://tgilbert14.github.io/ddl-boneyard/og-yard.png"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#06080e">
 <style>
 /* ============================================================
    BONEYARD · 00-tokens.css · the light (arwen, 2026-09-29)
@@ -140,190 +125,108 @@
   --switch-on: 500ms;
 }
 
-body { margin: 0; background: var(--field); color: var(--ink); font: 15px/1.5 var(--font-mono); padding: clamp(1rem, 4vw, 3rem); }
-h1 { font: 600 clamp(1.4rem, 4vw, 2.2rem)/1.1 var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: var(--phosphor); margin: 0 0 .4rem; }
-p { max-width: 62ch; color: var(--ink-dim); }
-a { color: var(--phosphor); }
-a:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
-table { border-collapse: collapse; width: 100%; margin-top: 1.5rem; font-size: 14px; }
-th, td { text-align: left; vertical-align: top; padding: .6rem .7rem; border-top: 1px solid var(--line); }
-thead th { color: var(--ink-dim); font-weight: 500; letter-spacing: .06em; text-transform: uppercase; font-size: 12px; }
-tbody th { font-weight: 600; white-space: nowrap; }
-.role { display: block; font-size: 11px; color: var(--ink-dim); letter-spacing: .08em; text-transform: uppercase; }
-.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.wrap { overflow-x: auto; }
-nav { margin-top: 2rem; }
-.still { display: inline-block; line-height: 0; }
-.still img { display: block; width: 120px; height: auto; aspect-ratio: 16 / 9; background: var(--field-2); outline: 1px solid var(--line); }
-.still:hover img, .still:focus-visible img { outline-color: var(--phosphor); }
-h2 { font: 600 12px/1.2 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-dim); margin: 2.2rem 0 0; }
-.pages { list-style: none; padding: 0; margin: .6rem 0 0; columns: 18rem; font-size: 13px; }
-.pages li { break-inside: avoid; padding: .15rem 0; }
-.pages .role { display: inline; margin-left: .3rem; }
-.pages code { display: block; color: var(--ink-dim); font-size: 12px; }
-</style>
-</head>
-<body>
-<main>
-<h1>The shelf</h1>
-<p>Every effect on the BONEYARD row is one plain file: a provenance header, a PARAMS block, and one mount() factory. Each part below runs on its own page with its tweak row and a note on how it works.</p>
-<div class="wrap">
-<table>
-<thead><tr><th scope="col">Part</th><th scope="col">Technique</th><th scope="col">Lineage</th><th scope="col">Size</th><th scope="col">Measured cost</th><th scope="col">Still</th></tr></thead>
-<tbody>
-<tr>
-  <th scope="row"><a href="sky.html">The sky</a><span class="role">layer</span></th>
-  <td>two-plane 1/z starfield drifting with camera z, plus a 24-stop horizon band tinted by the visitor's local hour</td>
-  <td>Star Raiders (Atari, 1979) and Galaga (Namco, 1981) multi-plane stars</td>
-  <td class="num">9.6 KB</td>
-  <td>0.12 ms/frame JS avg (1.2 max) @ 1440x900 dpr 1, headless desktop Chromium (2026-09-30); raster not in this number; phone TBD</td>
-  <td><a href="sky.html" class="still"><img src="stills/sky.webp" width="120" height="68" loading="lazy" decoding="async" alt="The sky, the still frame"></a></td>
-</tr>
-<tr>
-  <th scope="row"><a href="tube.html">The tube</a><span class="role">layer</span></th>
-  <td>WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a two-scale bloom (quarter-res tight, eighth-res wide) added back, overdriven white-hot cores, a very slight barrel, a vignette, and a light chromatic fringe only at peak warp or a punch</td>
-  <td>the vector CRT: the oscilloscope; Asteroids (Atari, 1979); Battlezone (Atari, 1980); Tempest (Atari, 1981); Vectrex (1982)</td>
-  <td class="num">19.8 KB</td>
-  <td>0.24 ms/frame JS (3 uploads + 5 passes) @ 2160x1350 internal (1440x900 x1.5), desktop Chromium 149 on an AMD RX 5600M (D3D11), 2026-09-29; A/B over 5 s of scroll, frame work with the tube 4.7 to 5.5 ms vs 4.2 to 5.7 ms without (inside the noise); 390x844 x1: 0.21 ms JS, +0.6 to 1.4 ms frame work. A readPixels-synced upper bound (?tubeprobe=1) reads 10 to 14 ms because it also waits on the layers' own 2D raster; on SwiftShader (software GL) the adaptive budget drops it within seconds; phone TBD</td>
-  <td><a href="tube.html" class="still"><img src="stills/tube.webp" width="120" height="68" loading="lazy" decoding="async" alt="The tube, the still frame"></a></td>
-</tr>
-<tr>
-  <th scope="row"><a href="row.html">The row</a><span class="role">layer</span></th>
-  <td>1/z perspective light-grid with billboard vector pylons, all projected to one shared vanishing point</td>
-  <td>the Tron light-grid (Disney, 1982); the Battlezone horizon (Atari, 1980); the per-scanline perspective floor (Sega, Space Harrier, 1985; Super Nintendo Mode 7, 1990)</td>
-  <td class="num">9.6 KB</td>
-  <td>0.09 ms/frame JS avg (1.4 max) @ 1440x900 dpr 1, headless desktop Chromium (2026-09-30); raster not in this number; phone TBD</td>
-  <td><a href="row.html" class="still"><img src="stills/row.webp" width="120" height="68" loading="lazy" decoding="async" alt="The row, the still frame"></a></td>
-</tr>
-<tr>
-  <th scope="row"><a href="greetings.html">Greetings</a><span class="role">layer</span></th>
-  <td>real-DOM sine scroller: a duplicated track slid by one CSS transform animation, and a travelling sine wave written only to the glyphs that are on screen, from the ride's own frame loop</td>
-  <td>the C64 and Amiga cracktro sine scroller, about 1985 to 1992</td>
-  <td class="num">7.7 KB</td>
-  <td>the first version ran one CSS animation per glyph (587 at once) and cost about 22 ms of style work per frame at 4x CPU, the single largest cost on the ride; this version writes about 40 (phone) to 170 (desktop) transforms per frame and the ride went from 16 to 26 fps to 50 to 60 fps at 4x CPU (2026-09-30)</td>
-  <td><a href="greetings.html" class="still"><img src="stills/greetings.webp" width="120" height="68" loading="lazy" decoding="async" alt="Greetings, the still frame"></a></td>
-</tr>
-<tr>
-  <th scope="row"><a href="switch.html">Switch</a><span class="role">corridor</span></th>
-  <td>the CRT switch-off as compositor-only transforms on a room's wrapper: an accelerating slam of scaleY to a white-hot line (110 ms in Full, 200 in Calm), scaleX to a white dot (100 / 150 ms), the dot recedes to the vanishing point (420 / 600 ms); switch-on is the reverse with a small overshoot in Full</td>
-  <td>every CRT television's power-off, formalised by 1980s title sequences</td>
-  <td class="num">8.8 KB</td>
-  <td>0.0 ms/frame of JavaScript during the transition (compositor animations); measured in docs/BUILD-LOG.md, desktop Chromium, 2026-09-29</td>
-  <td><a href="switch.html" class="still"><img src="stills/switch.webp" width="120" height="68" loading="lazy" decoding="async" alt="Switch, the still frame"></a></td>
-</tr>
-<tr>
-  <th scope="row"><a href="hyperspace.html">Hyperspace</a><span class="role">corridor</span></th>
-  <td>the sky's own stars streaked along their 1/z rays: each star drawn as a line from its projection at z to its projection at z + warp * streakLen, scrubbed by scroll position through the gap between two bays</td>
-  <td>the Star Wars jump (1977); the demoscene 1/z starfields (early 1990s); Windows 3.1 Starfield Simulation (1992)</td>
-  <td class="num">9.4 KB</td>
-  <td>0.13 ms/frame JS avg (0.7 max) @ 1440x900 dpr 1, headless desktop Chromium (2026-09-30); raster not in this number; phone TBD</td>
-  <td><a href="hyperspace.html" class="still"><img src="stills/hyperspace.webp" width="120" height="68" loading="lazy" decoding="async" alt="Hyperspace, the still frame"></a></td>
-</tr>
-<tr>
-  <th scope="row"><a href="rings.html">Rings</a><span class="role">corridor</span></th>
-  <td>the dot tunnel: concentric squares of dots at fixed depths, projected by 1/z onto the shared vanishing point, each ring rotated by an angle that grows with its depth, so the far end of the tunnel twists</td>
-  <td>the demoscene dot tunnel (Amiga and PC intros, about 1991); the 1/z projection it shares with every starfield of the era</td>
-  <td class="num">7.4 KB</td>
-  <td>0.17 to 0.24 ms/frame @ 1440x900 internal (dpr 1), headless desktop Chromium, parts page counter (2026-09-29); phone TBD</td>
-  <td><a href="rings.html" class="still"><img src="stills/rings.webp" width="120" height="68" loading="lazy" decoding="async" alt="Rings, the still frame"></a></td>
-</tr>
-<tr>
-  <th scope="row"><a href="jump.html">Jump</a><span class="role">bay</span></th>
-  <td>1/z starfield in warp: stars flow toward the camera along rays from the vanishing point and are drawn as streaks whose length is the warp; press-and-hold raises warp, release settles to cruise</td>
-  <td>the Star Wars jump (1977); the demoscene 1/z starfields (early 1990s); Windows 3.1 Starfield Simulation (1992)</td>
-  <td class="num">10.2 KB</td>
-  <td>0.12 ms/frame JS avg (0.7 max) @ 1440x900 dpr 1, headless desktop Chromium (2026-09-30); raster not in this number; phone TBD</td>
-  <td><a href="jump.html" class="still"><img src="stills/jump.webp" width="120" height="68" loading="lazy" decoding="async" alt="Jump, the still frame"></a></td>
-</tr>
-<tr>
-  <th scope="row"><a href="gate.html">Gate</a><span class="role">bay</span></th>
-  <td>slit-scan corridor: two planes (floor and ceiling) receding to the shared vanishing point, cut into lanes that run along the line of flight; every texel samples a 1-D strip of artwork at an index that slides with the dolly, so colour rushes down each lane toward the viewer</td>
-  <td>Douglas Trumbull's slit-scan for 2001: A Space Odyssey (1968), itself after John Whitney's slit-scan experiments (1950s and 1960s); the polar variant is the stargate</td>
-  <td class="num">15.0 KB</td>
-  <td>1.2 to 2.0 ms/frame @ 320x200 internal (pixel 320), headless desktop Chromium, parts page counter (2026-09-30); 390x844 at 4x CPU: 8.0 ms JS, part page holds 60 fps; JS time only, not a real-GPU frame</td>
-  <td><a href="gate.html" class="still"><img src="stills/gate.webp" width="120" height="68" loading="lazy" decoding="async" alt="Gate, the still frame"></a></td>
-</tr>
-<tr>
-  <th scope="row"><a href="range.html">Range</a><span class="role">bay</span></th>
-  <td>Voxel Space: one ray per screen column marched front to back over a heightmap, each hit drawn as a vertical span above the column's running y-buffer; distance fog; hillshaded colour table</td>
-  <td>NovaLogic, Comanche: Maximum Overkill, 1992; adapted from a CC0 voxel demo at 3d-retro.com whose terrain was synthetic sine waves; ported from Voxel Catalinas (desertdatalabs.com/labs/voxel-catalinas/)</td>
-  <td class="num">21.3 KB</td>
-  <td>2.9 ms/frame @ 384x240 internal (1440x900 backing), desktop Chromium, headless, busy machine (2026-09-29); 177x384 at 390x844 2.0 ms; phone TBD</td>
-  <td><a href="range.html" class="still"><img src="stills/range.webp" width="120" height="68" loading="lazy" decoding="async" alt="Range, the still frame"></a></td>
-</tr>
-<tr>
-  <th scope="row"><a href="wash.html">Wash</a><span class="role">bay</span></th>
-  <td>particle advection through a vector field: each drop steps along the downslope gradient of a real elevation grid plus a weak divergence-free curl noise, and leaves a decaying phosphor trail</td>
-  <td>vector-field particle advection and streakline plots in 1990s scientific visualization; the generative flow-field sketches that grew out of them</td>
-  <td class="num">16.3 KB</td>
-  <td>2.4 ms/frame @ 480x300 internal (1440x900 backing), 2,400 drops, desktop Chromium, headless, busy machine (2026-09-29); 222x480 at 390x844 2.2 ms; phone TBD</td>
-  <td><a href="wash.html" class="still"><img src="stills/wash.webp" width="120" height="68" loading="lazy" decoding="async" alt="Wash, the still frame"></a></td>
-</tr>
-<tr>
-  <th scope="row"><a href="relief.html">Relief</a><span class="role">bay</span></th>
-  <td>scan-processor relief: 96 scanlines of the real Santa Catalina elevation grid, each lifted by height and drawn as double-stroked phosphor wire; hidden lines removed by filling each line's curtain (the vertical strip from the wire down to the base) with the field colour, far to near, the Unknown Pleasures way</td>
-  <td>the Rutt/Etra scan processor (Steve Rutt and Bill Etra, 1973), which bent each video scanline by its brightness; the CP 1919 pulsar stack (Harold Craft, 1970) that became the Unknown Pleasures cover (1979)</td>
-  <td class="num">14.6 KB</td>
-  <td>1.6 to 2.0 ms/frame on the parts counter @ 1440x900 x1 internal, headless Chromium (2026-09-30); 390x844 at 4x CPU (lite path): 8.0 to 8.4 ms JS, part page 44 to 47 fps; JS time only, not a real-GPU frame time</td>
-  <td><a href="relief.html" class="still"><img src="stills/relief.webp" width="120" height="68" loading="lazy" decoding="async" alt="Relief, the still frame"></a></td>
-</tr>
-<tr>
-  <th scope="row"><a href="terminator.html">Terminator</a><span class="role">bay</span></th>
-  <td>a back-culled dotted sphere in orthographic projection with faint graticule, land drawn as denser and brighter dots from a 1-degree land mask, lit by a Lambert term from the real sub-solar point so the day line sits where it sits right now</td>
-  <td>Elite's dotted planets (David Braben and Ian Bell, Acornsoft, 1984); the IRIX-era wireframe globe (Silicon Graphics workstations, early 1990s)</td>
-  <td class="num">16.5 KB</td>
-  <td>0.67 ms per full redraw @ 2160x1350 internal (1440x900 x1.5), 0.52 ms/frame on the parts counter while dragging, 0.01 ms/frame idle (it redraws only on change); headless Chromium, software raster (2026-09-29); phone TBD</td>
-  <td><a href="terminator.html" class="still"><img src="stills/terminator.webp" width="120" height="68" loading="lazy" decoding="async" alt="Terminator, the still frame"></a></td>
-</tr>
-<tr>
-  <th scope="row"><a href="scope.html">Scope</a><span class="role">bay</span></th>
-  <td>an oscilloscope in XY mode: X against Y traces a Lissajous figure; the phosphor's persistence is drawn as five explicit copies of the recent trace at falling brightness, each a wide phosphor halo under a white-hot core; press-and-hold starts two WebAudio oscillators (left = X, right = Y) and the trace switches to the actual samples read back from two AnalyserNodes</td>
-  <td>Lissajous figures (Jules Antoine Lissajous, 1857); the oscilloscope's XY mode; oscilloscope music (the 2010s practice of composing stereo sound whose two channels draw pictures on an XY scope)</td>
-  <td class="num">17.0 KB</td>
-  <td>0.21 to 0.27 ms/frame idle @ 1440x900 x1 internal, headless desktop Chromium, harness counter (2026-09-30); 390x844 at 4x CPU: 1.1 ms JS, part page 60 fps; JS time only, the additive strokes raster on the GPU</td>
-  <td><a href="scope.html" class="still"><img src="stills/scope.webp" width="120" height="68" loading="lazy" decoding="async" alt="Scope, the still frame"></a></td>
-</tr>
-<tr>
-  <th scope="row"><a href="mark.html">Mark</a><span class="role">bay</span></th>
-  <td>glenz vectors: a low-poly solid whose faces are translucent, painter-sorted by depth and filled additively, so the back faces show through the front ones and pile up as light; edges stroked on top</td>
-  <td>Amiga demoscene glenz vectors (about 1989 to 1990), with the demo finale's sunburst behind the object</td>
-  <td class="num">20.6 KB</td>
-  <td>0.39 ms/frame @ 1440x900 x1 internal, 1.96 ms at 4x CPU; 390x844 at 4x CPU 1.82 ms; desktop Chromium on a real GPU (RX 5600M, D3D11), harness counter (2026-09-30); ride 59 to 60 fps incl. the arrival; phone device TBD</td>
-  <td><a href="mark.html" class="still"><img src="stills/mark.webp" width="120" height="68" loading="lazy" decoding="async" alt="Mark, the still frame"></a></td>
-</tr>
-<tr>
-  <th scope="row"><a href="placeholder.html">Tube idle (placeholder)</a><span class="role">placeholder</span></th>
-  <td>the designed idle of a switched-on vector tube: a centre bloom on the vanishing point, one horizontal hairline that breathes, an inset bezel; nothing else</td>
-  <td>the idle screen of a vector CRT with no program loaded (the oscilloscope at rest; Vectrex, 1982, between games)</td>
-  <td class="num">3.6 KB</td>
-  <td>see docs/BUILD-LOG.md for the measured number @ 1440x900 x1.5 internal, desktop Chromium (2026-09-29); phone TBD</td>
-  <td><a href="placeholder.html" class="still"><img src="stills/placeholder.webp" width="120" height="68" loading="lazy" decoding="async" alt="Tube idle (placeholder), the still frame"></a></td>
-</tr>
-</tbody>
-</table>
-</div>
-<h2 id="h-pages">Every page</h2>
-<ul class="pages" aria-labelledby="h-pages">
-<li><a href="../">The ride</a> <code>index.html</code></li>
-<li><a href="index.html">The shelf</a> <code>parts/index.html</code></li>
-<li><a href="sky.html">The sky</a> <span class="role">layer</span> <code>parts/sky.html</code></li>
-<li><a href="tube.html">The tube</a> <span class="role">layer</span> <code>parts/tube.html</code></li>
-<li><a href="row.html">The row</a> <span class="role">layer</span> <code>parts/row.html</code></li>
-<li><a href="greetings.html">Greetings</a> <span class="role">layer</span> <code>parts/greetings.html</code></li>
-<li><a href="switch.html">Switch</a> <span class="role">corridor</span> <code>parts/switch.html</code></li>
-<li><a href="hyperspace.html">Hyperspace</a> <span class="role">corridor</span> <code>parts/hyperspace.html</code></li>
-<li><a href="rings.html">Rings</a> <span class="role">corridor</span> <code>parts/rings.html</code></li>
-<li><a href="jump.html">Jump</a> <span class="role">bay</span> <code>parts/jump.html</code></li>
-<li><a href="gate.html">Gate</a> <span class="role">bay</span> <code>parts/gate.html</code></li>
-<li><a href="range.html">Range</a> <span class="role">bay</span> <code>parts/range.html</code></li>
-<li><a href="wash.html">Wash</a> <span class="role">bay</span> <code>parts/wash.html</code></li>
-<li><a href="relief.html">Relief</a> <span class="role">bay</span> <code>parts/relief.html</code></li>
-<li><a href="terminator.html">Terminator</a> <span class="role">bay</span> <code>parts/terminator.html</code></li>
-<li><a href="scope.html">Scope</a> <span class="role">bay</span> <code>parts/scope.html</code></li>
-<li><a href="mark.html">Mark</a> <span class="role">bay</span> <code>parts/mark.html</code></li>
-<li><a href="placeholder.html">Tube idle (placeholder)</a> <span class="role">placeholder</span> <code>parts/placeholder.html</code></li>
-</ul>
-<nav><a href="../">Ride the row</a> · <a href="https://desertdatalabs.com/">Desert Data Labs</a></nav>
-</main>
-</body>
-</html>
+*{box-sizing:border-box}html{background:var(--field);color:var(--ink);-webkit-text-size-adjust:100%}body{margin:0;font:13px/1.6 var(--font-mono)}a{color:inherit}a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-offset:5px}button,input{font:inherit}button{cursor:pointer}::selection{background:var(--phosphor);color:var(--field)}.topbar{max-width:1500px;margin:auto;padding:22px clamp(18px,4vw,64px);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.brand{font:10px var(--font-display);letter-spacing:.12em;color:var(--phosphor-core);text-decoration:none}.topbar nav{display:flex;gap:26px;align-items:center}.topbar nav a{font-size:10px;letter-spacing:.1em;text-decoration:none;padding:12px 0}.topbar nav a span{color:var(--amber)}.topbar a:hover{color:var(--phosphor)}main{max-width:1500px;margin:auto;padding:clamp(30px,6vw,80px) clamp(18px,4vw,64px) 48px}.eyebrow{font-size:9px;letter-spacing:.25em;color:var(--amber);margin:0 0 14px}h1{font:clamp(30px,6.2vw,78px)/1.1 var(--font-display);margin:0;color:var(--phosphor-core);letter-spacing:-.03em}.intro{margin:20px 0 0;color:var(--ink-dim);font-size:12px}.intro span{color:var(--phosphor)}.shelf-controls{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:36px 0 26px}.filters{display:flex;gap:4px;flex-wrap:wrap}.filters button{color:var(--ink-dim);border:1px solid var(--line);background:transparent;min-height:44px;padding:0 17px;font-size:10px;letter-spacing:.05em}.filters button[aria-pressed=true]{color:var(--field);background:var(--phosphor);border-color:var(--phosphor)}.filters button:hover:not([aria-pressed=true]){border-color:var(--phosphor-dim);color:var(--phosphor)}.search{position:relative;display:flex;align-items:center}.search span{position:absolute;left:13px;color:var(--amber)}.search input{background:var(--field-2);color:var(--ink);border:1px solid var(--line);min-height:44px;width:230px;padding:0 13px 0 38px;font-size:11px}.search input::placeholder{color:var(--ink-dim)}.parts-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:30px 22px}.part-card{min-width:0}.part-card[hidden]{display:none}.part-link{display:block;text-decoration:none}.part-preview{position:relative;aspect-ratio:16/10;background:var(--field-2);border:1px solid var(--line);overflow:hidden;transition:border-color .16s}.part-preview img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .35s cubic-bezier(.2,.8,.2,1)}.part-type{position:absolute;top:12px;left:12px;font-size:8px;letter-spacing:.13em;text-transform:uppercase;border:1px solid var(--line);padding:4px 8px;background:var(--scrim-deep);color:var(--ink-dim)}.part-arrow{position:absolute;right:12px;bottom:12px;display:grid;place-items:center;width:36px;height:36px;border:1px solid var(--amber);background:var(--scrim-deep);color:var(--amber);font-size:16px;transition:background .16s,color .16s}.part-link:hover .part-preview,.part-link:focus-visible .part-preview{border-color:var(--phosphor)}.part-link:hover img{transform:scale(1.04)}.part-link:hover .part-arrow{background:var(--amber);color:var(--field)}.part-link:active .part-arrow{transform:translateY(2px);background:var(--phosphor);color:var(--field)}.part-label{display:flex;gap:10px;align-items:center;margin-top:14px}.part-number{font-size:9px;color:var(--amber)}.part-label h2{font:14px/1.2 var(--font-display);margin:0;color:var(--phosphor-core);letter-spacing:.01em}.part-size{margin-left:auto;font-size:9px;color:var(--ink-dim);white-space:nowrap}.part-note{font-size:10px;line-height:1.6;color:var(--ink-dim);margin:9px 0 0}.missing-still{height:100%;display:grid;place-items:center;color:var(--phosphor);font-size:12px}.empty{padding:48px 0;font-size:13px;color:var(--ink-dim)}.shelf-footer{display:flex;justify-content:space-between;gap:20px;border-top:1px solid var(--line);margin-top:48px;padding-top:20px;font-size:9px;letter-spacing:.04em;color:var(--ink-dim)}.shelf-footer a{text-decoration:none;color:var(--phosphor)}.shelf-footer p{margin:0}.result-count{color:var(--ink-dim);font-size:9px;margin:0 0 18px}.js-only{display:none}html.js .js-only{display:flex}html.js p.js-only{display:block}[hidden]{display:none!important}@media(max-width:1000px){.parts-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.topbar{padding:14px 18px}.topbar nav{gap:18px}.topbar nav a{font-size:9px}main{padding-top:34px}.eyebrow{font-size:8px}h1{font-size:38px}.intro{font-size:10px;max-width:31ch}.shelf-controls{margin-top:27px;gap:14px}.filters{width:100%;display:grid;grid-template-columns:repeat(4,1fr)}.filters button{padding:0 6px;font-size:9px}.search,.search input{width:100%}.parts-grid{gap:24px 14px}.part-label{flex-wrap:wrap;gap:6px;margin-top:10px}.part-label h2{font-size:11px}.part-size{flex-basis:100%;margin:0;padding-left:19px;font-size:8px}.part-note{font-size:9px}.part-type{font-size:7px;top:8px;left:8px;padding:3px 5px}.part-arrow{width:28px;height:28px;right:8px;bottom:8px}.shelf-footer{flex-direction:column;gap:10px}}@media(max-width:360px){.parts-grid{grid-template-columns:1fr}.part-label h2{font-size:14px}.part-size{margin-left:auto;flex-basis:auto;padding:0}.part-note{font-size:10px}}@media(prefers-reduced-motion:reduce){.part-preview img{transition:none}.part-link:hover img{transform:none}}
+</style></head><body><header class="topbar"><a class="brand" href="../">BONEYARD</a><nav aria-label="Main"><a href="../">Ride the row <span>↗</span></a><a href="https://github.com/tgilbert14/ddl-boneyard">Source <span>↗</span></a></nav></header><main><p class="eyebrow">THE SALVAGE SHELF / 17 ORIGINAL PARTS</p><h1>Take a little<br>light with you.</h1><p class="intro">Open. Tune. Pull a part. <span>It still runs.</span></p><div class="shelf-controls js-only"><div class="filters" aria-label="Filter by part type"><button type="button" data-filter="all" aria-pressed="true">All parts</button><button type="button" data-filter="bay" aria-pressed="false">Bays</button><button type="button" data-filter="corridor" aria-pressed="false">Corridors</button><button type="button" data-filter="layer" aria-pressed="false">Layers</button></div><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a technique" aria-label="Search parts"></label></div><p class="result-count js-only" id="result-count" role="status">17 parts</p><section class="parts-grid" aria-label="Standalone effects"><article class="part-card" data-role="bay" data-search="jump bay 1/z starfield in warp: stars flow toward the camera along rays from the vanishing point and are drawn as streaks whose length is the warp; press-and-hold raises warp, release settles to cruise the star wars jump (1977); the demoscene 1/z starfields (early 1990s); windows 3.1 starfield simulation (1992)">
+<a href="jump.html" class="part-link">
+<div class="part-preview"><img src="stills/jump.webp" width="480" height="270" loading="lazy" decoding="async" alt="Jump, designed still"><span class="part-type">bay</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">01</span><h2>Jump</h2><span class="part-size">10.2 KB</span></div>
+<p class="part-note">A starfield you can push into warp.</p>
+</a></article>
+<article class="part-card" data-role="bay" data-search="gate bay slit-scan corridor: two planes (floor and ceiling) receding to the shared vanishing point, cut into lanes that run along the line of flight; every texel samples a 1-d strip of artwork at an index that slides with the dolly, so colour rushes down each lane toward the viewer douglas trumbull's slit-scan for 2001: a space odyssey (1968), itself after john whitney's slit-scan experiments (1950s and 1960s); the polar variant is the stargate">
+<a href="gate.html" class="part-link">
+<div class="part-preview"><img src="stills/gate.webp" width="480" height="270" loading="lazy" decoding="async" alt="Gate, designed still"><span class="part-type">bay</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">02</span><h2>Gate</h2><span class="part-size">15.0 KB</span></div>
+<p class="part-note">A sunset stretched into a slit-scan corridor.</p>
+</a></article>
+<article class="part-card" data-role="bay" data-search="range bay voxel space: one ray per screen column marched front to back over a heightmap, each hit drawn as a vertical span above the column's running y-buffer; distance fog; hillshaded colour table novalogic, comanche: maximum overkill, 1992; adapted from a cc0 voxel demo at 3d-retro.com whose terrain was synthetic sine waves; ported from voxel catalinas (desertdatalabs.com/labs/voxel-catalinas/)">
+<a href="range.html" class="part-link">
+<div class="part-preview"><img src="stills/range.webp" width="480" height="270" loading="lazy" decoding="async" alt="Range, designed still"><span class="part-type">bay</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">03</span><h2>Range</h2><span class="part-size">21.4 KB</span></div>
+<p class="part-note">Fly the real Santa Catalina elevation grid.</p>
+</a></article>
+<article class="part-card" data-role="bay" data-search="wash bay particle advection through a vector field: each drop steps along the downslope gradient of a real elevation grid plus a weak divergence-free curl noise, and leaves a decaying phosphor trail vector-field particle advection and streakline plots in 1990s scientific visualization; the generative flow-field sketches that grew out of them">
+<a href="wash.html" class="part-link">
+<div class="part-preview"><img src="stills/wash.webp" width="480" height="270" loading="lazy" decoding="async" alt="Wash, designed still"><span class="part-type">bay</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">04</span><h2>Wash</h2><span class="part-size">16.3 KB</span></div>
+<p class="part-note">Rain traces the downhill slopes of the Catalinas.</p>
+</a></article>
+<article class="part-card" data-role="bay" data-search="relief bay scan-processor relief: 96 scanlines of the real santa catalina elevation grid, each lifted by height and drawn as double-stroked phosphor wire; hidden lines removed by filling each line's curtain (the vertical strip from the wire down to the base) with the field colour, far to near, the unknown pleasures way the rutt/etra scan processor (steve rutt and bill etra, 1973), which bent each video scanline by its brightness; the cp 1919 pulsar stack (harold craft, 1970) that became the unknown pleasures cover (1979)">
+<a href="relief.html" class="part-link">
+<div class="part-preview"><img src="stills/relief.webp" width="480" height="270" loading="lazy" decoding="async" alt="Relief, designed still"><span class="part-type">bay</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">05</span><h2>Relief</h2><span class="part-size">14.7 KB</span></div>
+<p class="part-note">A mountain range, drawn as turning scanlines.</p>
+</a></article>
+<article class="part-card" data-role="bay" data-search="terminator bay a back-culled dotted sphere in orthographic projection with faint graticule, land drawn as denser and brighter dots from a 1-degree land mask, lit by a lambert term from the real sub-solar point so the day line sits where it sits right now elite's dotted planets (david braben and ian bell, acornsoft, 1984); the irix-era wireframe globe (silicon graphics workstations, early 1990s)">
+<a href="terminator.html" class="part-link">
+<div class="part-preview"><img src="stills/terminator.webp" width="480" height="270" loading="lazy" decoding="async" alt="Terminator, designed still"><span class="part-type">bay</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">06</span><h2>Terminator</h2><span class="part-size">16.6 KB</span></div>
+<p class="part-note">A dotted Earth with today's day line.</p>
+</a></article>
+<article class="part-card" data-role="bay" data-search="scope bay an oscilloscope in xy mode: x against y traces a lissajous figure; the phosphor's persistence is drawn as five explicit copies of the recent trace at falling brightness, each a wide phosphor halo under a white-hot core; press-and-hold starts two webaudio oscillators (left = x, right = y) and the trace switches to the actual samples read back from two analysernodes lissajous figures (jules antoine lissajous, 1857); the oscilloscope's xy mode; oscilloscope music (the 2010s practice of composing stereo sound whose two channels draw pictures on an xy scope)">
+<a href="scope.html" class="part-link">
+<div class="part-preview"><img src="stills/scope.webp" width="480" height="270" loading="lazy" decoding="async" alt="Scope, designed still"><span class="part-type">bay</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">07</span><h2>Scope</h2><span class="part-size">17.2 KB</span></div>
+<p class="part-note">Two tones. One oscilloscope trace.</p>
+</a></article>
+<article class="part-card" data-role="bay" data-search="mark bay glenz vectors: a low-poly solid whose faces are translucent, painter-sorted by depth and filled additively, so the back faces show through the front ones and pile up as light; edges stroked on top amiga demoscene glenz vectors (about 1989 to 1990), with the demo finale's sunburst behind the object">
+<a href="mark.html" class="part-link">
+<div class="part-preview"><img src="stills/mark.webp" width="480" height="270" loading="lazy" decoding="async" alt="Mark, designed still"><span class="part-type">bay</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">08</span><h2>Mark</h2><span class="part-size">20.7 KB</span></div>
+<p class="part-note">The DDL glyph, drawn as a transparent solid.</p>
+</a></article>
+<article class="part-card" data-role="corridor" data-search="switch corridor the crt switch-off as compositor-only transforms on a room's wrapper: an accelerating slam of scaley to a white-hot line (110 ms in full, 200 in calm), scalex to a white dot (100 / 150 ms), the dot recedes to the vanishing point (420 / 600 ms); switch-on is the reverse with a small overshoot in full every crt television's power-off, formalised by 1980s title sequences">
+<a href="switch.html" class="part-link">
+<div class="part-preview"><img src="stills/switch.webp" width="480" height="270" loading="lazy" decoding="async" alt="Switch, designed still"><span class="part-type">corridor</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">09</span><h2>Switch</h2><span class="part-size">9.1 KB</span></div>
+<p class="part-note">A tube opens, collapses and recedes.</p>
+</a></article>
+<article class="part-card" data-role="corridor" data-search="hyperspace corridor the sky's own stars streaked along their 1/z rays: each star drawn as a line from its projection at z to its projection at z + warp * streaklen, scrubbed by scroll position through the gap between two bays the star wars jump (1977); the demoscene 1/z starfields (early 1990s); windows 3.1 starfield simulation (1992)">
+<a href="hyperspace.html" class="part-link">
+<div class="part-preview"><img src="stills/hyperspace.webp" width="480" height="270" loading="lazy" decoding="async" alt="Hyperspace, designed still"><span class="part-type">corridor</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">10</span><h2>Hyperspace</h2><span class="part-size">9.4 KB</span></div>
+<p class="part-note">A corridor of light at warp.</p>
+</a></article>
+<article class="part-card" data-role="corridor" data-search="rings corridor the dot tunnel: concentric squares of dots at fixed depths, projected by 1/z onto the shared vanishing point, each ring rotated by an angle that grows with its depth, so the far end of the tunnel twists the demoscene dot tunnel (amiga and pc intros, about 1991); the 1/z projection it shares with every starfield of the era">
+<a href="rings.html" class="part-link">
+<div class="part-preview"><img src="stills/rings.webp" width="480" height="270" loading="lazy" decoding="async" alt="Rings, designed still"><span class="part-type">corridor</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">11</span><h2>Rings</h2><span class="part-size">7.4 KB</span></div>
+<p class="part-note">A tunnel drawn from concentric rings.</p>
+</a></article>
+<article class="part-card" data-role="layer" data-search="the sky layer two-plane 1/z starfield drifting with camera z, plus a 24-stop horizon band tinted by the visitor's local hour star raiders (atari, 1979) and galaga (namco, 1981) multi-plane stars">
+<a href="sky.html" class="part-link">
+<div class="part-preview"><img src="stills/sky.webp" width="480" height="270" loading="lazy" decoding="async" alt="The sky, designed still"><span class="part-type">layer</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">12</span><h2>The sky</h2><span class="part-size">9.6 KB</span></div>
+<p class="part-note">The stars and local-hour horizon.</p>
+</a></article>
+<article class="part-card" data-role="layer" data-search="the tube layer webgl1 phosphor post-pass over the composited 2d layers: persistence (max of the current frame and the decayed last one), a two-scale bloom (quarter-res tight, eighth-res wide) added back, overdriven white-hot cores, a very slight barrel, a vignette, and a light chromatic fringe only at peak warp or a punch the vector crt: the oscilloscope; asteroids (atari, 1979); battlezone (atari, 1980); tempest (atari, 1981); vectrex (1982)">
+<a href="tube.html" class="part-link">
+<div class="part-preview"><img src="stills/tube.webp" width="480" height="270" loading="lazy" decoding="async" alt="The tube, designed still"><span class="part-type">layer</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">13</span><h2>The tube</h2><span class="part-size">19.8 KB</span></div>
+<p class="part-note">The phosphor treatment around the scene.</p>
+</a></article>
+<article class="part-card" data-role="layer" data-search="the row layer 1/z perspective light-grid with billboard vector pylons, all projected to one shared vanishing point the tron light-grid (disney, 1982); the battlezone horizon (atari, 1980); the per-scanline perspective floor (sega, space harrier, 1985; super nintendo mode 7, 1990)">
+<a href="row.html" class="part-link">
+<div class="part-preview"><img src="stills/row.webp" width="480" height="270" loading="lazy" decoding="async" alt="The row, designed still"><span class="part-type">layer</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">14</span><h2>The row</h2><span class="part-size">9.6 KB</span></div>
+<p class="part-note">The light-grid beneath the ride.</p>
+</a></article>
+<article class="part-card" data-role="layer" data-search="greetings layer real-dom sine scroller: a duplicated track slid by one css transform animation, and a travelling sine wave written only to the glyphs that are on screen, from the ride's own frame loop the c64 and amiga cracktro sine scroller, about 1985 to 1992">
+<a href="greetings.html" class="part-link">
+<div class="part-preview"><img src="stills/greetings.webp" width="480" height="270" loading="lazy" decoding="async" alt="Greetings, designed still"><span class="part-type">layer</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">15</span><h2>Greetings</h2><span class="part-size">7.7 KB</span></div>
+<p class="part-note">The rolling names behind the techniques.</p>
+</a></article>
+<article class="part-card" data-role="layer" data-search="the yard layer layered canvas 2d industrial matte: cached vector chassis paths, local effect captures clipped into shaped crt glass, and three console silhouettes staged in one-point perspective the black-and-cyan light world of tron (steven lisberger, 1982); the tektronix 4014 storage terminal (1974); syd mead's painted production designs for electronic landscapes and working machines">
+<a href="yard-scene.html" class="part-link">
+<div class="part-preview"><img src="stills/yard-scene.webp" width="480" height="270" loading="lazy" decoding="async" alt="The yard, designed still"><span class="part-type">layer</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">16</span><h2>The yard</h2><span class="part-size">24.4 KB</span></div>
+<p class="part-note">The machines waiting in the desert.</p>
+</a></article>
+<article class="part-card" data-role="placeholder" data-search="tube idle (placeholder) placeholder the designed idle of a switched-on vector tube: a centre bloom on the vanishing point, one horizontal hairline that breathes, an inset bezel; nothing else the idle screen of a vector crt with no program loaded (the oscilloscope at rest; vectrex, 1982, between games)">
+<a href="placeholder.html" class="part-link">
+<div class="part-preview"><img src="stills/placeholder.webp" width="480" height="270" loading="lazy" decoding="async" alt="Tube idle (placeholder), designed still"><span class="part-type">placeholder</span><span class="part-arrow" aria-hidden="true">↗</span></div>
+<div class="part-label"><span class="part-number">17</span><h2>Tube idle (placeholder)</h2><span class="part-size">3.6 KB</span></div>
+<p class="part-note">A fallback when a module is missing.</p>
+</a></article></section><p class="empty" id="empty" hidden>No match. Try another search.</p><footer class="shelf-footer"><p>Original code. Local assets. Full provenance in every part.</p><a href="https://desertdatalabs.com/">Desert Data Labs ↗</a></footer></main><script>
+(()=>{'use strict';document.documentElement.classList.add('js');const cards=[...document.querySelectorAll('.part-card')],buttons=[...document.querySelectorAll('[data-filter]')],search=document.getElementById('search'),url=new URL(location.href);let role=['bay','corridor','layer'].includes(url.searchParams.get('role'))?url.searchParams.get('role'):'all';search.value=(url.searchParams.get('q')||'').slice(0,120);function filter(write){let shown=0;const q=search.value.trim().toLowerCase();for(const card of cards){card.hidden=(role!=='all'&&card.dataset.role!==role)||(q&&!card.dataset.search.includes(q));if(!card.hidden)shown++;}buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter===role)));document.getElementById('result-count').textContent=shown+' / '+cards.length+' parts';document.getElementById('empty').hidden=shown!==0;if(write){const u=new URL(location.href);role==='all'?u.searchParams.delete('role'):u.searchParams.set('role',role);q?u.searchParams.set('q',search.value.trim()):u.searchParams.delete('q');history.replaceState(null,'',u);}}buttons.forEach(b=>b.addEventListener('click',()=>{role=b.dataset.filter;filter(true)}));search.addEventListener('input',()=>filter(true));filter(false)})();
+</script></body></html>

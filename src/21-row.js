@@ -31,16 +31,16 @@
   const PARAMS = {
     camH: 1.0,          /* camera height in world units */
     focalK: 0.62,       /* focal length as a fraction of canvas height */
-    zLines: 44,         /* depth lines drawn ahead */
+    zLines: 32,         /* depth lines drawn ahead */
     xLines: 7,          /* lateral lines each side of centre */
     xSpacing: 1,        /* world units between lateral lines */
-    pylonX: 2.1,        /* pylons at +- this x: close to the line of flight, so they whip past */
+    pylonX: 3.8,        /* pylons at +- this x: close to the line of flight, so they whip past */
     pylonEvery: 6,      /* units between pylons */
-    pylonH: 1.9,        /* pylon height, world units */
+    pylonH: 1.3,        /* pylon height, world units */
     haloWidth: 5,       /* px, the wide dim stroke */
     coreWidth: 1.1,     /* px, the bright stroke */
-    haloAlpha: 0.16,
-    coreAlpha: 0.85,
+    haloAlpha: 0.09,
+    coreAlpha: 0.6,
     nearBoost: 1.6,     /* alpha ~ nearBoost / d */
     speedGain: 2.2,     /* Full: floor travel per unit of ride camera travel */
     cruiseFull: 3.2,    /* Full: extra idle flight, units per second */

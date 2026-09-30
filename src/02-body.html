@@ -8,6 +8,7 @@
     <div id="horizon"><i></i></div>
     <canvas class="layer" id="c-sky"></canvas>
     <canvas class="layer" id="c-row"></canvas>
+    <canvas class="layer" id="c-yard-scene"></canvas>
     <canvas class="layer" id="c-corridor"></canvas>
     <div id="rooms"></div>
   </div>
@@ -15,127 +16,83 @@
   <div id="ignite"><i class="ig-cover"></i><i class="ig-line"></i><i class="ig-flash"></i></div>
 </div>
 
-<header id="hud" aria-label="Heads-up display">
+<header id="hud" aria-label="Ride controls">
+  <a class="yard-brand" href="#yard" aria-label="Boneyard: back to the yard"><svg viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="currentColor"><path d="M10 9H27L32 14V28L27 33H10V9ZM16 15H24L27 18L24 21H16M16 21H25L28 24L25 27H16V15"/></svg><span>BONEYARD</span></a>
   <div class="hud__clock hud__js"><time id="hud-clock" aria-label="Your local time"></time><span class="dev" id="hud-dev" hidden></span></div>
-  <div class="hud__readout hud__js" id="hud-readout" aria-live="polite">Bay 00 <span class="dot">/</span> 08 <span class="dot">·</span> The yard</div>
-  <div class="hud__bl hud__js">
-    <button type="button" class="sound" id="sound" aria-pressed="false">Sound</button>
-    <fieldset class="dial" id="dial">
-      <legend>Motion</legend>
-      <label><input type="radio" name="dial" id="dial-full" value="full"><span>Full</span></label>
-      <label><input type="radio" name="dial" id="dial-calm" value="calm"><span>Calm</span></label>
-      <label><input type="radio" name="dial" id="dial-still" value="still"><span>Still</span></label>
-    </fieldset>
-    <button type="button" class="autofly" id="autofly" aria-pressed="false">Auto-fly</button>
+  <div class="hud__readout hud__js" id="hud-readout" aria-live="off">The yard</div>
+  <div class="hud-actions">
+    <a class="shelf-link" href="parts/index.html">Parts <span aria-hidden="true">↗</span></a>
+    <button type="button" class="autofly hud__js" id="autofly" aria-pressed="false">Auto-fly</button>
+    <details class="settings hud__js" id="ride-settings"><summary aria-label="Motion and sound settings"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true"><path d="M3 5H17M3 10H17M3 15H17"/><circle cx="7" cy="5" r="2" fill="var(--field)"/><circle cx="13" cy="10" r="2" fill="var(--field)"/><circle cx="8" cy="15" r="2" fill="var(--field)"/></svg></summary>
+      <div class="settings-panel"><fieldset class="dial" id="dial"><legend>Motion</legend>
+        <label><input type="radio" name="dial" id="dial-full" value="full"><span>Full</span></label>
+        <label><input type="radio" name="dial" id="dial-calm" value="calm"><span>Calm</span></label>
+        <label><input type="radio" name="dial" id="dial-still" value="still"><span>Still</span></label>
+      </fieldset><button type="button" class="sound" id="sound" aria-pressed="false">Sound off</button></div>
+    </details>
   </div>
-  <ol class="index" id="index" aria-label="Bays">
-    <li><a href="#jump" data-bay="1">01</a></li>
-    <li><a href="#gate" data-bay="2">02</a></li>
-    <li><a href="#range" data-bay="3">03</a></li>
-    <li><a href="#wash" data-bay="4">04</a></li>
-    <li><a href="#relief" data-bay="5">05</a></li>
-    <li><a href="#terminator" data-bay="6">06</a></li>
-    <li><a href="#scope" data-bay="7">07</a></li>
-    <li><a href="#mark" data-bay="8">08</a></li>
-  </ol>
+  <nav class="bay-navigation" aria-label="Explore the eight bays">
+    <button class="nav-step hud__js" id="bay-prev" type="button" aria-label="Previous bay">←</button>
+    <button class="bay-menu hud__js" id="bay-menu" type="button" aria-expanded="false" aria-controls="index"><span id="bay-menu-label">The yard</span><span aria-hidden="true">⌃</span></button>
+    <ol class="index" id="index" aria-label="Bays"><li><a href="#jump" data-bay="1" aria-label="Bay 1: Jump"><span class="nav-number">01</span><span class="nav-name">Jump</span></a></li><li><a href="#gate" data-bay="2" aria-label="Bay 2: Gate"><span class="nav-number">02</span><span class="nav-name">Gate</span></a></li><li><a href="#range" data-bay="3" aria-label="Bay 3: Range"><span class="nav-number">03</span><span class="nav-name">Range</span></a></li><li><a href="#wash" data-bay="4" aria-label="Bay 4: Wash"><span class="nav-number">04</span><span class="nav-name">Wash</span></a></li><li><a href="#relief" data-bay="5" aria-label="Bay 5: Relief"><span class="nav-number">05</span><span class="nav-name">Relief</span></a></li><li><a href="#terminator" data-bay="6" aria-label="Bay 6: Terminator"><span class="nav-number">06</span><span class="nav-name">Terminator</span></a></li><li><a href="#scope" data-bay="7" aria-label="Bay 7: Scope"><span class="nav-number">07</span><span class="nav-name">Scope</span></a></li><li><a href="#mark" data-bay="8" aria-label="Bay 8: Mark"><span class="nav-number">08</span><span class="nav-name">Mark</span></a></li></ol>
+    <button class="nav-step hud__js" id="bay-next" type="button" aria-label="Next bay">→</button>
+  </nav>
+  <div class="ride-progress" aria-hidden="true"><i id="ride-progress"></i></div>
 </header>
 
 <main id="row-main">
   <section class="bay bay--yard" id="yard" data-bay="0" data-slug="yard" aria-labelledby="title">
-    <p class="yard__kicker">A Desert Data Labs experience</p>
+    <p class="yard__kicker">DESERT DATA LABS / TUCSON, AZ</p>
     <h1 class="yard__title" id="title" aria-label="Boneyard"><span class="g" aria-hidden="true" style="--i:0">B</span><span class="g" aria-hidden="true" style="--i:1">o</span><span class="g" aria-hidden="true" style="--i:2">n</span><span class="g" aria-hidden="true" style="--i:3">e</span><span class="g" aria-hidden="true" style="--i:4">y</span><span class="g" aria-hidden="true" style="--i:5">a</span><span class="g" aria-hidden="true" style="--i:6">r</span><span class="g" aria-hidden="true" style="--i:7">d</span></h1>
-    <p class="yard__line">Eight retired display machines, tubes still on, in a row on the desert floor. Scroll to fly the row. Pull any part.</p>
-    <p class="yard__plate">A fiction of display machines, not the aircraft at Davis-Monthan. The clock in the corner shows your local time, and the horizon colour follows your hour.</p>
-    <span class="yard__cue" id="cue"></span>
+    <p class="yard__line">Old machines. Still runs.</p>
+    <div class="yard-entry"><a class="enter-ride" href="#jump">Enter the row <span aria-hidden="true">↓</span></a><a class="parts-entry" href="parts/index.html">Pull a part <span aria-hidden="true">↗</span></a></div>
+    <span class="yard__cue" id="cue" aria-hidden="true"></span>
   </section>
 
   <section class="bay" id="jump" data-bay="1" data-slug="jump" data-holds="true" aria-labelledby="h-jump">
-    <div class="plate">
-      <h2 id="h-jump"><span class="n">01</span>Jump</h2>
-      <p class="lineage">Hyperspace starfield · Star Wars 1977 · the 1/z starfields of the early 1990s · Windows 3.1 Starfield Simulation 1992</p>
-      <p class="note">The stars you were resting under begin to streak. Hold the pointer, a finger or Space to raise warp; let go and it settles.</p>
-      <a class="pull" href="parts/jump.html" aria-label="Pull Jump: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
-    </div>
+    <img class="bay-still" src="parts/stills/jump.webp" width="480" height="270" loading="lazy" alt="Jump, the designed still frame">
+    <div class="plate"><div class="plate-heading"><h2 id="h-jump"><span class="n">01</span>Jump</h2><a class="pull" href="parts/jump.html" aria-label="Pull Jump: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg><span>Pull part</span><span aria-hidden="true">↗</span></a></div><div class="plate-footer"><button type="button" class="bay-hold" aria-pressed="false">Hold to warp <span aria-hidden="true">◉</span></button><details class="bay-info"><summary>About</summary><div class="bay-info-body"><p class="lineage">Hyperspace starfield · Star Wars 1977 · the 1/z starfields of the early 1990s · Windows 3.1 Starfield Simulation 1992</p><p class="note">The stars you were resting under begin to streak. Hold the pointer, a finger or Space to raise warp; let go and it settles.</p></div></details></div></div>
   </section>
 
   <section class="bay" id="gate" data-bay="2" data-slug="gate" aria-labelledby="h-gate">
-    <div class="plate">
-      <h2 id="h-gate"><span class="n">02</span>Gate</h2>
-      <p class="lineage">Slit-scan · Douglas Trumbull, 2001: A Space Odyssey, 1968</p>
-      <p class="note">One column of a real Sonoran sunset, stretched into a corridor. Only that one column of pixels ships with the page.</p>
-      <a class="pull" href="parts/gate.html" aria-label="Pull Gate: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
-    </div>
+    <img class="bay-still" src="parts/stills/gate.webp" width="480" height="270" loading="lazy" alt="Gate, the designed still frame">
+    <div class="plate"><div class="plate-heading"><h2 id="h-gate"><span class="n">02</span>Gate</h2><a class="pull" href="parts/gate.html" aria-label="Pull Gate: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg><span>Pull part</span><span aria-hidden="true">↗</span></a></div><div class="plate-footer"><p class="interaction-cue">Scroll into the light</p><details class="bay-info"><summary>About</summary><div class="bay-info-body"><p class="lineage">Slit-scan · Douglas Trumbull, 2001: A Space Odyssey, 1968</p><p class="note">One column of a real Sonoran sunset, stretched into a corridor. Only that one column of pixels ships with the page.</p></div></details></div></div>
   </section>
 
   <section class="bay" id="range" data-bay="3" data-slug="range" aria-labelledby="h-range">
-    <div class="plate">
-      <h2 id="h-range"><span class="n">03</span>Range</h2>
-      <p class="lineage">Voxel Space · NovaLogic, Comanche: Maximum Overkill, 1992</p>
-      <p class="note">A flight over the real Santa Catalinas: SRTM and USGS 3DEP elevation in 64 m cells, drawn with 2x vertical exaggeration.</p>
-      <a class="pull" href="parts/range.html" aria-label="Pull Range: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
-    </div>
+    <img class="bay-still" src="parts/stills/range.webp" width="480" height="270" loading="lazy" alt="Range, the designed still frame">
+    <div class="plate"><div class="plate-heading"><h2 id="h-range"><span class="n">03</span>Range</h2><a class="pull" href="parts/range.html" aria-label="Pull Range: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg><span>Pull part</span><span aria-hidden="true">↗</span></a></div><div class="plate-footer"><div class="scene-actions"><button type="button" class="bay-turn" data-slug="range" data-turn="-15" aria-label="Steer left">←</button><button type="button" class="bay-turn" data-slug="range" data-turn="15" aria-label="Steer right">→</button></div><details class="bay-info"><summary>About</summary><div class="bay-info-body"><p class="lineage">Voxel Space · NovaLogic, Comanche: Maximum Overkill, 1992</p><p class="note">A flight over the real Santa Catalinas: SRTM and USGS 3DEP elevation in 64 m cells, drawn with 2x vertical exaggeration.</p></div></details></div></div>
   </section>
 
   <section class="bay" id="wash" data-bay="4" data-slug="wash" aria-labelledby="h-wash">
-    <div class="plate">
-      <h2 id="h-wash"><span class="n">04</span>Wash</h2>
-      <p class="lineage">Vector-field particle advection · scientific visualization, 1990s</p>
-      <p class="note">Rain finds the washes on the same mountains you just flew. The drops follow the downhill slope of the ground. It is a slope model, not hydrology.</p>
-      <a class="pull" href="parts/wash.html" aria-label="Pull Wash: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
-    </div>
+    <img class="bay-still" src="parts/stills/wash.webp" width="480" height="270" loading="lazy" alt="Wash, the designed still frame">
+    <div class="plate"><div class="plate-heading"><h2 id="h-wash"><span class="n">04</span>Wash</h2><a class="pull" href="parts/wash.html" aria-label="Pull Wash: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg><span>Pull part</span><span aria-hidden="true">↗</span></a></div><div class="plate-footer"><p class="interaction-cue">Let the rain find its way</p><details class="bay-info"><summary>About</summary><div class="bay-info-body"><p class="lineage">Vector-field particle advection · scientific visualization, 1990s</p><p class="note">Rain finds the washes on the same mountains you just flew. The drops follow the downhill slope of the ground. It is a slope model, not hydrology.</p></div></details></div></div>
   </section>
 
   <section class="bay" id="relief" data-bay="5" data-slug="relief" aria-labelledby="h-relief">
-    <div class="plate">
-      <h2 id="h-relief"><span class="n">05</span>Relief</h2>
-      <p class="lineage">Rutt/Etra scan processor · Steve Rutt and Bill Etra, 1973 · CP 1919 plot, Harold Craft, 1970</p>
-      <p class="note">The range you flew and watered, held as an object: scanlines bent by elevation, turning slowly until you drag it.</p>
-      <a class="pull" href="parts/relief.html" aria-label="Pull Relief: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
-    </div>
+    <img class="bay-still" src="parts/stills/relief.webp" width="480" height="270" loading="lazy" alt="Relief, the designed still frame">
+    <div class="plate"><div class="plate-heading"><h2 id="h-relief"><span class="n">05</span>Relief</h2><a class="pull" href="parts/relief.html" aria-label="Pull Relief: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg><span>Pull part</span><span aria-hidden="true">↗</span></a></div><div class="plate-footer"><div class="scene-actions"><button type="button" class="bay-turn" data-slug="relief" data-turn="-15" aria-label="Turn left">←</button><button type="button" class="bay-turn" data-slug="relief" data-turn="15" aria-label="Turn right">→</button><span class="interaction-cue">Drag or turn</span></div><details class="bay-info"><summary>About</summary><div class="bay-info-body"><p class="lineage">Rutt/Etra scan processor · Steve Rutt and Bill Etra, 1973 · CP 1919 plot, Harold Craft, 1970</p><p class="note">The range you flew and watered, held as an object: scanlines bent by elevation, turning slowly until you drag it.</p></div></details></div></div>
   </section>
 
   <section class="bay" id="terminator" data-bay="6" data-slug="terminator" aria-labelledby="h-terminator">
-    <div class="plate">
-      <h2 id="h-terminator"><span class="n">06</span>Terminator</h2>
-      <p class="lineage">Dotted planets · Elite, David Braben and Ian Bell, 1984</p>
-      <p class="note">A dotted globe with today's day line, computed from your clock. Tucson in amber. Drag to spin; it comes back to face Tucson.</p>
-      <a class="pull" href="parts/terminator.html" aria-label="Pull Terminator: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
-    </div>
+    <img class="bay-still" src="parts/stills/terminator.webp" width="480" height="270" loading="lazy" alt="Terminator, the designed still frame">
+    <div class="plate"><div class="plate-heading"><h2 id="h-terminator"><span class="n">06</span>Terminator</h2><a class="pull" href="parts/terminator.html" aria-label="Pull Terminator: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg><span>Pull part</span><span aria-hidden="true">↗</span></a></div><div class="plate-footer"><div class="scene-actions"><button type="button" class="bay-turn" data-slug="terminator" data-turn="-15" aria-label="Turn left">←</button><button type="button" class="bay-turn" data-slug="terminator" data-turn="15" aria-label="Turn right">→</button><span class="interaction-cue">Drag or turn</span></div><details class="bay-info"><summary>About</summary><div class="bay-info-body"><p class="lineage">Dotted planets · Elite, David Braben and Ian Bell, 1984</p><p class="note">A dotted globe with today's day line, computed from your clock. Tucson in amber. Drag to spin; it comes back to face Tucson.</p></div></details></div></div>
   </section>
 
   <section class="bay" id="scope" data-bay="7" data-slug="scope" data-holds="true" aria-labelledby="h-scope">
-    <div class="plate">
-      <h2 id="h-scope"><span class="n">07</span>Scope</h2>
-      <p class="lineage">Oscilloscope XY mode · Lissajous figures, Jules Antoine Lissajous, 1857</p>
-      <p class="note">Hold the pointer or Space to hear two tones; the trace then draws the actual audio signal, left channel across and right channel up. Nothing on this row makes a sound unless you hold it down.</p>
-      <a class="pull" href="parts/scope.html" aria-label="Pull Scope: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
-    </div>
+    <img class="bay-still" src="parts/stills/scope.webp" width="480" height="270" loading="lazy" alt="Scope, the designed still frame">
+    <div class="plate"><div class="plate-heading"><h2 id="h-scope"><span class="n">07</span>Scope</h2><a class="pull" href="parts/scope.html" aria-label="Pull Scope: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg><span>Pull part</span><span aria-hidden="true">↗</span></a></div><div class="plate-footer"><button type="button" class="bay-hold" aria-pressed="false">Hold to hear the trace <span aria-hidden="true">◉</span></button><details class="bay-info"><summary>About</summary><div class="bay-info-body"><p class="lineage">Oscilloscope XY mode · Lissajous figures, Jules Antoine Lissajous, 1857</p><p class="note">Hold the pointer or Space to hear two tones; the trace then draws the actual audio signal, left channel across and right channel up. Nothing on this row makes a sound unless you hold it down.</p></div></details></div></div>
   </section>
 
   <section class="bay" id="mark" data-bay="8" data-slug="mark" aria-labelledby="h-mark">
-    <div class="plate">
-      <h2 id="h-mark"><span class="n">08</span>Mark</h2>
-      <p class="lineage">Glenz vectors · the Amiga scene, about 1989 to 1990</p>
-      <p class="note">The Desert Data Labs mark as a see-through solid, the same glyph that stood as every pylon on the way in. Drag to turn it.</p>
-      <a class="pull" href="parts/mark.html" aria-label="Pull Mark: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg></a>
-    </div>
+    <img class="bay-still" src="parts/stills/mark.webp" width="480" height="270" loading="lazy" alt="Mark, the designed still frame">
+    <div class="plate"><div class="plate-heading"><h2 id="h-mark"><span class="n">08</span>Mark</h2><a class="pull" href="parts/mark.html" aria-label="Pull Mark: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg><span>Pull part</span><span aria-hidden="true">↗</span></a></div><div class="plate-footer"><div class="scene-actions"><button type="button" class="bay-turn" data-slug="mark" data-turn="-15" aria-label="Turn left">←</button><button type="button" class="bay-turn" data-slug="mark" data-turn="15" aria-label="Turn right">→</button><span class="interaction-cue">Drag or turn</span></div><details class="bay-info"><summary>About</summary><div class="bay-info-body"><p class="lineage">Glenz vectors · the Amiga scene, about 1989 to 1990</p><p class="note">The Desert Data Labs mark as a see-through solid, the same glyph that stood as every pylon on the way in. Drag to turn it.</p></div></details></div></div>
   </section>
 
   <section class="bay bay--signoff" id="shelf" data-bay="9" data-slug="shelf" aria-labelledby="h-shelf">
-    <div class="signoff">
-      <h2 id="h-shelf">That is the row.</h2>
-      <p>Every screen you flew past is one plain file: a provenance header, a PARAMS block, one mount() function. The shelf holds all of them.</p>
-      <p class="small">Elevation: AWS Terrain Tiles (Mapzen Terrarium), compiled from SRTM, USGS 3DEP and others. Life-zone bands from the Desert Data Labs 27 Miles project.</p>
-      <nav aria-label="Where next">
-        <a href="parts/index.html">The shelf: pull any part</a>
-        <a href="https://desertdatalabs.com/">Desert Data Labs</a>
-      </nav>
-    </div>
-  </section>
+    <div class="signoff"><p class="yard__kicker">THE LAST LIGHT STAYS ON.</p><h2 id="h-shelf">Take something<br>with you.</h2><nav aria-label="Where next"><a class="enter-ride" href="parts/index.html">Pull a part <span aria-hidden="true">↗</span></a><a class="parts-entry" href="#yard">Ride again <span aria-hidden="true">↑</span></a></nav><p class="signoff-home"><a href="https://desertdatalabs.com/">Made by Desert Data Labs ↗</a></p><details class="credits"><summary>Sources & credits</summary><p>An imagined yard of display machines, not the aircraft at Davis-Monthan. Elevation: AWS Terrain Tiles, compiled from SRTM and USGS 3DEP. Life-zone bands: DDL's 27 Miles project. Every part carries its own history and provenance.</p></details></div></section>
 </main>
 
-<div id="greetings" role="note" aria-label="Greetings to the people and years behind the tricks on this row: Douglas Trumbull, slit-scan, 1968. NovaLogic, Voxel Space, 1992. David Braben and Ian Bell, Elite, 1984. Steve Rutt and Bill Etra, 1973. Harold Craft, CP 1919, 1970. Jules Antoine Lissajous, 1857. Atari: Asteroids 1979, Battlezone 1980, Tempest 1981. Vectrex 1982. Sega, Space Harrier, 1985. The Amiga scene, 1988 to 1994. Ground truth: AWS Terrain Tiles from SRTM and USGS 3DEP.">
-  <div class="greet__static">Greetings to · Douglas Trumbull 1968 · NovaLogic 1992 · David Braben and Ian Bell 1984 · Steve Rutt and Bill Etra 1973 · Harold Craft 1970 · Jules Antoine Lissajous 1857 · Atari 1979 to 1981 · Vectrex 1982 · Sega 1985 · the Amiga scene 1988 to 1994 · ground: AWS Terrain Tiles, SRTM, USGS 3DEP</div>
-</div>
+
 
 <div id="dev" aria-label="Developer tweak row"></div>
