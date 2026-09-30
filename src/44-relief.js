@@ -40,8 +40,8 @@
 (() => {
   'use strict';
   const PARAMS = {
-    lines: 96,           /* scanlines, north to south */
-    samples: 192,        /* samples along each line, west to east */
+    lines: 64,           /* scanlines, north to south (96 measured 26 fps; 64 x 128 holds the frame budget) */
+    samples: 128,        /* samples along each line, west to east */
     exaggeration: 4,     /* vertical factor, printed in the readout */
     elevationDeg: 21,    /* camera elevation above the base plane (the middle of the swell) */
     elevSwing: 6,        /* +- degrees of the slow elevation swell, Full and Calm */
@@ -57,13 +57,15 @@
     haloWidth: 5, glowWidth: 2.2, coreWidth: 1.1,
     haloAlpha: 0.2, glowAlpha: 0.45, coreAlpha: 1,
     farAlpha: 0.3,       /* alpha of the farthest line relative to the nearest */
+    maxBackingWidth: 760,
+    orbitFps: 30,        /* redraw rate while the camera drifts on its own; drags draw every frame */   /* px; above this the canvas renders smaller and CSS scales it up */
     liteSamples: 112,    /* samples per line when the smaller side is under 600 css px (phones) */
   };
   const COMPASS = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'];   /* camera bearing from the centre, yaw 0 = south, +90 = east */
 
   function mount(canvas, params, ctx) {
     const g = canvas.getContext('2d', { alpha: true });
-    let w = canvas.width, h = canvas.height, px = 1, dead = false;
+    let w = canvas.width, h = canvas.height, px = 1, dead = false, sinceDraw = 1;
     let grid = null, pts = null, scr = null, L = 0, S = 0, vScale = 1, summitFt = 0, dem = null;
     let yaw = params.homeDeg, mode = 'orbit', idle = 0, drag = null, lastReadout = '', sinceReadout = 0;
     let swell = 0, built = null, lite = false;   /* lite: a small screen, fewer samples per line and two plain strokes */   /* built: the lines, samples and factor the current mesh was made with */
@@ -199,10 +201,17 @@
             yaw += params.orbitDegPerSec * calm * dt;
           }
         }
-        sinceReadout += dt; draw(); readout();
+        sinceReadout += dt; sinceDraw += dt;
+        const moving = pointer && pointer.down;
+        if (moving || sinceDraw >= 1 / params.orbitFps) { sinceDraw = 0; draw(); }
+        readout();
       },
       resize(nw, nh, ndpr) {
-        w = nw; h = nh; px = Math.max(0.75, ndpr);
+        /* cap the backing store: the wide glow strokes are raster-bound (measured 10 fps at 1440x900 on a real
+           GPU with JS at 2 ms); CSS scales the canvas back up smoothly, and the glow tolerates the softness */
+        const k = Math.min(1, params.maxBackingWidth / Math.max(1, nw));
+        if (k < 1) { canvas.width = Math.round(nw * k); canvas.height = Math.round(nh * k); }
+        w = canvas.width; h = canvas.height; px = Math.max(0.5, ndpr * k);
         const was = lite; lite = Math.min(w, h) / px < 600;
         if (was !== lite && dem) build();
       },

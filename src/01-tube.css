@@ -207,11 +207,9 @@ html.js .bay:is([data-slug="range"], [data-slug="relief"], [data-slug="terminato
 #greetings .greet__copy { display: inline-block; padding-right: 6ch; }
 #greetings .greet__copy span { display: inline-block; min-width: .3ch; }
 html.js.greet-on #greetings .greet__track { animation: greet-slide var(--greet-cycle, 48s) linear infinite; }
-html.js.greet-on[data-dial="full"] #greetings .greet__copy span { animation: greet-sine 1.8s ease-in-out infinite alternate; animation-delay: var(--d, 0s); }
-#greetings:hover .greet__track, #greetings:focus-within .greet__track,
-#greetings:hover .greet__copy span, #greetings:focus-within .greet__copy span { animation-play-state: paused; }
+/* the per-glyph wave is written by 23-greetings.js tick() to on-screen glyphs only (587 CSS animations cost ~22 ms/frame) */
+#greetings:hover .greet__track, #greetings:focus-within .greet__track { animation-play-state: paused; }
 @keyframes greet-slide { to { transform: translate3d(-50%, 0, 0); } }
-@keyframes greet-sine { from { transform: translate3d(0, -5px, 0); } to { transform: translate3d(0, 5px, 0); } }
 
 /* ---------- the ride: main is the scroll document, bays are 100svh sections ---------- */
 main { position: relative; z-index: var(--z-main); }

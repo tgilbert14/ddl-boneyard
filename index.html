@@ -356,11 +356,9 @@ html.js .bay:is([data-slug="range"], [data-slug="relief"], [data-slug="terminato
 #greetings .greet__copy { display: inline-block; padding-right: 6ch; }
 #greetings .greet__copy span { display: inline-block; min-width: .3ch; }
 html.js.greet-on #greetings .greet__track { animation: greet-slide var(--greet-cycle, 48s) linear infinite; }
-html.js.greet-on[data-dial="full"] #greetings .greet__copy span { animation: greet-sine 1.8s ease-in-out infinite alternate; animation-delay: var(--d, 0s); }
-#greetings:hover .greet__track, #greetings:focus-within .greet__track,
-#greetings:hover .greet__copy span, #greetings:focus-within .greet__copy span { animation-play-state: paused; }
+/* the per-glyph wave is written by 23-greetings.js tick() to on-screen glyphs only (587 CSS animations cost ~22 ms/frame) */
+#greetings:hover .greet__track, #greetings:focus-within .greet__track { animation-play-state: paused; }
 @keyframes greet-slide { to { transform: translate3d(-50%, 0, 0); } }
-@keyframes greet-sine { from { transform: translate3d(0, -5px, 0); } to { transform: translate3d(0, 5px, 0); } }
 
 /* ---------- the ride: main is the scroll document, bays are 100svh sections ---------- */
 main { position: relative; z-index: var(--z-main); }
@@ -911,6 +909,8 @@ const bootBoneyardRide = () => {
   function resizeAll() {
     W = innerWidth; H = innerHeight; dpr = dprCap();
     len = bays[1] ? bays[1].el.offsetHeight || H : H;
+    for (const b of bays) b.top = b.el.offsetTop;   /* cached: an offsetTop read per frame forced layout (profiled) */
+    if (greetings && greetings.handle && greetings.handle.resize) greetings.handle.resize();
     ctx.scale = CFG.scaleSteps[scaleIdx];
     ctx.dpr = dpr * ctx.scale;
     for (const L of layers) { const s = sizeCanvas(L.canvas, W, H, dpr, ctx.scale, L.m.pixel); L.handle.resize(s.w, s.h, s.dpr); if (ctx.dial === 'still') L.handle.still(t); }
@@ -992,7 +992,7 @@ const bootBoneyardRide = () => {
   function updateBays(dt) {
     for (const b of bays) {
       const m = b.m; if (!m) continue;
-      const p = (scrollY - b.el.offsetTop) / len;          /* bay lengths from the hold; + = passed */
+      const p = (scrollY - b.top) / len;          /* bay lengths from the hold; + = passed */
       const d = -p * CFG.unitsPerBay;                      /* grid units ahead */
       const live = Math.abs(p) < CFG.liveZone;
       if (m.state === 'far') {
@@ -1018,7 +1018,7 @@ const bootBoneyardRide = () => {
     for (let i = 0; i < LAST; i++) {
       const a = bays[i], b = bays[i + 1], slug = CFG.corridors[a.slug + '>' + b.slug];
       if (!slug || !reg.corridors[slug]) continue;
-      gaps.push({ a, b, m: reg.corridors[slug], start: a.el.offsetTop + 0.02 * len, end: b.el.offsetTop - CFG.liveZone * len });
+      gaps.push({ a, b, m: reg.corridors[slug], start: a.top + 0.02 * len, end: b.top - CFG.liveZone * len });
     }
   }
   function updateCorridor(dt) {
@@ -1142,12 +1142,12 @@ const bootBoneyardRide = () => {
   function flyStep(dt) {
     if (!autofly) return;
     const near = Math.round(scrollY / len);
-    const p = (scrollY - bays[near].el.offsetTop) / len;
+    const p = (scrollY - bays[near].top) / len;
     if (Math.abs(p) < 0.012 && dwellAt !== near) { dwell += dt; if (dwell < CFG.autoflyDwell) return; dwellAt = near; dwell = 0; }
-    const top = bays[LAST].el.offsetTop;
+    const top = bays[LAST].top;
     if (scrollY >= top - 1) { setAutofly(false); return; }
     const next = Math.min(top, scrollY + len * CFG.autoflyBaysPerSecond * dt * (ctx.dial === 'calm' ? 0.5 : 1));
-    const target = bays[Math.min(LAST, near + 1)].el.offsetTop;
+    const target = bays[Math.min(LAST, near + 1)].top;
     window.scrollTo({ top: (next > target - 0.5 && scrollY < target) ? target : next, behavior: 'auto' });
   }
 
@@ -1195,10 +1195,14 @@ const bootBoneyardRide = () => {
   hud.dial.addEventListener('change', (e) => { if (e.target.checked) applyDial(e.target.value, true); });
 
   /* ---------- the world task ---------- */
-  let frameN = 0, devAcc = 0, devN = 0, devAt = 0;
+  let frameN = 0, devAcc = 0, devN = 0, devAt = 0, liveScrollY = window.scrollY, vpXs = '', vpYs = '';
+  /* scroll position cached from the event: reading window.scrollY inside the frame, after last frame's style
+     writes, forced a synchronous style recalc every frame (profiled: 35% of CPU at 4x throttle) */
+  addEventListener('scroll', () => { liveScrollY = window.scrollY; }, { passive: true });
+  addEventListener('resize', () => { liveScrollY = window.scrollY; }, { passive: true });
   function world(dt, now) {
     t += dt; frameN++;
-    scrollY = window.scrollY;
+    scrollY = liveScrollY;
     if (scrollY !== lastScrollY) { scrollStill = 0; lastScrollY = scrollY; } else scrollStill += dt;
     const still = ctx.dial === 'still';
     flyStep(dt);
@@ -1216,7 +1220,11 @@ const bootBoneyardRide = () => {
       ctx.vp.y += (ctx.vpBase.y + (ptrTy - 0.5) * 2 * CFG.parallax - ctx.vp.y) * kx;
     } else { ctx.vp.x += (ctx.vpBase.x - ctx.vp.x) * 0.1; ctx.vp.y += (ctx.vpBase.y - ctx.vp.y) * 0.1; }
     ptr.nx = ptrTx; ptr.ny = ptrTy;
-    if ((frameN & 1) === 0) { roomsEl.style.setProperty('--vp-x', (ctx.vp.x * 100).toFixed(2) + '%'); roomsEl.style.setProperty('--vp-y', (ctx.vp.y * 100).toFixed(2) + '%'); }
+    if ((frameN & 1) === 0) {   /* write only on change: an identical write still dirtied style for every room */
+      const xs = (ctx.vp.x * 100).toFixed(1) + '%', ys = (ctx.vp.y * 100).toFixed(1) + '%';
+      if (xs !== vpXs) { vpXs = xs; roomsEl.style.setProperty('--vp-x', xs); }
+      if (ys !== vpYs) { vpYs = ys; roomsEl.style.setProperty('--vp-y', ys); }
+    }
 
     setCurrent(Math.max(0, Math.min(LAST, Math.round(scrollY / len))));
     updateBays(dt);
@@ -1224,6 +1232,7 @@ const bootBoneyardRide = () => {
     if (!still) {
       const t0 = DEV ? performance.now() : 0;
       for (const L of layers) L.handle.tick(dt, t, cam.z, ptr);
+      if (greetings) greetings.handle.tick(dt, t);   /* the credits wave rides the world loop, so it rests when the ride rests */
       if (DEV) { devAcc += performance.now() - t0; devN++; }
     }
     if (post) post.handle.tick(dt, t, { sky: canvases.sky, row: canvases.row, corridor: canvases.corridor, rooms: roomsEl });
@@ -1903,35 +1912,39 @@ else bootBoneyardRide();
 
 
 /* BONEYARD PART · L4 · GREETINGS
- * technique   real-DOM sine scroller: a duplicated track moved by transform, each glyph a span on a negative-delay
- *             phased translateY (playbook 2.7), so the wave runs from t=0 with no per-frame JavaScript
+ * technique   real-DOM sine scroller: a duplicated track slid by one CSS transform animation, and a travelling sine
+ *             wave written only to the glyphs that are on screen, from the ride's own frame loop
  * lineage     the C64 and Amiga cracktro sine scroller, about 1985 to 1992
- * original    the demoscene "greetings to" list IS the provenance line: the people and years behind every trick on the
+ * original    the demoscene "greetings to" list IS the provenance line: the people and years behind the tricks on the
  *             row plus the data sources for the ground (vision brief 4.4, verified). aria-label on the parent carries
  *             the plain sentence; the glyph spans are aria-hidden; the track pauses on hover and focus-within; the
  *             dial's Still shows the static line instead of the track. Never <marquee>.
  * not         a news ticker, a fake terminal, a place for links. It names people and years and nothing else.
- * deps        none · DOM + CSS animations (compositor) · 2026-09
- * budget      0.0 ms/frame of JavaScript after start (CSS transform animations only); compositor cost measured in docs/BUILD-LOG.md, desktop Chromium, 2026-09-29; phone TBD
- * api         mount(element, params, ctx) -> { start(), setDial(v), tick, resize, still, destroy }
+ * deps        none · DOM + one CSS transform animation · 2026-09
+ * budget      the first version ran one CSS animation per glyph (587 at once) and cost about 22 ms of style work per
+ *             frame at 4x CPU, the single largest cost on the ride; this version writes about 40 (phone) to 170
+ *             (desktop) transforms per frame and the ride went from 16 to 26 fps to 50 to 60 fps at 4x CPU (2026-09-30)
+ * api         mount(element, params, ctx) -> { start(), setDial(v), tick(dt, t), resize, still, destroy }
  * license     MIT, Desert Data Labs LLC
  */
 /* HOW IT WORKS
  * On mount the module reads the sentence already in the element (the static line that ships in the HTML and is what
  * a visitor without JavaScript reads), splits it into one span per glyph, and builds a track holding two copies of
- * that span run. The track slides by exactly one copy width per cycle (translateX to -50% of a two-copy track), so the
- * loop joins without a jump; the cycle length is the copy width divided by pxPerSecond, measured once on start.
+ * that span run. One CSS animation slides the track by exactly one copy width per cycle, so the loop joins without a
+ * jump. Every frame the ride calls tick(): the module reads how far that animation has run, works out where each
+ * glyph is on screen, and lifts only the visible glyphs on a sine wave that travels along the line. Off-screen glyphs
+ * are never touched, so the cost follows the screen width, not the length of the sentence.
  *
- * Each glyph carries --d, a negative animation-delay of -(i mod phases) * period / phases, so one keyframe pair
- * produces a standing wave across the line. All of it is CSS transform: no JavaScript runs per frame. Hover or focus
- * pauses both animations with animation-play-state. Still hides the track and shows the static sentence.
+ * When the ride rests (the Still dial, the sign-off, a hidden tab) tick() is not called and the wave holds its last
+ * shape. Hover or focus pauses the slide. Still hides the track and shows the static sentence.
  */
 (() => {
   'use strict';
   const PARAMS = {
     pxPerSecond: 58,       /* track speed */
-    phases: 12,            /* glyphs per wave */
-    period: 3.6,           /* seconds for one full sine (matches the 1.8 s alternate keyframe in 01-tube.css) */
+    amplitude: 5,          /* px of lift at the crest */
+    wavelength: 180,       /* px per sine along the line */
+    speed: 1.7,            /* radians per second the wave travels */
     text: 'Greetings to · Douglas Trumbull 1968 · NovaLogic 1992 · David Braben and Ian Bell 1984 · Steve Rutt and Bill Etra 1973 · Harold Craft 1970 · Jules Antoine Lissajous 1857 · Atari 1979 to 1981 · Vectrex 1982 · Sega 1985 · the Amiga scene 1988 to 1994 · ground: AWS Terrain Tiles, SRTM, USGS 3DEP',
   };
   /* the standalone skin, injected only when the host is not the ride's #greetings (the parts page) */
@@ -1939,13 +1952,12 @@ else bootBoneyardRide();
 [data-greet-host]{position:relative;overflow:hidden;contain:paint;white-space:nowrap;height:30px;line-height:30px;font:500 12px/30px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 [data-greet-host] .greet__track{display:inline-flex;margin-left:100%;will-change:transform;animation:greet-slide var(--greet-cycle,48s) linear infinite}
 [data-greet-host] .greet__copy{display:inline-block;padding-right:6ch}
-[data-greet-host] .greet__copy span{display:inline-block;min-width:.3ch;animation:greet-sine 1.8s ease-in-out infinite alternate;animation-delay:var(--d,0s)}
-[data-greet-host]:hover .greet__track,[data-greet-host]:hover .greet__copy span{animation-play-state:paused}
+[data-greet-host] .greet__copy span{display:inline-block;min-width:.3ch}
+[data-greet-host]:hover .greet__track{animation-play-state:paused}
 [data-greet-host][data-still] .greet__track{display:none}
 [data-greet-host]:not([data-still]) .greet__static{display:none}
 @keyframes greet-slide{to{transform:translate3d(-50%,0,0)}}
-@keyframes greet-sine{from{transform:translate3d(0,-5px,0)}to{transform:translate3d(0,5px,0)}}
-@media (prefers-reduced-motion: reduce){[data-greet-host] .greet__track,[data-greet-host] .greet__copy span{animation:none}}`;
+@media (prefers-reduced-motion: reduce){[data-greet-host] .greet__track{animation:none}}`;
 
   function mount(el, params, ctx) {
     const standalone = el.id !== 'greetings';
@@ -1955,35 +1967,58 @@ else bootBoneyardRide();
     if (!el.hasAttribute('aria-label')) el.setAttribute('aria-label', text);
     if (standalone) { el.dataset.greetHost = '1'; const st = document.createElement('style'); st.textContent = CSS; el.prepend(st); }
     const track = document.createElement('div'); track.className = 'greet__track'; track.setAttribute('aria-hidden', 'true');
-    const step = params.period / params.phases;
+    const spans = [];
     for (let c = 0; c < 2; c++) {
       const copy = document.createElement('span'); copy.className = 'greet__copy';
-      const glyphs = [...text];
-      for (let i = 0; i < glyphs.length; i++) {
-        const s = document.createElement('span');
-        s.textContent = glyphs[i] === ' ' ? ' ' : glyphs[i];
-        s.style.setProperty('--d', `-${((i % params.phases) * step).toFixed(2)}s`);
-        copy.appendChild(s);
-      }
+      for (const ch of text) { const s = document.createElement('span'); s.textContent = ch === ' ' ? ' ' : ch; copy.appendChild(s); spans.push(s); }
       track.appendChild(copy);
     }
-    let started = false, dial = ctx.dial;
+    let started = false, dial = ctx.dial, lefts = null, copyW = 1, hostW = 1, lead = 0, slide = null;
+    const lifted = new Set();            /* glyphs currently carrying a transform */
     function apply() {
       const still = dial === 'still';
       if (still) { el.dataset.still = '1'; staticEl.hidden = false; if (track.parentNode) track.remove(); }
       else { delete el.dataset.still; if (started) { staticEl.hidden = true; if (!track.parentNode) el.appendChild(track); measure(); } }
+      if (dial !== 'full') flatten();
     }
     function measure() {
       const copy = track.firstElementChild; if (!copy) return;
-      const cw = copy.getBoundingClientRect().width || 1200;
-      el.style.setProperty('--greet-cycle', (cw / params.pxPerSecond).toFixed(1) + 's');
+      copyW = copy.getBoundingClientRect().width || 1200;
+      hostW = el.getBoundingClientRect().width || innerWidth;
+      el.style.setProperty('--greet-cycle', (copyW / params.pxPerSecond).toFixed(1) + 's');
+      /* glyph x inside the track, measured once per resize (layout reads never happen in tick) */
+      const tRect = track.getBoundingClientRect();
+      lead = tRect.left - el.getBoundingClientRect().left - currentShift();
+      lefts = spans.map((s) => s.getBoundingClientRect().left - tRect.left + s.offsetWidth / 2);
+      slide = null;
     }
+    function currentShift() {
+      if (!slide) slide = track.getAnimations ? track.getAnimations().find((a) => a.animationName === 'greet-slide') || null : null;
+      if (!slide || slide.currentTime == null) return 0;
+      const dur = slide.effect.getComputedTiming().duration || 1;
+      return -((slide.currentTime % dur) / dur) * copyW;   /* the track moves one copy width per cycle */
+    }
+    function flatten() { for (const s of lifted) s.style.transform = ''; lifted.clear(); }
     return {
       start() { started = true; apply(); },
       setDial(v) { dial = v; apply(); },
-      tick() {}, resize() { if (started && dial !== 'still') measure(); }, still() { dial = 'still'; apply(); },
-      destroy() { track.remove(); staticEl.hidden = false; delete el.dataset.still; },
-      params(p) { params = p; },
+      tick(dt, t) {
+        if (!started || dial !== 'full' || !lefts) return;
+        const shift = currentShift(), k = (Math.PI * 2) / params.wavelength, w = params.speed * t, A = params.amplitude;
+        const seen = new Set();
+        for (let i = 0; i < spans.length; i++) {
+          const x = lead + lefts[i] + shift;
+          if (x < -24 || x > hostW + 24) continue;
+          const s = spans[i]; seen.add(s);
+          s.style.transform = `translate3d(0,${(A * Math.sin(k * x - w)).toFixed(1)}px,0)`;
+        }
+        for (const s of lifted) if (!seen.has(s)) s.style.transform = '';
+        lifted.clear(); for (const s of seen) lifted.add(s);
+      },
+      resize() { if (started && dial !== 'still') measure(); },
+      still() { dial = 'still'; apply(); },
+      destroy() { flatten(); track.remove(); staticEl.hidden = false; delete el.dataset.still; },
+      params(p) { params = p; measure(); },
     };
   }
   BAYS.push({ slug: 'greetings', title: 'Greetings', order: 3, role: 'layer', kind: 'dom', params: PARAMS, mount });
@@ -3782,8 +3817,8 @@ else bootBoneyardRide();
 (() => {
   'use strict';
   const PARAMS = {
-    lines: 96,           /* scanlines, north to south */
-    samples: 192,        /* samples along each line, west to east */
+    lines: 64,           /* scanlines, north to south (96 measured 26 fps; 64 x 128 holds the frame budget) */
+    samples: 128,        /* samples along each line, west to east */
     exaggeration: 4,     /* vertical factor, printed in the readout */
     elevationDeg: 21,    /* camera elevation above the base plane (the middle of the swell) */
     elevSwing: 6,        /* +- degrees of the slow elevation swell, Full and Calm */
@@ -3799,13 +3834,15 @@ else bootBoneyardRide();
     haloWidth: 5, glowWidth: 2.2, coreWidth: 1.1,
     haloAlpha: 0.2, glowAlpha: 0.45, coreAlpha: 1,
     farAlpha: 0.3,       /* alpha of the farthest line relative to the nearest */
+    maxBackingWidth: 760,
+    orbitFps: 30,        /* redraw rate while the camera drifts on its own; drags draw every frame */   /* px; above this the canvas renders smaller and CSS scales it up */
     liteSamples: 112,    /* samples per line when the smaller side is under 600 css px (phones) */
   };
   const COMPASS = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'];   /* camera bearing from the centre, yaw 0 = south, +90 = east */
 
   function mount(canvas, params, ctx) {
     const g = canvas.getContext('2d', { alpha: true });
-    let w = canvas.width, h = canvas.height, px = 1, dead = false;
+    let w = canvas.width, h = canvas.height, px = 1, dead = false, sinceDraw = 1;
     let grid = null, pts = null, scr = null, L = 0, S = 0, vScale = 1, summitFt = 0, dem = null;
     let yaw = params.homeDeg, mode = 'orbit', idle = 0, drag = null, lastReadout = '', sinceReadout = 0;
     let swell = 0, built = null, lite = false;   /* lite: a small screen, fewer samples per line and two plain strokes */   /* built: the lines, samples and factor the current mesh was made with */
@@ -3941,10 +3978,17 @@ else bootBoneyardRide();
             yaw += params.orbitDegPerSec * calm * dt;
           }
         }
-        sinceReadout += dt; draw(); readout();
+        sinceReadout += dt; sinceDraw += dt;
+        const moving = pointer && pointer.down;
+        if (moving || sinceDraw >= 1 / params.orbitFps) { sinceDraw = 0; draw(); }
+        readout();
       },
       resize(nw, nh, ndpr) {
-        w = nw; h = nh; px = Math.max(0.75, ndpr);
+        /* cap the backing store: the wide glow strokes are raster-bound (measured 10 fps at 1440x900 on a real
+           GPU with JS at 2 ms); CSS scales the canvas back up smoothly, and the glow tolerates the softness */
+        const k = Math.min(1, params.maxBackingWidth / Math.max(1, nw));
+        if (k < 1) { canvas.width = Math.round(nw * k); canvas.height = Math.round(nh * k); }
+        w = canvas.width; h = canvas.height; px = Math.max(0.5, ndpr * k);
         const was = lite; lite = Math.min(w, h) / px < 600;
         if (was !== lite && dem) build();
       },
@@ -4285,6 +4329,7 @@ else bootBoneyardRide();
 (() => {
   'use strict';
   const PARAMS = {
+    maxBackingWidth: 720,   /* px; above this the canvas renders smaller and CSS scales it up */
     base: 110,            /* Hz, the Y oscillator */
     span: 0.83,           /* pointer X across the screen = this many octaves of ratio, centred on 3:2 */
     snapWidth: 0.055,     /* ratio distance inside which the pull starts */
@@ -4488,7 +4533,7 @@ else bootBoneyardRide();
         clear();
         graticule(params.gridAlpha);
         const live = voice && ac && ac.state === 'running';
-        const path = live ? samples() : curve(ratio, phase, 0, CYCLES, 720);
+        const path = live ? samples() : curve(ratio, phase, 0, CYCLES, 360);   /* 720 points cost frames; 360 is smooth at the capped backing size */
         layers(path);
         remember(path, dt);
         if (!live) {
@@ -4498,7 +4543,12 @@ else bootBoneyardRide();
         }
         say(held);
       },
-      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); hist.length = 0; },
+      resize(nw, nh, ndpr) {
+        /* cap the backing store: five wide glow passes are raster-bound (measured 31 fps at 1440x900 on a real GPU) */
+        const k = Math.min(1, params.maxBackingWidth / Math.max(1, nw));
+        if (k < 1) { canvas.width = Math.round(nw * k); canvas.height = Math.round(nh * k); }
+        w = canvas.width; h = canvas.height; px = Math.max(0.5, ndpr * k); hist.length = 0;
+      },
       still() {
         /* the designed frame: a 3:2 figure at full heat with its four older copies trailing */
         ratio = 1.5; phase = 0.35; lockK = 1; hist.length = 0;

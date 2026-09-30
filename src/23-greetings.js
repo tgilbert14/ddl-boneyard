@@ -1,33 +1,37 @@
 /* BONEYARD PART · L4 · GREETINGS
- * technique   real-DOM sine scroller: a duplicated track moved by transform, each glyph a span on a negative-delay
- *             phased translateY (playbook 2.7), so the wave runs from t=0 with no per-frame JavaScript
+ * technique   real-DOM sine scroller: a duplicated track slid by one CSS transform animation, and a travelling sine
+ *             wave written only to the glyphs that are on screen, from the ride's own frame loop
  * lineage     the C64 and Amiga cracktro sine scroller, about 1985 to 1992
- * original    the demoscene "greetings to" list IS the provenance line: the people and years behind every trick on the
+ * original    the demoscene "greetings to" list IS the provenance line: the people and years behind the tricks on the
  *             row plus the data sources for the ground (vision brief 4.4, verified). aria-label on the parent carries
  *             the plain sentence; the glyph spans are aria-hidden; the track pauses on hover and focus-within; the
  *             dial's Still shows the static line instead of the track. Never <marquee>.
  * not         a news ticker, a fake terminal, a place for links. It names people and years and nothing else.
- * deps        none · DOM + CSS animations (compositor) · 2026-09
- * budget      0.0 ms/frame of JavaScript after start (CSS transform animations only); compositor cost measured in docs/BUILD-LOG.md, desktop Chromium, 2026-09-29; phone TBD
- * api         mount(element, params, ctx) -> { start(), setDial(v), tick, resize, still, destroy }
+ * deps        none · DOM + one CSS transform animation · 2026-09
+ * budget      the first version ran one CSS animation per glyph (587 at once) and cost about 22 ms of style work per
+ *             frame at 4x CPU, the single largest cost on the ride; this version writes about 40 (phone) to 170
+ *             (desktop) transforms per frame and the ride went from 16 to 26 fps to 50 to 60 fps at 4x CPU (2026-09-30)
+ * api         mount(element, params, ctx) -> { start(), setDial(v), tick(dt, t), resize, still, destroy }
  * license     MIT, Desert Data Labs LLC
  */
 /* HOW IT WORKS
  * On mount the module reads the sentence already in the element (the static line that ships in the HTML and is what
  * a visitor without JavaScript reads), splits it into one span per glyph, and builds a track holding two copies of
- * that span run. The track slides by exactly one copy width per cycle (translateX to -50% of a two-copy track), so the
- * loop joins without a jump; the cycle length is the copy width divided by pxPerSecond, measured once on start.
+ * that span run. One CSS animation slides the track by exactly one copy width per cycle, so the loop joins without a
+ * jump. Every frame the ride calls tick(): the module reads how far that animation has run, works out where each
+ * glyph is on screen, and lifts only the visible glyphs on a sine wave that travels along the line. Off-screen glyphs
+ * are never touched, so the cost follows the screen width, not the length of the sentence.
  *
- * Each glyph carries --d, a negative animation-delay of -(i mod phases) * period / phases, so one keyframe pair
- * produces a standing wave across the line. All of it is CSS transform: no JavaScript runs per frame. Hover or focus
- * pauses both animations with animation-play-state. Still hides the track and shows the static sentence.
+ * When the ride rests (the Still dial, the sign-off, a hidden tab) tick() is not called and the wave holds its last
+ * shape. Hover or focus pauses the slide. Still hides the track and shows the static sentence.
  */
 (() => {
   'use strict';
   const PARAMS = {
     pxPerSecond: 58,       /* track speed */
-    phases: 12,            /* glyphs per wave */
-    period: 3.6,           /* seconds for one full sine (matches the 1.8 s alternate keyframe in 01-tube.css) */
+    amplitude: 5,          /* px of lift at the crest */
+    wavelength: 180,       /* px per sine along the line */
+    speed: 1.7,            /* radians per second the wave travels */
     text: 'Greetings to · Douglas Trumbull 1968 · NovaLogic 1992 · David Braben and Ian Bell 1984 · Steve Rutt and Bill Etra 1973 · Harold Craft 1970 · Jules Antoine Lissajous 1857 · Atari 1979 to 1981 · Vectrex 1982 · Sega 1985 · the Amiga scene 1988 to 1994 · ground: AWS Terrain Tiles, SRTM, USGS 3DEP',
   };
   /* the standalone skin, injected only when the host is not the ride's #greetings (the parts page) */
@@ -35,13 +39,12 @@
 [data-greet-host]{position:relative;overflow:hidden;contain:paint;white-space:nowrap;height:30px;line-height:30px;font:500 12px/30px var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 [data-greet-host] .greet__track{display:inline-flex;margin-left:100%;will-change:transform;animation:greet-slide var(--greet-cycle,48s) linear infinite}
 [data-greet-host] .greet__copy{display:inline-block;padding-right:6ch}
-[data-greet-host] .greet__copy span{display:inline-block;min-width:.3ch;animation:greet-sine 1.8s ease-in-out infinite alternate;animation-delay:var(--d,0s)}
-[data-greet-host]:hover .greet__track,[data-greet-host]:hover .greet__copy span{animation-play-state:paused}
+[data-greet-host] .greet__copy span{display:inline-block;min-width:.3ch}
+[data-greet-host]:hover .greet__track{animation-play-state:paused}
 [data-greet-host][data-still] .greet__track{display:none}
 [data-greet-host]:not([data-still]) .greet__static{display:none}
 @keyframes greet-slide{to{transform:translate3d(-50%,0,0)}}
-@keyframes greet-sine{from{transform:translate3d(0,-5px,0)}to{transform:translate3d(0,5px,0)}}
-@media (prefers-reduced-motion: reduce){[data-greet-host] .greet__track,[data-greet-host] .greet__copy span{animation:none}}`;
+@media (prefers-reduced-motion: reduce){[data-greet-host] .greet__track{animation:none}}`;
 
   function mount(el, params, ctx) {
     const standalone = el.id !== 'greetings';
@@ -51,35 +54,58 @@
     if (!el.hasAttribute('aria-label')) el.setAttribute('aria-label', text);
     if (standalone) { el.dataset.greetHost = '1'; const st = document.createElement('style'); st.textContent = CSS; el.prepend(st); }
     const track = document.createElement('div'); track.className = 'greet__track'; track.setAttribute('aria-hidden', 'true');
-    const step = params.period / params.phases;
+    const spans = [];
     for (let c = 0; c < 2; c++) {
       const copy = document.createElement('span'); copy.className = 'greet__copy';
-      const glyphs = [...text];
-      for (let i = 0; i < glyphs.length; i++) {
-        const s = document.createElement('span');
-        s.textContent = glyphs[i] === ' ' ? ' ' : glyphs[i];
-        s.style.setProperty('--d', `-${((i % params.phases) * step).toFixed(2)}s`);
-        copy.appendChild(s);
-      }
+      for (const ch of text) { const s = document.createElement('span'); s.textContent = ch === ' ' ? ' ' : ch; copy.appendChild(s); spans.push(s); }
       track.appendChild(copy);
     }
-    let started = false, dial = ctx.dial;
+    let started = false, dial = ctx.dial, lefts = null, copyW = 1, hostW = 1, lead = 0, slide = null;
+    const lifted = new Set();            /* glyphs currently carrying a transform */
     function apply() {
       const still = dial === 'still';
       if (still) { el.dataset.still = '1'; staticEl.hidden = false; if (track.parentNode) track.remove(); }
       else { delete el.dataset.still; if (started) { staticEl.hidden = true; if (!track.parentNode) el.appendChild(track); measure(); } }
+      if (dial !== 'full') flatten();
     }
     function measure() {
       const copy = track.firstElementChild; if (!copy) return;
-      const cw = copy.getBoundingClientRect().width || 1200;
-      el.style.setProperty('--greet-cycle', (cw / params.pxPerSecond).toFixed(1) + 's');
+      copyW = copy.getBoundingClientRect().width || 1200;
+      hostW = el.getBoundingClientRect().width || innerWidth;
+      el.style.setProperty('--greet-cycle', (copyW / params.pxPerSecond).toFixed(1) + 's');
+      /* glyph x inside the track, measured once per resize (layout reads never happen in tick) */
+      const tRect = track.getBoundingClientRect();
+      lead = tRect.left - el.getBoundingClientRect().left - currentShift();
+      lefts = spans.map((s) => s.getBoundingClientRect().left - tRect.left + s.offsetWidth / 2);
+      slide = null;
     }
+    function currentShift() {
+      if (!slide) slide = track.getAnimations ? track.getAnimations().find((a) => a.animationName === 'greet-slide') || null : null;
+      if (!slide || slide.currentTime == null) return 0;
+      const dur = slide.effect.getComputedTiming().duration || 1;
+      return -((slide.currentTime % dur) / dur) * copyW;   /* the track moves one copy width per cycle */
+    }
+    function flatten() { for (const s of lifted) s.style.transform = ''; lifted.clear(); }
     return {
       start() { started = true; apply(); },
       setDial(v) { dial = v; apply(); },
-      tick() {}, resize() { if (started && dial !== 'still') measure(); }, still() { dial = 'still'; apply(); },
-      destroy() { track.remove(); staticEl.hidden = false; delete el.dataset.still; },
-      params(p) { params = p; },
+      tick(dt, t) {
+        if (!started || dial !== 'full' || !lefts) return;
+        const shift = currentShift(), k = (Math.PI * 2) / params.wavelength, w = params.speed * t, A = params.amplitude;
+        const seen = new Set();
+        for (let i = 0; i < spans.length; i++) {
+          const x = lead + lefts[i] + shift;
+          if (x < -24 || x > hostW + 24) continue;
+          const s = spans[i]; seen.add(s);
+          s.style.transform = `translate3d(0,${(A * Math.sin(k * x - w)).toFixed(1)}px,0)`;
+        }
+        for (const s of lifted) if (!seen.has(s)) s.style.transform = '';
+        lifted.clear(); for (const s of seen) lifted.add(s);
+      },
+      resize() { if (started && dial !== 'still') measure(); },
+      still() { dial = 'still'; apply(); },
+      destroy() { flatten(); track.remove(); staticEl.hidden = false; delete el.dataset.still; },
+      params(p) { params = p; measure(); },
     };
   }
   BAYS.push({ slug: 'greetings', title: 'Greetings', order: 3, role: 'layer', kind: 'dom', params: PARAMS, mount });

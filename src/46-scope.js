@@ -38,6 +38,7 @@
 (() => {
   'use strict';
   const PARAMS = {
+    maxBackingWidth: 720,   /* px; above this the canvas renders smaller and CSS scales it up */
     base: 110,            /* Hz, the Y oscillator */
     span: 0.83,           /* pointer X across the screen = this many octaves of ratio, centred on 3:2 */
     snapWidth: 0.055,     /* ratio distance inside which the pull starts */
@@ -241,7 +242,7 @@
         clear();
         graticule(params.gridAlpha);
         const live = voice && ac && ac.state === 'running';
-        const path = live ? samples() : curve(ratio, phase, 0, CYCLES, 720);
+        const path = live ? samples() : curve(ratio, phase, 0, CYCLES, 360);   /* 720 points cost frames; 360 is smooth at the capped backing size */
         layers(path);
         remember(path, dt);
         if (!live) {
@@ -251,7 +252,12 @@
         }
         say(held);
       },
-      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); hist.length = 0; },
+      resize(nw, nh, ndpr) {
+        /* cap the backing store: five wide glow passes are raster-bound (measured 31 fps at 1440x900 on a real GPU) */
+        const k = Math.min(1, params.maxBackingWidth / Math.max(1, nw));
+        if (k < 1) { canvas.width = Math.round(nw * k); canvas.height = Math.round(nh * k); }
+        w = canvas.width; h = canvas.height; px = Math.max(0.5, ndpr * k); hist.length = 0;
+      },
       still() {
         /* the designed frame: a 3:2 figure at full heat with its four older copies trailing */
         ratio = 1.5; phase = 0.35; lockK = 1; hist.length = 0;

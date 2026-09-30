@@ -96,6 +96,8 @@ const bootBoneyardRide = () => {
   function resizeAll() {
     W = innerWidth; H = innerHeight; dpr = dprCap();
     len = bays[1] ? bays[1].el.offsetHeight || H : H;
+    for (const b of bays) b.top = b.el.offsetTop;   /* cached: an offsetTop read per frame forced layout (profiled) */
+    if (greetings && greetings.handle && greetings.handle.resize) greetings.handle.resize();
     ctx.scale = CFG.scaleSteps[scaleIdx];
     ctx.dpr = dpr * ctx.scale;
     for (const L of layers) { const s = sizeCanvas(L.canvas, W, H, dpr, ctx.scale, L.m.pixel); L.handle.resize(s.w, s.h, s.dpr); if (ctx.dial === 'still') L.handle.still(t); }
@@ -177,7 +179,7 @@ const bootBoneyardRide = () => {
   function updateBays(dt) {
     for (const b of bays) {
       const m = b.m; if (!m) continue;
-      const p = (scrollY - b.el.offsetTop) / len;          /* bay lengths from the hold; + = passed */
+      const p = (scrollY - b.top) / len;          /* bay lengths from the hold; + = passed */
       const d = -p * CFG.unitsPerBay;                      /* grid units ahead */
       const live = Math.abs(p) < CFG.liveZone;
       if (m.state === 'far') {
@@ -203,7 +205,7 @@ const bootBoneyardRide = () => {
     for (let i = 0; i < LAST; i++) {
       const a = bays[i], b = bays[i + 1], slug = CFG.corridors[a.slug + '>' + b.slug];
       if (!slug || !reg.corridors[slug]) continue;
-      gaps.push({ a, b, m: reg.corridors[slug], start: a.el.offsetTop + 0.02 * len, end: b.el.offsetTop - CFG.liveZone * len });
+      gaps.push({ a, b, m: reg.corridors[slug], start: a.top + 0.02 * len, end: b.top - CFG.liveZone * len });
     }
   }
   function updateCorridor(dt) {
@@ -327,12 +329,12 @@ const bootBoneyardRide = () => {
   function flyStep(dt) {
     if (!autofly) return;
     const near = Math.round(scrollY / len);
-    const p = (scrollY - bays[near].el.offsetTop) / len;
+    const p = (scrollY - bays[near].top) / len;
     if (Math.abs(p) < 0.012 && dwellAt !== near) { dwell += dt; if (dwell < CFG.autoflyDwell) return; dwellAt = near; dwell = 0; }
-    const top = bays[LAST].el.offsetTop;
+    const top = bays[LAST].top;
     if (scrollY >= top - 1) { setAutofly(false); return; }
     const next = Math.min(top, scrollY + len * CFG.autoflyBaysPerSecond * dt * (ctx.dial === 'calm' ? 0.5 : 1));
-    const target = bays[Math.min(LAST, near + 1)].el.offsetTop;
+    const target = bays[Math.min(LAST, near + 1)].top;
     window.scrollTo({ top: (next > target - 0.5 && scrollY < target) ? target : next, behavior: 'auto' });
   }
 
@@ -380,10 +382,14 @@ const bootBoneyardRide = () => {
   hud.dial.addEventListener('change', (e) => { if (e.target.checked) applyDial(e.target.value, true); });
 
   /* ---------- the world task ---------- */
-  let frameN = 0, devAcc = 0, devN = 0, devAt = 0;
+  let frameN = 0, devAcc = 0, devN = 0, devAt = 0, liveScrollY = window.scrollY, vpXs = '', vpYs = '';
+  /* scroll position cached from the event: reading window.scrollY inside the frame, after last frame's style
+     writes, forced a synchronous style recalc every frame (profiled: 35% of CPU at 4x throttle) */
+  addEventListener('scroll', () => { liveScrollY = window.scrollY; }, { passive: true });
+  addEventListener('resize', () => { liveScrollY = window.scrollY; }, { passive: true });
   function world(dt, now) {
     t += dt; frameN++;
-    scrollY = window.scrollY;
+    scrollY = liveScrollY;
     if (scrollY !== lastScrollY) { scrollStill = 0; lastScrollY = scrollY; } else scrollStill += dt;
     const still = ctx.dial === 'still';
     flyStep(dt);
@@ -401,7 +407,11 @@ const bootBoneyardRide = () => {
       ctx.vp.y += (ctx.vpBase.y + (ptrTy - 0.5) * 2 * CFG.parallax - ctx.vp.y) * kx;
     } else { ctx.vp.x += (ctx.vpBase.x - ctx.vp.x) * 0.1; ctx.vp.y += (ctx.vpBase.y - ctx.vp.y) * 0.1; }
     ptr.nx = ptrTx; ptr.ny = ptrTy;
-    if ((frameN & 1) === 0) { roomsEl.style.setProperty('--vp-x', (ctx.vp.x * 100).toFixed(2) + '%'); roomsEl.style.setProperty('--vp-y', (ctx.vp.y * 100).toFixed(2) + '%'); }
+    if ((frameN & 1) === 0) {   /* write only on change: an identical write still dirtied style for every room */
+      const xs = (ctx.vp.x * 100).toFixed(1) + '%', ys = (ctx.vp.y * 100).toFixed(1) + '%';
+      if (xs !== vpXs) { vpXs = xs; roomsEl.style.setProperty('--vp-x', xs); }
+      if (ys !== vpYs) { vpYs = ys; roomsEl.style.setProperty('--vp-y', ys); }
+    }
 
     setCurrent(Math.max(0, Math.min(LAST, Math.round(scrollY / len))));
     updateBays(dt);
@@ -409,6 +419,7 @@ const bootBoneyardRide = () => {
     if (!still) {
       const t0 = DEV ? performance.now() : 0;
       for (const L of layers) L.handle.tick(dt, t, cam.z, ptr);
+      if (greetings) greetings.handle.tick(dt, t);   /* the credits wave rides the world loop, so it rests when the ride rests */
       if (DEV) { devAcc += performance.now() - t0; devN++; }
     }
     if (post) post.handle.tick(dt, t, { sky: canvases.sky, row: canvases.row, corridor: canvases.corridor, rooms: roomsEl });
