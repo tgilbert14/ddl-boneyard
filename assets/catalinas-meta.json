@@ -1,0 +1,69 @@
+{
+  "source": "AWS Terrain Tiles (Mapzen terrarium), z11 x392-394 y828-830",
+  "encoding": "elev_m = R*256 + G + B/256 - 32768",
+  "bounds": {
+    "north": 32.54681317351515,
+    "south": 32.10118973232094,
+    "west": -111.09375,
+    "east": -110.56640625
+  },
+  "width": 768,
+  "height": 768,
+  "m_per_px": {
+    "x": 64.59248259040142,
+    "y": 64.15933123256292
+  },
+  "elev_min_m": 625.84375,
+  "elev_max_m": 2790.81640625,
+  "landmarks": {
+    "Mount Lemmon summit": {
+      "row": 179,
+      "col": 444,
+      "inside": true,
+      "elev_m": 2790.8,
+      "approx_m": 2791
+    },
+    "Summerhaven": {
+      "row": 198,
+      "col": 491,
+      "inside": true,
+      "elev_m": 2285.7,
+      "approx_m": 2400
+    },
+    "Windy Point": {
+      "row": 304,
+      "col": 547,
+      "inside": true,
+      "elev_m": 1945.2,
+      "approx_m": 2000
+    },
+    "Sabino Canyon visitor center": {
+      "row": 408,
+      "col": 394,
+      "inside": true,
+      "elev_m": 833.3,
+      "approx_m": 820
+    },
+    "Pusch Ridge": {
+      "row": 329,
+      "col": 235,
+      "inside": true,
+      "elev_m": 1107.1,
+      "approx_m": 1700
+    },
+    "Tucson downtown": {
+      "row": 560,
+      "col": 243,
+      "inside": true,
+      "elev_m": 758.1,
+      "approx_m": 730
+    },
+    "Catalina Highway base (Tanque Verde)": {
+      "row": 501,
+      "col": 529,
+      "inside": true,
+      "elev_m": 817.9,
+      "approx_m": 820
+    }
+  }
+}
