@@ -7,7 +7,7 @@
  *             blue-black). The ground stays black at every hour and the band's alpha caps at bandAlpha, so daytime
  *             reads as a pale grey-blue line on the horizon, never as daylight; the ramp is NOT clamped to dusk-night
  *             (clampDay: false) because at this alpha the day stops read as "a bright horizon at noon", which is honest.
- *             Flip clampDay if arwen's retune disagrees. In Full the stars fly with the row (speedGain plus a
+ *             Set clampDay to hold the daytime tint near dawn or dusk. In Full the stars fly with the row (speedGain plus a
  *             cruise, and warp multiplies it through HYPERSPACE), and at speed the near plane draws as short streaks.
  *             The sky is also the housekeeper of the shared punch: a stale ctx.share.punch / shake (no writer this
  *             frame) is zeroed here, so a switched-off room never leaves the world shaking.

@@ -48,6 +48,13 @@ const HARNESS = '90-parts-harness.html';
 
 const read = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n?/g, '\n');   /* CRLF-proof: a Windows editor must not break the header parser */
 
+/* Each emitted file embeds font bytes and may be downloaded on its own. Keep the complete
+   copyright notices and licenses with those bytes, including configured HTML exports. */
+const fontNotices = ['OFL-michroma.txt', 'OFL-ibmplexmono.txt']
+  .map((file) => fs.readFileSync(path.join(__dirname, 'assets', 'fonts', file), 'utf8').replace(/\r\n?/g, '\n').replace(/[ \t]+$/gm, '').trim())
+  .join('\n\n');
+const fontLicenseCss = `/* Embedded font copyright notices and licenses\n${fontNotices}\n*/\n`;
+
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const kb = (s) => (Buffer.byteLength(s, 'utf8') / 1024).toFixed(1) + ' KB';
 
@@ -89,7 +96,7 @@ function ownHostsOnly(text, label) {
 const ship = (text, label) => { guard(text, label); noEmDash(text, label); ownHostsOnly(text, label); };
 
 /* ---------------------------------------------------------------- the ride */
-const css = parts.filter((f) => f.endsWith('.css')).map(read).join('\n\n');
+const css = fontLicenseCss + parts.filter((f) => f.endsWith('.css')).map(read).join('\n\n');
 const body = parts.filter((f) => f.endsWith('.html')).map(read).join('\n\n');
 const js = parts.filter((f) => f.endsWith('.js')).map(read).join('\n\n');
 
@@ -169,7 +176,7 @@ const modules = parts.filter((f) => f.endsWith('.js')).map((f) => parseModule(f,
 const slugs = new Set();
 for (const m of modules) { if (slugs.has(m.slug)) throw new Error(`duplicate slug ${m.slug}`); slugs.add(m.slug); }
 
-const tokens = read('00-tokens.css');
+const tokens = fontLicenseCss + read('00-tokens.css');
 const runtime = read('09-runtime.js');
 const harness = read(HARNESS);
 const noteHtml = (note) => note ? note.split(/\n\s*\n/).map((p) => `<p>${esc(p.replace(/\s*\n\s*/g, ' '))}</p>`).join('\n') : '<p>No note yet.</p>';

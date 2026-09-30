@@ -9,6 +9,7 @@ import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import {browserRuntime} from './browser-runtime.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const fontLicenses=await Promise.all(['OFL-michroma.txt','OFL-ibmplexmono.txt'].map(async file=>(await fs.readFile(path.join(root,'assets/fonts',file),'utf8')).replace(/\r\n?/g,'\n').replace(/[ \t]+$/gm,'').trim()));
 const base=process.argv[2]||'http://127.0.0.1:4186/';
 if(!['127.0.0.1','localhost'].includes(new URL(base).hostname)) throw new Error('Use a local preview.');
 const temp=await fs.mkdtemp(path.join(os.tmpdir(),'boneyard-lift-'));
@@ -44,6 +45,7 @@ try {
     await page.waitForTimeout(350);
     const source=await page.evaluate(()=>window.BONEYARD_PART.exportSource());
     assert(source.includes('id="boneyard-part-config"'),slug+' has embedded config');
+    for(const license of fontLicenses)assert(source.includes(license),slug+' exported font notice and license');
     await fs.writeFile(path.join(temp,slug+'.html'),source);
     const before=await page.evaluate(()=>({...window.BONEYARD_PART.params}));
     const png=await page.evaluate(()=>document.getElementById('part').toDataURL('image/png').split(',')[1]);
