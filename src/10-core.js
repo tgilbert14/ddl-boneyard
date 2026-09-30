@@ -441,6 +441,16 @@ const bootBoneyardRide = () => {
 
   /* ---------- boot: size, mount what is visible, switch the tube on (the only auto-start, 500 ms) ---------- */
   resizeAll();
+  /* deep links in the brief's form #range?t=22: no element has that id, so the browser stays on the yard.
+     Rewrite to ?t=22#range (modules read location.search) and land on the bay. */
+  {
+    const m = location.hash.match(/^#([a-z-]+)\?(.+)$/);
+    const target = m && bays.find((b) => b.slug === m[1]);
+    if (target) {
+      history.replaceState(null, '', location.pathname + '?' + m[2] + '#' + m[1]);
+      window.scrollTo({ top: target.top, behavior: 'auto' });
+    }
+  }
   const boot = () => {
     if (ctx.dial === 'still') { html.classList.add('tube-on'); }
     else {

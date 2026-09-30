@@ -184,8 +184,9 @@ for (const f of fs.readdirSync(OUT_PARTS)) if (f.endsWith('.html')) fs.unlinkSyn
 for (const m of modules) {
   const code = read(m.file);
   const url = `${SITE_URL}parts/${m.slug}.html`;
-  const og = hasStill(m.slug)
-    ? { img: `${SITE_URL}parts/stills/${m.slug}.webp`, w: 480, h: 270, type: 'image/webp' }
+  /* a 1200x630 share card when capture.mjs made one (large link previews need it), else the yard card */
+  const og = fs.existsSync(path.join(OUT_PARTS, 'og', `${m.slug}.jpg`))
+    ? { img: `${SITE_URL}parts/og/${m.slug}.jpg`, w: 1200, h: 630, type: 'image/jpeg' }
     : { img: `${SITE_URL}og-yard.png`, w: 1200, h: 630, type: 'image/png' };
   const pageOut = harness
     .replace(/__CANONICAL__/g, url)

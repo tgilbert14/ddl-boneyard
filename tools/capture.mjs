@@ -78,6 +78,22 @@ try {
   }
   await ctx.close();
 
+  /* ---- per-part share cards: 1200x630 JPEG, the same designed still at the size large link previews need ---- */
+  fs.mkdirSync(path.join(ROOT, 'parts', 'og'), { recursive: true });
+  const ogCtx = await browser.newContext({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1, reducedMotion: 'reduce', colorScheme: 'dark' });
+  ogCtx.on('request', (r) => { const u = new URL(r.url()); if (!['127.0.0.1', ''].includes(u.hostname) && u.protocol !== 'data:') offsite.push(r.url()); });
+  const ogPage = await ogCtx.newPage();
+  for (const slug of slugs) {
+    await ogPage.goto(`${BASE}parts/${slug}.html`, { waitUntil: 'networkidle' });
+    await ogPage.addStyleTag({ content: 'main, .skip { display: none !important; }' });
+    await ogPage.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    await ogPage.waitForTimeout(350);
+    const jpg = await ogPage.screenshot({ type: 'jpeg', quality: 84 });
+    fs.writeFileSync(path.join(ROOT, 'parts', 'og', `${slug}.jpg`), jpg);
+    console.log(`card   parts/og/${slug}.jpg  ${(jpg.length / 1024).toFixed(1)} KB`);
+  }
+  await ogCtx.close();
+
   /* ---- og-yard.png: the ride at rest, the title in frame (full motion so the stars are lit; 1.6 s after
      the 500 ms switch-on so the tube is settled) ---- */
   if (!ONLY) {
