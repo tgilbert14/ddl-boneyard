@@ -7,14 +7,15 @@
  * original    the scanlines are a real terrain grid (AWS Terrain Tiles, 768 x 768 at about 64 m), block-averaged to
  *             96 lines by 192 samples and held as an object in perspective on the site's one vanishing point; the
  *             curtains are parallel planes, so sorting them by distance along their normal makes the painter's
- *             order exact from every orbit angle; a slow orbit that a horizontal drag takes over and that comes back
- *             to the three-quarter view from the southwest (the Tucson side)
+ *             order exact from every orbit angle; a low flyover camera (orbit plus a slow swell in height and distance)
+ *             that a horizontal drag takes over and that comes back to the three-quarter view from the
+ *             southwest (the Tucson side)
  * not         true scale: height is exaggerated (the factor is in the readout, never hidden) and the base sits at the
  *             grid's lowest cell, not sea level; block means soften the peaks, so the summit figure comes from the
  *             full-resolution grid, not from the drawn lines
  * deps        none · Canvas 2D · 2026-09
- * budget      1.6 to 2.4 ms/frame on the parts counter @ 2160x1350 internal (1440x900 x1.5), 1.3 to 2.8 ms per still() redraw;
- *             headless Chromium, software raster, not a real-GPU frame time (2026-09-29); phone TBD
+ * budget      1.6 to 2.0 ms/frame on the parts counter @ 1440x900 x1 internal, headless Chromium (2026-09-30); 390x844 at
+ *             4x CPU (lite path): 8.0 to 8.4 ms JS, part page 44 to 47 fps; JS time only, not a real-GPU frame time
  * api         mount(canvas, params, ctx) -> { tick(dt, t, progress, pointer), resize(w, h, dpr), still(t), destroy() }
  * license     MIT, Desert Data Labs LLC
  */
@@ -23,11 +24,15 @@
  * block the mean of every cell inside it), and each sample becomes a 3D point: x east and z south in a box two units
  * across (the real 49.6 by 49.3 km footprint), y the height above the lowest cell times the vertical factor.
  *
- * A camera orbits the box at a fixed elevation and looks at a point just above it, so the look point lands on the
- * shared vanishing point and the range sits below the horizon line like an object on a table. Every frame the
+ * A camera circles the box low, like a flyover of the scan: its elevation and distance swell slowly on two
+ * unrelated periods while it orbits, and it always looks at a point just above the range, so the look point lands
+ * on the shared vanishing point and the range fills the frame below the horizon line. Every frame the
  * 18,432 points are projected (one 3x3 rotation and a divide each). Lines are drawn from the farthest to the nearest:
  * first the curtain under the wire is filled with the field colour, which erases any farther wire it covers, then
- * the wire is stroked twice (a wide dim halo, a thin bright core), dimmer with distance.
+ * the wire is stroked three times with additive light (a wide phosphor halo, a mid glow, a thin white-hot core),
+ * dimmer with distance (on a phone-sized screen: fewer samples per line and two plain strokes, which keeps the
+ * frame rate). The grid is rebuilt only when lines, samples or the vertical factor actually change, and
+ * the readout always prints the factor the drawn mesh was built with.
  *
  * Horizontal drag (a touch drag only once it is clearly sideways, so vertical scrolling is never stolen) turns the
  * range. Let go and it waits, eases to the nearest three-quarter view, rests there, then resumes the slow orbit.
@@ -38,18 +43,21 @@
     lines: 96,           /* scanlines, north to south */
     samples: 192,        /* samples along each line, west to east */
     exaggeration: 4,     /* vertical factor, printed in the readout */
-    elevationDeg: 31,    /* camera elevation above the base plane */
-    distance: 3.3,       /* camera distance, box half-widths */
-    lookY: 0.5,           /* height of the look point, which projects onto the vanishing point */
-    fit: 0.66,           /* focal length as a fraction of min(1.7 x width, 1.5 x height) */
-    orbitDegPerSec: 5,   /* slow auto-orbit */
+    elevationDeg: 21,    /* camera elevation above the base plane (the middle of the swell) */
+    elevSwing: 6,        /* +- degrees of the slow elevation swell, Full and Calm */
+    distance: 2.55,      /* camera distance, box half-widths (the middle of the swell) */
+    distSwing: 0.22,     /* +- box half-widths of the slow distance swell */
+    lookY: 0.34,         /* height of the look point, which projects onto the vanishing point */
+    fit: 0.98,           /* focal length as a fraction of min(1.7 x width, 1.5 x height) */
+    orbitDegPerSec: 7,   /* slow auto-orbit (Calm halves) */
     homeDeg: -45,        /* the three-quarter view: camera to the southwest */
     returnAfter: 2.5,    /* seconds after a drag before it eases home */
     restAt: 7,           /* seconds resting at the three-quarter view before orbiting again */
     dragDegPerPx: 0.35,
-    haloWidth: 3.2, coreWidth: 1.05,
-    haloAlpha: 0.16, coreAlpha: 0.9,
-    farAlpha: 0.22,      /* alpha of the farthest line relative to the nearest */
+    haloWidth: 5, glowWidth: 2.2, coreWidth: 1.1,
+    haloAlpha: 0.2, glowAlpha: 0.45, coreAlpha: 1,
+    farAlpha: 0.3,       /* alpha of the farthest line relative to the nearest */
+    liteSamples: 112,    /* samples per line when the smaller side is under 600 css px (phones) */
   };
   const COMPASS = ['S', 'SE', 'E', 'NE', 'N', 'NW', 'W', 'SW'];   /* camera bearing from the centre, yaw 0 = south, +90 = east */
 
@@ -58,10 +66,12 @@
     let w = canvas.width, h = canvas.height, px = 1, dead = false;
     let grid = null, pts = null, scr = null, L = 0, S = 0, vScale = 1, summitFt = 0, dem = null;
     let yaw = params.homeDeg, mode = 'orbit', idle = 0, drag = null, lastReadout = '', sinceReadout = 0;
+    let swell = 0, built = null, lite = false;   /* lite: a small screen, fewer samples per line and two plain strokes */   /* built: the lines, samples and factor the current mesh was made with */
 
     function build() {
       if (!dem) return;
-      L = Math.max(8, Math.round(params.lines)); S = Math.max(16, Math.round(params.samples));
+      built = { lines: params.lines, samples: params.samples, exaggeration: params.exaggeration };
+      L = Math.max(8, Math.round(params.lines)); S = Math.max(16, Math.round(lite ? Math.min(params.samples, params.liteSamples) : params.samples));
       const W = dem.width, H = dem.height, e = dem.elev;
       /* the real footprint from catalinas-meta.json: 64.59 m per column, 64.16 m per row */
       const spanX = W * 64.5925, spanZ = H * 64.1593, half = spanX / 2;
@@ -90,7 +100,9 @@
     }
 
     function view() {
-      const A = yaw * Math.PI / 180, E = params.elevationDeg * Math.PI / 180, D = params.distance;
+      const A = yaw * Math.PI / 180;
+      const E = (params.elevationDeg + params.elevSwing * Math.sin(swell * 0.27)) * Math.PI / 180;
+      const D = params.distance + params.distSwing * Math.sin(swell * 0.19 + 1.3);
       const tx = 0, ty = params.lookY, tz = 0;
       const cx = tx + D * Math.cos(E) * Math.sin(A), cy = ty + D * Math.sin(E), cz = tz + D * Math.cos(E) * Math.cos(A);
       let fx = tx - cx, fy = ty - cy, fz = tz - cz; const fl = Math.hypot(fx, fy, fz); fx /= fl; fy /= fl; fz /= fl;
@@ -125,7 +137,7 @@
       order.sort((a, b) => Math.abs(zOf(b) - V.cz) - Math.abs(zOf(a) - V.cz));
       const dNear = Math.abs(zOf(order[L - 1]) - V.cz), dFar = Math.max(dNear + 1e-3, Math.abs(zOf(order[0]) - V.cz));
       g.lineJoin = 'round'; g.lineCap = 'round';
-      const halo = params.haloWidth * px, core = params.coreWidth * px;
+      const halo = params.haloWidth * px, glow = params.glowWidth * px, core = params.coreWidth * px;
       for (let o = 0; o < L; o++) {
         const i = order[o], z = zOf(i), row = i * S * 2;
         const line = new Path2D();
@@ -135,19 +147,21 @@
         const curtain = new Path2D(line);
         const bE = base(pts[(i * S + S - 1) * 3], z), bW = base(pts[(i * S) * 3], z);
         curtain.lineTo(bE[0], bE[1]); curtain.lineTo(bW[0], bW[1]); curtain.closePath();
-        g.globalAlpha = 1; g.fillStyle = T.field; g.fill(curtain);
+        g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1; g.fillStyle = T.field; g.fill(curtain);
         const q = (Math.abs(z - V.cz) - dNear) / (dFar - dNear);           /* 0 near, 1 far */
         const a = 1 - (1 - params.farAlpha) * q;
+        if (!lite) g.globalCompositeOperation = 'lighter';
         g.strokeStyle = T.phosphor; g.lineWidth = halo; g.globalAlpha = a * params.haloAlpha; g.stroke(line);
+        if (!lite) { g.lineWidth = glow; g.globalAlpha = a * params.glowAlpha; g.stroke(line); }
         g.strokeStyle = T.phosphorCore; g.lineWidth = core; g.globalAlpha = a * params.coreAlpha; g.stroke(line);
       }
-      g.globalAlpha = 1;
+      g.globalCompositeOperation = 'source-over'; g.globalAlpha = 1;
     }
 
     function readout() {
-      if (!dem) return;
+      if (!dem || !built) return;
       const a = ((yaw % 360) + 360 + 22.5) % 360;
-      const text = `${L} scanlines · ${dem.width} x ${dem.height} grid · summit ${summitFt.toLocaleString('en-US')} ft · ${params.exaggeration}x vertical · seen from the ${COMPASS[Math.floor(a / 45)]}`;
+      const text = `${L} scanlines · ${dem.width} x ${dem.height} grid · summit ${summitFt.toLocaleString('en-US')} ft · ${built.exaggeration}x vertical · seen from the ${COMPASS[Math.floor(a / 45)]}`;
       if (text !== lastReadout || sinceReadout > 0.5) { lastReadout = text; sinceReadout = 0; ctx.readout('relief', text); }
     }
 
@@ -161,6 +175,7 @@
     return {
       tick(dt, t, progress, pointer) {
         const calm = ctx.dial === 'calm' ? 0.5 : 1;
+        swell += dt * calm;
         /* drag: arms only when the move is clearly sideways (|dx| > 8 and |dx| > |dy|) */
         if (pointer.down) {
           if (!drag) drag = { x0: pointer.x, y0: pointer.y, yaw0: yaw, armed: false, dead: false };
@@ -186,12 +201,18 @@
         }
         sinceReadout += dt; draw(); readout();
       },
-      resize(nw, nh, ndpr) { w = nw; h = nh; px = Math.max(0.75, ndpr); },
-      still() { yaw = params.homeDeg; mode = 'rest'; idle = 0; draw(); readout(); flushLater(); },
+      resize(nw, nh, ndpr) {
+        w = nw; h = nh; px = Math.max(0.75, ndpr);
+        const was = lite; lite = Math.min(w, h) / px < 600;
+        if (was !== lite && dem) build();
+      },
+      still() { yaw = params.homeDeg; mode = 'rest'; idle = 0; swell = 0; draw(); readout(); flushLater(); },
       destroy() { dead = true; clearTimeout(flushT); g.clearRect(0, 0, w, h); grid = pts = scr = null; dem = null; },
       params(p) {
-        const rebuild = p.lines !== params.lines || p.samples !== params.samples || p.exaggeration !== params.exaggeration;
-        params = p; if (rebuild) build(); lastReadout = ''; readout(); draw();
+        /* compare against what the mesh was BUILT with: the harness and ?dev=1 mutate the params object in place */
+        params = p;
+        if (!built || p.lines !== built.lines || p.samples !== built.samples || p.exaggeration !== built.exaggeration) build();
+        lastReadout = ''; readout(); draw();
       },
     };
   }
