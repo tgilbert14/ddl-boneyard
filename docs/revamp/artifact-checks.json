@@ -1,5 +1,5 @@
 {
-  "date": "2026-09-30T18:23:10.732Z",
+  "date": "2026-09-30T18:26:46.337Z",
   "conditions": "Local Chromium, DPR 1, reduced motion, 17 standalone pages plus four exact export API artifacts lifted with adjacent assets. User download buttons are exercised separately in the visible browser.",
   "results": [
     {
@@ -272,7 +272,7 @@
         "labels": true,
         "buffer": 384
       },
-      "htmlBytes": 127970,
+      "htmlBytes": 160204,
       "errors": []
     },
     {
@@ -302,7 +302,7 @@
         "bloom": 0.32,
         "stillDolly": 23.5
       },
-      "htmlBytes": 142930,
+      "htmlBytes": 175164,
       "errors": []
     },
     {
@@ -313,7 +313,7 @@
         "beamGlow": 0.72,
         "sceneryDensity": 1
       },
-      "htmlBytes": 129650,
+      "htmlBytes": 161884,
       "errors": []
     },
     {
@@ -344,7 +344,7 @@
         "release": 0.28,
         "fftSize": 256
       },
-      "htmlBytes": 125102,
+      "htmlBytes": 157336,
       "errors": []
     },
     {

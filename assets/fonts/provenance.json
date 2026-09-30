@@ -1,0 +1,22 @@
+{
+  "reviewedAt": "2026-09-30T18:26:07.915Z",
+  "licenseSource": "https://raw.githubusercontent.com/IBM/plex/763c36ef9117782905ae010056dfbe8fd2653a25/packages/plex-mono/LICENSE.txt",
+  "files": [
+    {
+      "file": "assets/fonts/IBMPlexMono-Regular-Latin1.woff2",
+      "source": "https://raw.githubusercontent.com/IBM/plex/763c36ef9117782905ae010056dfbe8fd2653a25/packages/plex-mono/fonts/split/woff2/IBMPlexMono-Regular-Latin1.woff2",
+      "sourceRevision": "763c36ef9117782905ae010056dfbe8fd2653a25",
+      "sha256": "e8993d946649b9d01abb1ed06d574b19d8ea3e66b5c3948602db335c44c18e56",
+      "bytes": 17544,
+      "modifications": "none; byte-identical IBM-authored Latin1 webfont, redistributed under accompanying OFL"
+    },
+    {
+      "file": "assets/fonts/IBMPlexMono-Medium-Latin1.woff2",
+      "source": "https://raw.githubusercontent.com/IBM/plex/763c36ef9117782905ae010056dfbe8fd2653a25/packages/plex-mono/fonts/split/woff2/IBMPlexMono-Medium-Latin1.woff2",
+      "sourceRevision": "763c36ef9117782905ae010056dfbe8fd2653a25",
+      "sha256": "41201b658a328b9d00368215c2f1102770f80b15952ab82631e4006255e6365d",
+      "bytes": 17868,
+      "modifications": "none; byte-identical IBM-authored Latin1 webfont, redistributed under accompanying OFL"
+    }
+  ]
+}

@@ -6,6 +6,14 @@ http://127.0.0.1:4186/. This is implemented local work; no production deployment
 preview was requested. Theme approval is recorded in brief.md; whole-experience owner acceptance
 remains open.
 
+Release follow-up: Tim requested "send it live!" on 2026-09-30, authorizing the existing
+https://tgilbert14.github.io/ddl-boneyard/ target. The release audit added complete font notices
+to every emitted and exported HTML file, and replaced inherited custom IBM font subsets with
+unchanged IBM-authored Latin1 webfonts. Their pinned sources and byte hashes are in
+assets/fonts/provenance.json. Final deploy and live verification receipts are retained in the
+adjacent ddl-boneyard-release-20260930 directory. The browser/device limits below still apply;
+this is not a fully certified REVAMP release evidence pass.
+
 ## What changed
 
 The original native-scroll ride and all eight real effects remain. The opening is now a procedural
@@ -56,7 +64,7 @@ exports, and a serializer that accidentally matched its own marker literals.
 `lab.json` records local Chromium at DPR 1, fourfold CPU slowdown and localhost transport, with no
 network throttle or real user input. The opening's LCP proxy was 80 ms desktop and 76 ms phone;
 CLS was .022 and .008 respectively. No long tasks were observed in the fixed observation window.
-The source was about 386 KiB uncompressed and 128 KiB gzip. The first field loaded three local
+The final source was about 426 KiB uncompressed and 154 KiB gzip. The first field loaded three local
 machine captures in addition to the document; fonts are inline. No external resource requests.
 These are local lab results, not field Core Web Vitals, INP, a Lighthouse score, or phone hardware
 performance certification. Full rendering/GPU cost is not represented by JS ticker work.
