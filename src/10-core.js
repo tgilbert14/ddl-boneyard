@@ -283,15 +283,19 @@ const bootBoneyardRide = () => {
   addEventListener('blur', () => ctx.keys.clear());
 
   /* ---------- the live readout: the current bay's one line of real numbers, in the HUD ---------- */
-  let liveAt = 0;
+  let liveAt = 0, liveTimer = 0;
   function paintLive() {
+    liveAt = performance.now();
     const el = document.getElementById('hud-live'); if (!el) return;
     const b = bays[Math.max(0, current)], text = b && ctx.readouts[b.slug];
     el.textContent = text ? ' · ' + text : '';
   }
+  /* throttled to about 7 per second, trailing edge: the last value always lands (a still frame sends one) */
   ctx.onReadout = (slug) => {
     const b = bays[Math.max(0, current)]; if (!b || b.slug !== slug) return;
-    const n = performance.now(); if (n - liveAt < 150) return; liveAt = n; paintLive();
+    const wait = 150 - (performance.now() - liveAt);
+    if (wait <= 0) { clearTimeout(liveTimer); liveTimer = 0; paintLive(); }
+    else if (!liveTimer) liveTimer = setTimeout(() => { liveTimer = 0; paintLive(); }, wait);
   };
 
   /* ---------- Auto-fly: a visible button, reading pace, any input stops it ---------- */
