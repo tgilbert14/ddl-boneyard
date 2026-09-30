@@ -497,6 +497,7 @@ html[data-dial="still"] #horizon, html[data-dial="still"] #c-tube { transition: 
   <div class="hud__clock hud__js"><time id="hud-clock" aria-label="Your local time"></time><span class="dev" id="hud-dev" hidden></span></div>
   <div class="hud__readout hud__js" id="hud-readout" aria-live="polite">Bay 00 <span class="dot">/</span> 08 <span class="dot">·</span> The yard</div>
   <div class="hud__bl hud__js">
+    <button type="button" class="sound" id="sound" aria-pressed="false">Sound</button>
     <fieldset class="dial" id="dial">
       <legend>Motion</legend>
       <label><input type="radio" name="dial" id="dial-full" value="full"><span>Full</span></label>
@@ -504,7 +505,6 @@ html[data-dial="still"] #horizon, html[data-dial="still"] #c-tube { transition: 
       <label><input type="radio" name="dial" id="dial-still" value="still"><span>Still</span></label>
     </fieldset>
     <button type="button" class="autofly" id="autofly" aria-pressed="false">Auto-fly</button>
-    <button type="button" class="sound" id="sound" aria-pressed="false">Sound</button>
   </div>
   <ol class="index" id="index" aria-label="Bays">
     <li><a href="#jump" data-bay="1">01</a></li>
@@ -842,6 +842,7 @@ const bootBoneyardRide = () => {
     focal: 2.0,               /* units: far-frame scale = focal / (focal + d) */
     slowFrame: 20, slowCount: 30, scaleSteps: [1, 0.75, 0.5],
     autoflyBaysPerSecond: 1 / 9, autoflyDwell: 3,
+    minStateS: 0.35,   /* a room holds on or off at least this long: fast scrubbing cannot strobe switches (WCAG 2.3.1) */
     greetingsAt: 4, chevronAt: 8,
     /* which canvas corridor plays in the gap between two bays (SWITCH plays on every transition) */
     corridors: { 'yard>jump': 'hyperspace', 'relief>terminator': 'hyperspace', 'terminator>scope': 'rings', 'scope>mark': 'rings' },
@@ -983,7 +984,7 @@ const bootBoneyardRide = () => {
     if (DEV) devRow(b);
   }
   function switchOff(b, dir) {
-    const m = b.m; m.state = 'off';
+    const m = b.m; m.state = 'off'; m.offAt = t;
     const flash = ctx.dial === 'full' && t - lastFlash > 0.5;
     if (flash) lastFlash = t;
     const p = switcher ? switcher.handle.play(m, 'off', { still: ctx.dial === 'still', flash, dir }) : Promise.resolve(true);
@@ -1002,10 +1003,10 @@ const bootBoneyardRide = () => {
         m.room.style.setProperty('--room-s', s.toFixed(4));
         m.room.style.setProperty('--room-o', (0.25 + 0.75 * s).toFixed(3));
       } else if (m.state === 'on') {
-        if (!live) { switchOff(b, p > 0 ? 'forward' : 'back'); continue; }
+        if (!live && t - m.t0 >= CFG.minStateS) { switchOff(b, p > 0 ? 'forward' : 'back'); continue; }
         if (ctx.dial !== 'still') m.handle.tick(dt, t - m.t0, p, ctx.pointer);
       } else if (m.state === 'off') {
-        if (live) { if (switcher) switcher.handle.cancel(m); switchOn(b); continue; }
+        if (live && t - (m.offAt || -1e9) >= CFG.minStateS) { if (switcher) switcher.handle.cancel(m); switchOn(b); continue; }
         if (p < 0 && !(switcher && switcher.handle.busy(m))) { m.state = 'far'; m.room.classList.add('is-far'); m.room.classList.remove('is-hidden'); }
       }
     }
@@ -2217,9 +2218,11 @@ else bootBoneyardRide();
     if (!ACtx) return;
     if (!ac) { ac = new ACtx(); g = graph(ac); }
     const p = ac.state !== 'running' && ac.resume ? ac.resume() : null;
-    armed = false;
+    /* armed stays true until the context is really running: without activation Chrome leaves resume() pending
+       forever, so clearing it here left the default-on sound silent for the whole visit (Smaug round 2, KILL 2) */
     Promise.resolve(p).catch(() => {}).then(() => {
       if (ac.state !== 'running') { armed = allowed(); return; }   /* blocked: try again on the next gesture */
+      armed = false;
       if (!audible()) { sleep(); return; }
       g.level(true);
       g.ignite(ac.currentTime, !press);   /* switch-on clunk + bed rise: 0.6 s on a press, 1.5 s and soft on the first gesture */
@@ -2247,6 +2250,7 @@ else bootBoneyardRide();
       const y = window.scrollY; if (y !== lastY) { lastY = y; yMovedAt = now; }
       let v = c ? Math.abs(c.camera.v || 0) : 0;
       if (now - yMovedAt > 600) v = Math.min(v, 0.5);             /* the ride's loop may have stopped with a stale v */
+      if (now - yMovedAt > 1500) v = 0;                          /* parked: let the flywheel settle so the loop can rest */
       const warp = c ? (c.share.warp || 0) : 0;
       const target = Math.max(1 - Math.exp(-v / MIX.speedRef), warp * 0.9);
       sm += (target - sm) * (1 - Math.exp(-dt / (target > sm ? 0.12 : 0.6)));   /* flywheel: spins up fast, runs down slow */
@@ -2262,6 +2266,8 @@ else bootBoneyardRide();
       }
       /* fallback warp */
       if (!sawWarpEvent) onWarp(warp);
+      /* rest: nothing moving, no warp, no duck, the flywheel spun down: stop asking for frames (Smaug W1) */
+      if (sm < 0.01 && warp < 0.01 && !duck && now - yMovedAt > 1500) { cancelAnimationFrame(raf); raf = 0; }
     };
     raf = requestAnimationFrame(step);
   }
@@ -2286,8 +2292,12 @@ else bootBoneyardRide();
     const now = ac.currentTime; if (now - lastWhoosh < MIX.whooshGap) return;
     lastWhoosh = now; stats.whooshes++; g.whoosh(dial() === 'calm' ? 0.6 : 1);
   }
-  addEventListener('boneyard:switch', (e) => { sawSwitchEvent = true; onSwitch(e.detail && e.detail.dir); });
-  addEventListener('boneyard:warp', (e) => { sawWarpEvent = true; onWarp(+(e.detail && e.detail.level) || 1, true); });
+  const rouse = () => { if (!raf && ac && ac.state === 'running' && audible() && !document.hidden) loop(); };
+  addEventListener('scroll', rouse, { passive: true });
+  addEventListener('pointerdown', rouse, { passive: true });
+  addEventListener('keydown', rouse);
+  addEventListener('boneyard:switch', (e) => { rouse(); sawSwitchEvent = true; onSwitch(e.detail && e.detail.dir); });
+  addEventListener('boneyard:warp', (e) => { rouse(); sawWarpEvent = true; onWarp(+(e.detail && e.detail.level) || 1, true); });
 
   /* ---------- the button (delegated, so markup that lands late still works) ---------- */
   document.addEventListener('click', (e) => {
@@ -2298,8 +2308,11 @@ else bootBoneyardRide();
     wake(true);
   });
   /* default or remembered "on": the first real gesture of the visit starts it (a press on SOUND is the click's business) */
+  const QUIET_KEYS = new Set(['Tab', 'Escape', 'Shift', 'Control', 'Alt', 'Meta', 'CapsLock']);
   const gesture = (e) => {
     if (!armed || (e.target && e.target.closest && e.target.closest('#sound'))) return;
+    if (e.type === 'keydown' && (QUIET_KEYS.has(e.key) || e.ctrlKey || e.metaKey || e.altKey)) return;   /* a keyboard user reaches the control first */
+    if (navigator.userActivation && !navigator.userActivation.isActive) return;   /* a scroll swipe's touchend is not a gesture */
     if (allowed()) wake(false);
   };
   addEventListener('pointerup', gesture, true);
@@ -2436,12 +2449,14 @@ else bootBoneyardRide();
         /* one keyframe list on the flash layer: the single flash frame (Full, core-granted), dark again within
            flashMs, then white-hot only once the tube is a sliver: through the line and the dot, out as it recedes */
         if (flash) {
-          const oF = Math.min(oLine * 0.5, params.flashMs / total), oHeat = oLine * 0.86;
+          /* heat lights only once the tube IS the line: ramping it in before oLine lit a band still a third of the
+             screen tall, one general flash per switch-off (Smaug round 2, KILL 1) */
+          const oF = Math.min(oLine * 0.5, params.flashMs / total), oHot = oLine + (oDot - oLine) * 0.2;
           list.push(flash.animate([
             { opacity: flashNow ? 0.9 : 0 },
             { opacity: 0, offset: oF },
-            { opacity: 0, offset: oHeat },
-            { opacity: 1, offset: oLine },
+            { opacity: 0, offset: oLine },
+            { opacity: 1, offset: oHot },
             { opacity: 1, offset: oDot + (1 - oDot) * 0.45 },
             { opacity: 0 },
           ], { duration: total, easing: 'linear', fill: 'none' }));

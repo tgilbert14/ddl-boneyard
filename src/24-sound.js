@@ -190,9 +190,11 @@
     if (!ACtx) return;
     if (!ac) { ac = new ACtx(); g = graph(ac); }
     const p = ac.state !== 'running' && ac.resume ? ac.resume() : null;
-    armed = false;
+    /* armed stays true until the context is really running: without activation Chrome leaves resume() pending
+       forever, so clearing it here left the default-on sound silent for the whole visit (Smaug round 2, KILL 2) */
     Promise.resolve(p).catch(() => {}).then(() => {
       if (ac.state !== 'running') { armed = allowed(); return; }   /* blocked: try again on the next gesture */
+      armed = false;
       if (!audible()) { sleep(); return; }
       g.level(true);
       g.ignite(ac.currentTime, !press);   /* switch-on clunk + bed rise: 0.6 s on a press, 1.5 s and soft on the first gesture */
@@ -220,6 +222,7 @@
       const y = window.scrollY; if (y !== lastY) { lastY = y; yMovedAt = now; }
       let v = c ? Math.abs(c.camera.v || 0) : 0;
       if (now - yMovedAt > 600) v = Math.min(v, 0.5);             /* the ride's loop may have stopped with a stale v */
+      if (now - yMovedAt > 1500) v = 0;                          /* parked: let the flywheel settle so the loop can rest */
       const warp = c ? (c.share.warp || 0) : 0;
       const target = Math.max(1 - Math.exp(-v / MIX.speedRef), warp * 0.9);
       sm += (target - sm) * (1 - Math.exp(-dt / (target > sm ? 0.12 : 0.6)));   /* flywheel: spins up fast, runs down slow */
@@ -235,6 +238,8 @@
       }
       /* fallback warp */
       if (!sawWarpEvent) onWarp(warp);
+      /* rest: nothing moving, no warp, no duck, the flywheel spun down: stop asking for frames (Smaug W1) */
+      if (sm < 0.01 && warp < 0.01 && !duck && now - yMovedAt > 1500) { cancelAnimationFrame(raf); raf = 0; }
     };
     raf = requestAnimationFrame(step);
   }
@@ -259,8 +264,12 @@
     const now = ac.currentTime; if (now - lastWhoosh < MIX.whooshGap) return;
     lastWhoosh = now; stats.whooshes++; g.whoosh(dial() === 'calm' ? 0.6 : 1);
   }
-  addEventListener('boneyard:switch', (e) => { sawSwitchEvent = true; onSwitch(e.detail && e.detail.dir); });
-  addEventListener('boneyard:warp', (e) => { sawWarpEvent = true; onWarp(+(e.detail && e.detail.level) || 1, true); });
+  const rouse = () => { if (!raf && ac && ac.state === 'running' && audible() && !document.hidden) loop(); };
+  addEventListener('scroll', rouse, { passive: true });
+  addEventListener('pointerdown', rouse, { passive: true });
+  addEventListener('keydown', rouse);
+  addEventListener('boneyard:switch', (e) => { rouse(); sawSwitchEvent = true; onSwitch(e.detail && e.detail.dir); });
+  addEventListener('boneyard:warp', (e) => { rouse(); sawWarpEvent = true; onWarp(+(e.detail && e.detail.level) || 1, true); });
 
   /* ---------- the button (delegated, so markup that lands late still works) ---------- */
   document.addEventListener('click', (e) => {
@@ -271,8 +280,11 @@
     wake(true);
   });
   /* default or remembered "on": the first real gesture of the visit starts it (a press on SOUND is the click's business) */
+  const QUIET_KEYS = new Set(['Tab', 'Escape', 'Shift', 'Control', 'Alt', 'Meta', 'CapsLock']);
   const gesture = (e) => {
     if (!armed || (e.target && e.target.closest && e.target.closest('#sound'))) return;
+    if (e.type === 'keydown' && (QUIET_KEYS.has(e.key) || e.ctrlKey || e.metaKey || e.altKey)) return;   /* a keyboard user reaches the control first */
+    if (navigator.userActivation && !navigator.userActivation.isActive) return;   /* a scroll swipe's touchend is not a gesture */
     if (allowed()) wake(false);
   };
   addEventListener('pointerup', gesture, true);

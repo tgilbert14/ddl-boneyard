@@ -807,7 +807,7 @@ const BONEYARD = (() => {
     run();
   }
   function frame(dt) {
-    if (ctx.dial === 'still' || KIND === 'dom') { task = null; return false; }
+    if (ctx.dial === 'still' || !handle || !handle.tick) { task = null; return false; }   /* DOM parts with a tick (greetings) run too (Smaug round 2, W3) */
     t += dt;
     /* layers get a cruising camera; bays hold; corridors take the progress slider */
     ctx.camera.v = 0.4; ctx.camera.z += 0.4 * dt;

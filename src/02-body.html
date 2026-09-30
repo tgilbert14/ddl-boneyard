@@ -19,6 +19,7 @@
   <div class="hud__clock hud__js"><time id="hud-clock" aria-label="Your local time"></time><span class="dev" id="hud-dev" hidden></span></div>
   <div class="hud__readout hud__js" id="hud-readout" aria-live="polite">Bay 00 <span class="dot">/</span> 08 <span class="dot">·</span> The yard</div>
   <div class="hud__bl hud__js">
+    <button type="button" class="sound" id="sound" aria-pressed="false">Sound</button>
     <fieldset class="dial" id="dial">
       <legend>Motion</legend>
       <label><input type="radio" name="dial" id="dial-full" value="full"><span>Full</span></label>
@@ -26,7 +27,6 @@
       <label><input type="radio" name="dial" id="dial-still" value="still"><span>Still</span></label>
     </fieldset>
     <button type="button" class="autofly" id="autofly" aria-pressed="false">Auto-fly</button>
-    <button type="button" class="sound" id="sound" aria-pressed="false">Sound</button>
   </div>
   <ol class="index" id="index" aria-label="Bays">
     <li><a href="#jump" data-bay="1">01</a></li>

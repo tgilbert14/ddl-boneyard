@@ -104,12 +104,14 @@
         /* one keyframe list on the flash layer: the single flash frame (Full, core-granted), dark again within
            flashMs, then white-hot only once the tube is a sliver: through the line and the dot, out as it recedes */
         if (flash) {
-          const oF = Math.min(oLine * 0.5, params.flashMs / total), oHeat = oLine * 0.86;
+          /* heat lights only once the tube IS the line: ramping it in before oLine lit a band still a third of the
+             screen tall, one general flash per switch-off (Smaug round 2, KILL 1) */
+          const oF = Math.min(oLine * 0.5, params.flashMs / total), oHot = oLine + (oDot - oLine) * 0.2;
           list.push(flash.animate([
             { opacity: flashNow ? 0.9 : 0 },
             { opacity: 0, offset: oF },
-            { opacity: 0, offset: oHeat },
-            { opacity: 1, offset: oLine },
+            { opacity: 0, offset: oLine },
+            { opacity: 1, offset: oHot },
             { opacity: 1, offset: oDot + (1 - oDot) * 0.45 },
             { opacity: 0 },
           ], { duration: total, easing: 'linear', fill: 'none' }));

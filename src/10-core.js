@@ -29,6 +29,7 @@ const bootBoneyardRide = () => {
     focal: 2.0,               /* units: far-frame scale = focal / (focal + d) */
     slowFrame: 20, slowCount: 30, scaleSteps: [1, 0.75, 0.5],
     autoflyBaysPerSecond: 1 / 9, autoflyDwell: 3,
+    minStateS: 0.35,   /* a room holds on or off at least this long: fast scrubbing cannot strobe switches (WCAG 2.3.1) */
     greetingsAt: 4, chevronAt: 8,
     /* which canvas corridor plays in the gap between two bays (SWITCH plays on every transition) */
     corridors: { 'yard>jump': 'hyperspace', 'relief>terminator': 'hyperspace', 'terminator>scope': 'rings', 'scope>mark': 'rings' },
@@ -170,7 +171,7 @@ const bootBoneyardRide = () => {
     if (DEV) devRow(b);
   }
   function switchOff(b, dir) {
-    const m = b.m; m.state = 'off';
+    const m = b.m; m.state = 'off'; m.offAt = t;
     const flash = ctx.dial === 'full' && t - lastFlash > 0.5;
     if (flash) lastFlash = t;
     const p = switcher ? switcher.handle.play(m, 'off', { still: ctx.dial === 'still', flash, dir }) : Promise.resolve(true);
@@ -189,10 +190,10 @@ const bootBoneyardRide = () => {
         m.room.style.setProperty('--room-s', s.toFixed(4));
         m.room.style.setProperty('--room-o', (0.25 + 0.75 * s).toFixed(3));
       } else if (m.state === 'on') {
-        if (!live) { switchOff(b, p > 0 ? 'forward' : 'back'); continue; }
+        if (!live && t - m.t0 >= CFG.minStateS) { switchOff(b, p > 0 ? 'forward' : 'back'); continue; }
         if (ctx.dial !== 'still') m.handle.tick(dt, t - m.t0, p, ctx.pointer);
       } else if (m.state === 'off') {
-        if (live) { if (switcher) switcher.handle.cancel(m); switchOn(b); continue; }
+        if (live && t - (m.offAt || -1e9) >= CFG.minStateS) { if (switcher) switcher.handle.cancel(m); switchOn(b); continue; }
         if (p < 0 && !(switcher && switcher.handle.busy(m))) { m.state = 'far'; m.room.classList.add('is-far'); m.room.classList.remove('is-hidden'); }
       }
     }
