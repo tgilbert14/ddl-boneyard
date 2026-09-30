@@ -2,7 +2,7 @@
  * technique   WebGL1 phosphor post-pass over the composited 2D layers: persistence (max of the current frame and the decayed last one), a quarter-res two-pass bloom added back, a very slight barrel, a vignette
  * lineage     the vector CRT: the oscilloscope; Asteroids (Atari, 1979); Battlezone (Atari, 1980); Tempest (Atari, 1981); Vectrex (1982)
  * original    one skin over the whole row that no room depends on: it takes the sky, the row and the corridor canvases as textures, and the rooms stay crisp DOM above it with a static CSS halo on their frames
- * not         scanlines (vector tubes had none; scanlines are ACI's), a curvature gimmick, a blocking dependency; it does not skin the rooms (see HOW IT WORKS)
+ * not         scanlines (vector tubes drew lines, not rasters, so they had none), a curvature gimmick, a blocking dependency; it does not skin the rooms (see HOW IT WORKS)
  * deps        none · WebGL1 when present, a clean no-op otherwise · 2026-09
  * budget      0.24 ms/frame JS (3 uploads + 5 passes) @ 2160x1350 internal (1440x900 x1.5), desktop Chromium 149 on an AMD RX 5600M (D3D11), 2026-09-29;
  *             A/B over 5 s of scroll, frame work with the tube 4.7 to 5.5 ms vs 4.2 to 5.7 ms without (inside the noise);

@@ -2,7 +2,7 @@
  * technique   the designed idle of a switched-on vector tube: a centre bloom on the vanishing point, one horizontal
  *             hairline that breathes, an inset bezel; nothing else
  * lineage     the idle screen of a vector CRT with no program loaded (the oscilloscope at rest; Vectrex, 1982, between games)
- * original    THIS IS THE PLACEHOLDER the core mounts for any bay whose module has not landed yet (02 to 08 today), so
+ * original    the placeholder the core mounts for any bay whose module has not landed yet, so
  *             the ride works end to end and a bay with no module still reads as a machine on the row. Builders replace
  *             it by registering role 'bay' with the bay's slug (docs/CONTRACT.md); the core prefers a real module.
  * not         a loading spinner, a "coming soon" card, text of any kind. Its nameplate below is the bay's real copy.

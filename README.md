@@ -1,10 +1,11 @@
 # BONEYARD
 
-A Tucson boneyard at night, of display machines. Retired consoles and scopes stand in a row on
-the desert floor under a survey light-grid, tubes still on, each drawing the one thing it was
-built to draw. You fly down the row. Every screen is a room; every room is a part you can pull.
+A scrolling web page set in an imagined Tucson boneyard of display machines at night. Retired
+consoles and scopes stand in a row on the desert floor under a light-grid, tubes still on, each
+drawing the one thing it was built to draw. You scroll to fly down the row. Each screen is a bay,
+and each bay's effect is a standalone part you can pull.
 
-A Desert Data Labs web experience and, at the same time, DDL's living library of motion effects:
+A Desert Data Labs web experience and a library of motion effects:
 every effect is one plain file with a provenance header, a `PARAMS` block and a fixed
 `mount(canvas, params, ctx)` API, and the build emits each one as a standalone `parts/<slug>.html`.
 
@@ -63,7 +64,7 @@ deploy stops if that changes any committed output, which means someone forgot to
 **GitHub Actions**. Before pushing: `node build.js` (and `node tools/capture.mjs` if a still
 changed), then commit the outputs together with the source.
 
-## The lift test (the library's promise)
+## The lift test
 
 Every part must survive being lifted out of the repo:
 

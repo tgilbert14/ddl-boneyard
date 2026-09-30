@@ -16,7 +16,7 @@
  * On mount the module reads the sentence already in the element (the static line that ships in the HTML and is what
  * a visitor without JavaScript reads), splits it into one span per glyph, and builds a track holding two copies of
  * that span run. The track slides by exactly one copy width per cycle (translateX to -50% of a two-copy track), so the
- * loop is seamless; the cycle length is the copy width divided by pxPerSecond, measured once on start.
+ * loop joins without a jump; the cycle length is the copy width divided by pxPerSecond, measured once on start.
  *
  * Each glyph carries --d, a negative animation-delay of -(i mod phases) * period / phases, so one keyframe pair
  * produces a standing wave across the line. All of it is CSS transform: no JavaScript runs per frame. Hover or focus
