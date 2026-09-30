@@ -28,7 +28,7 @@ const bootBoneyardRide = () => {
     liveZone: 0.3,            /* |p| < liveZone: the room is switched on */
     focal: 2.0,               /* units: far-frame scale = focal / (focal + d) */
     slowFrame: 20, slowCount: 30, scaleSteps: [1, 0.75, 0.5],
-    autoflyBaysPerSecond: 1 / 9, autoflyDwell: 3,
+    autoflyTravel: 4.2, autoflyDwell: 4.2, autoflyOpening: 0.35,
     minStateS: 0.35,   /* a room holds on or off at least this long: fast scrubbing cannot strobe switches (WCAG 2.3.1) */
     greetingsAt: 4, chevronAt: 8,
     /* which canvas corridor plays in the gap between two bays (SWITCH plays on every transition) */
@@ -62,7 +62,7 @@ const bootBoneyardRide = () => {
   /* the dial attribute goes on early so the CSS stills apply before first paint; the full wiring is below */
   const rmq = matchMedia('(prefers-reduced-motion: reduce)');
   const storedDial = keep.get('boneyard_dial');
-  html.dataset.dial = ['full', 'calm', 'still'].includes(storedDial) ? storedDial : (rmq.matches ? 'still' : navigator.connection?.saveData ? 'calm' : 'full');
+  html.dataset.dial = ['full', 'calm', 'still'].includes(storedDial) ? storedDial : 'full';
   ctx.dial = html.dataset.dial;
 
   /* ---------- geometry ---------- */
@@ -352,32 +352,72 @@ const bootBoneyardRide = () => {
     else if (!liveTimer) liveTimer = setTimeout(() => { liveTimer = 0; paintLive(); }, wait);
   };
 
-  /* ---------- Auto-fly: a visible button, reading pace, any input stops it ---------- */
-  let autofly = false, dwell = 0, dwellAt = -1;
+  /* ---------- Auto-fly: authored travel, exact scene stops, immediate manual takeover ---------- */
+  let autofly = false, flight = null;
+  const flyTop = (i) => Math.min(bays[i].top, Math.max(0, document.documentElement.scrollHeight - H));
+  const flyEase = (p) => p * p * p * (10 + p * (-15 + 6 * p));
+  function flyLeg(i) {
+    const from = window.scrollY, to = flyTop(i), distance = Math.abs(to - from) / Math.max(1, len);
+    const fromBay = bays.reduce((best, b) => b.top <= from ? b.i : best, 0);
+    flight = { phase: 'travel', target: i, from, to, fromBay, fromOffset: (from - bays[fromBay].top) / len, elapsed: 0,
+      duration: Math.max(0.8, CFG.autoflyTravel * Math.sqrt(distance) * (ctx.dial === 'calm' ? 1.25 : 1)) };
+  }
+  function flyHold(i, duration) { flight = { phase: 'hold', target: i, elapsed: 0, duration }; }
   function setAutofly(on) {
     if (on === autofly) return;
     if (on && ctx.dial === 'still') return;
     autofly = on;
     hud.autofly.setAttribute('aria-pressed', String(on));
-    hud.autofly.textContent = on ? 'Stop' : 'Auto-fly';
+    hud.autofly.setAttribute('aria-label', on ? 'Pause auto-fly' : 'Start auto-fly');
+    hud.autofly.textContent = on ? 'Pause' : 'Auto-fly';
     html.classList.toggle('autofly', on);
-    if (on) { dwell = 0; dwellAt = -1; if (scrollY >= bays[LAST].el.offsetTop - 2) window.scrollTo({ top: 0, behavior: 'auto' }); }
+    if (on) {
+      const y = window.scrollY;
+      const near = bays.reduce((best, b) => Math.abs(flyTop(b.i) - y) < Math.abs(flyTop(best) - y) ? b.i : best, 0);
+      if (y >= flyTop(LAST) - 2) flyLeg(0);     /* replay returns through the corridor, never a hard jump */
+      else if (Math.abs(flyTop(near) - y) < 2) flyHold(near, near === 0 ? CFG.autoflyOpening : CFG.autoflyDwell);
+      else flyLeg(bays.find((b) => flyTop(b.i) > y + 2)?.i ?? LAST);
+    } else flight = null;
+    dispatchEvent(new CustomEvent('boneyard:autofly', { detail: { active: on } }));
     wake();
   }
   hud.autofly.addEventListener('click', () => setAutofly(!autofly));
   for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown']) {
-    addEventListener(type, (e) => { if (autofly && !(['pointerdown', 'keydown'].includes(type) && e.target?.closest?.('#autofly'))) setAutofly(false); }, { passive: true, capture: true });
+    addEventListener(type, (e) => {
+      if (!autofly) return;
+      if (type !== 'wheel' && e.target?.closest?.('#autofly, #sound, #ride-settings')) return;
+      if (type === 'keydown' && ['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) return;
+      setAutofly(false);
+    }, { passive: true, capture: true });
   }
+  addEventListener('pagehide', () => setAutofly(false));
+  addEventListener('blur', () => setAutofly(false));
+  document.addEventListener('visibilitychange', () => { if (document.hidden) setAutofly(false); });
+  addEventListener('resize', () => {
+    if (!autofly || !flight) return;
+    if (flight.phase === 'hold') window.scrollTo({ top: flyTop(flight.target), behavior: 'instant' });
+    else {
+      flight.from = bays[flight.fromBay].top + flight.fromOffset * len;
+      flight.to = flyTop(flight.target);
+      const p = Math.min(1, flight.elapsed / flight.duration);
+      window.scrollTo({ top: flight.from + (flight.to - flight.from) * flyEase(p), behavior: 'instant' });
+    }
+  });
   function flyStep(dt) {
-    if (!autofly) return;
-    const near = Math.round(scrollY / len);
-    const p = (scrollY - bays[near].top) / len;
-    if (Math.abs(p) < 0.012 && dwellAt !== near) { dwell += dt; if (dwell < CFG.autoflyDwell) return; dwellAt = near; dwell = 0; }
-    const top = bays[LAST].top;
-    if (scrollY >= top - 1) { setAutofly(false); return; }
-    const next = Math.min(top, scrollY + len * CFG.autoflyBaysPerSecond * dt * (ctx.dial === 'calm' ? 0.5 : 1));
-    const target = bays[Math.min(LAST, near + 1)].top;
-    window.scrollTo({ top: (next > target - 0.5 && scrollY < target) ? target : next, behavior: 'auto' });
+    if (!autofly || !flight) return;
+    flight.elapsed += dt;
+    if (flight.phase === 'hold') {
+      if (flight.elapsed < flight.duration) return;
+      if (flight.target >= LAST) { setAutofly(false); return; }
+      flyLeg(flight.target + 1); return;
+    }
+    const p = Math.min(1, flight.elapsed / flight.duration);
+    const ease = flyEase(p);  /* zero velocity and acceleration at each end */
+    window.scrollTo({ top: flight.from + (flight.to - flight.from) * ease, behavior: 'instant' });
+    if (p === 1) {
+      if (flight.target >= LAST) setAutofly(false);
+      else flyHold(flight.target, flight.target === 0 ? CFG.autoflyOpening : CFG.autoflyDwell);
+    }
   }
 
   /* ---------- ?dev=1: the tweak row for the current bay's PARAMS ---------- */
@@ -427,7 +467,7 @@ const bootBoneyardRide = () => {
     wake();
   }
   applyDial(html.dataset.dial, false);
-  rmq.addEventListener('change', () => { if (!keep.get('boneyard_dial')) applyDial(rmq.matches ? 'still' : navigator.connection?.saveData ? 'calm' : 'full', false); });
+  rmq.addEventListener('change', () => { if (!keep.get('boneyard_dial') && rmq.matches) applyDial('still', false); });
   hud.dial.addEventListener('change', (e) => { if (e.target.checked) applyDial(e.target.value, true); });
 
   /* ---------- the world task ---------- */
@@ -518,7 +558,7 @@ const bootBoneyardRide = () => {
   setTimeout(() => { if (window.scrollY < 4 && ctx.dial === 'full' && cue) { cue.classList.add('pulse'); } }, CFG.chevronAt * 1000);
 
   /* dev surface: the measured numbers, never the HUD's business unless ?dev=1 */
-  window.BONEYARD_RIDE = { ctx, bays, layers, get corridor() { return corridor; }, stats: Ticker.stats, CFG, get current() { return current; } };
+  window.BONEYARD_RIDE = { ctx, bays, layers, get corridor() { return corridor; }, stats: Ticker.stats, CFG, get current() { return current; }, get autofly() { return autofly; }, get flight() { return flight && { ...flight }; } };
 };
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootBoneyardRide, { once: true });
 else bootBoneyardRide();

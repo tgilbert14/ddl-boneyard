@@ -1,13 +1,13 @@
-/* BONEYARD SOUND · the opt-in engine room (PUNCH item 7)
- * what        one SOUND button in settings. Off until a visitor opts in; an explicit choice is remembered. When on: a low synth engine bed whose pitch and filter
+/* BONEYARD SOUND · the gesture-led engine room (PUNCH item 7)
+ * what        one SOUND button in the header. Sound is enabled by default, but stays silent until a visitor scrolls,
+ *             uses ride navigation or starts Auto-fly. An explicit on or off choice is remembered. When sounding: a low synth engine bed whose pitch and filter
  *             follow scroll speed, a CRT relay clunk plus a high-voltage whine tick on every tube switch, a rising
  *             filtered-noise whoosh with a pitch sweep when a hyperspace warp crosses 0.6. SCOPE keeps its own tone.
- * law         no autoplay before a real gesture. No AudioContext exists until the visitor's first pointerup /
- *             keydown / touchend (scroll and wheel are not activation), and then the bed rises over 1.5 s behind one
- *             soft switch-on clunk. No gate, no overlay: the page runs silent until then. An explicit off is stored
- *             and wins. Default OFF under the dial's Still or prefers-reduced-motion.
- *             Hidden tab suspends the context. The dial's Still mutes it unless SOUND is pressed while in Still,
- *             and even then no whooshes. The bed ducks to near zero while SCOPE is current and held.
+ * law         no playback before real ride intent. Pointer, touch and keyboard gestures may unlock a silent context;
+ *             a scroll, navigation action or active Auto-fly request starts the bed. A wheel alone cannot unlock audio
+ *             in every browser, so a blocked request is shown as pending and the SOUND button completes it. An explicit
+ *             stored off always wins. Sound is independent of the motion dial. Hidden tabs suspend the context.
+ *             The bed ducks to near zero while SCOPE is current and held.
  * wiring      no BAYS registration and no core edit: a self-starting IIFE that reads window.BONEYARD_RIDE
  *             (camera.v, share.warp, pointer.down, current) on its own rAF while running, and listens for the
  *             window CustomEvents boneyard:switch {dir, slug} and boneyard:warp {level}. Until those events exist,
@@ -159,55 +159,118 @@
 
   /* ---------- the live rig ---------- */
   let ac = null, g = null, raf = 0;
-  /* the choice: an explicit 'off' wins; 'on' is on; nothing stored = on, unless Still or reduced motion */
-  const quiet = () => (window.BONEYARD_RIDE ? window.BONEYARD_RIDE.ctx.dial : document.documentElement.dataset.dial) === 'still' || matchMedia('(prefers-reduced-motion: reduce)').matches;
   const saved = store.get();
-  let pref = saved === 'on';              /* resolved at boot, once the core has set the dial */
-  let explicit = saved === 'on' || saved === 'off';
-  let stillOk = false;                    /* SOUND pressed while the dial sits on Still */
-  let armed = false;                      /* remembered "on" waiting for this visit's first gesture */
+  let pref = saved !== 'off';              /* fresh visits and remembered on both begin enabled */
+  let requested = false;                   /* a ride action has asked for audible playback */
+  let outputLive = false;                  /* the graph's master has been raised */
+  let igniteOnStart = true, pressOnStart = false;
+  let resumeFlight = null, resumeToken = 0, sleepT = 0;
   let lastClunk = { on: -1, off: -1 }, lastWhoosh = -1, warpHigh = false, sawSwitchEvent = false, prevBay = null;
   let sm = 0, lastY = window.scrollY, yMovedAt = 0;
   const stats = { clunks: 0, whooshes: 0, freq: 0, speed: 0, ducked: false };
 
   const ride = () => window.BONEYARD_RIDE || null;
   const dial = () => { const r = ride(); return (r && r.ctx.dial) || document.documentElement.dataset.dial || 'full'; };
-  const allowed = () => pref && (dial() !== 'still' || stillOk);
-  const audible = () => allowed() && !!ac && !document.hidden;
+  const running = () => !!ac && ac.state === 'running';
+  const audible = () => pref && requested && outputLive && running() && !document.hidden;
+  const outputLevel = () => g ? g.master.gain.value : 0;
+  const playing = () => audible() && outputLevel() > 0;
+  const pending = () => pref && requested && !document.hidden && (!ACtx || !running() || !outputLive);
   const btn = () => document.getElementById('sound');
 
   function paint() {
     const b = btn(); if (!b) return;
-    const on = allowed();
-    b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    b.dataset.state = on ? 'on' : 'off';
+    const wait = pending(), state = !pref ? 'off' : wait ? 'pending' : 'on';
+    b.setAttribute('aria-pressed', pref ? 'true' : 'false');
+    b.dataset.state = state;
+    if (!pref) {
+      b.setAttribute('aria-label', 'Sound off');
+      b.title = 'Turn on sound';
+    } else if (wait) {
+      b.setAttribute('aria-label', 'Sound pending. Tap to start sound');
+      b.title = ACtx ? 'Tap to start sound' : 'Sound is unavailable in this browser';
+    } else if (audible()) {
+      b.setAttribute('aria-label', 'Sound on');
+      b.title = 'Mute sound';
+    } else {
+      b.setAttribute('aria-label', 'Sound on');
+      b.title = 'Mute sound';
+    }
     const label = b.querySelector('[data-label]') || (b.children.length ? null : b);
-    if (label) label.textContent = on ? 'Sound on' : 'Sound off';
+    if (label) label.textContent = state === 'pending' ? 'Sound pending' : state === 'on' ? 'Sound on' : 'Sound off';
   }
 
-  /* create or resume the context: only ever called from inside a user gesture */
-  function wake(press) {
-    if (!ACtx) return;
-    if (!ac) { ac = new ACtx(); g = graph(ac); }
-    const p = ac.state !== 'running' && ac.resume ? ac.resume() : null;
-    /* armed stays true until the context is really running: without activation Chrome leaves resume() pending
-       forever, so clearing it here left the default-on sound silent for the whole visit (Smaug round 2, KILL 2) */
-    Promise.resolve(p).catch(() => {}).then(() => {
-      if (ac.state !== 'running') { armed = allowed(); return; }   /* blocked: try again on the next gesture */
-      armed = false;
-      if (!audible()) { sleep(); return; }
-      g.level(true);
-      g.ignite(ac.currentTime, !press);   /* switch-on clunk + bed rise: 0.6 s on a press, 1.5 s and soft on the first gesture */
-      loop();
-    });
-  }
-  let sleepT = 0;
-  function sleep() {
-    if (!ac) return;
-    cancelAnimationFrame(raf); raf = 0;
-    g.level(false);
+  function engage() {
+    if (!g || !pref || !requested || document.hidden || !running()) { paint(); return; }
     clearTimeout(sleepT);
-    sleepT = setTimeout(() => { if (ac && !audible() && ac.state === 'running') ac.suspend(); }, 180);
+    if (!outputLive) {
+      outputLive = true;
+      g.level(true);
+      if (igniteOnStart) {
+        g.ignite(ac.currentTime, !pressOnStart);   /* explicit SOUND is quick; ride intent gets the softer 1.5 s rise */
+        igniteOnStart = false;
+      }
+      pressOnStart = false;
+    }
+    loop();
+    paint();
+  }
+
+  function ensureContext() {
+    if (ac || !ACtx) return ac;
+    try {
+      ac = new ACtx(); g = graph(ac);
+      if (ac.addEventListener) ac.addEventListener('statechange', () => {
+        if (running() && pref && requested && !document.hidden) engage();
+        else paint();
+      });
+    } catch (_) { ac = null; g = null; }
+    return ac;
+  }
+
+  /* A wheel-started resume can remain pending indefinitely. Normal input shares one in-flight resume, while a
+     later trusted gesture may force a fresh call. engage() is idempotent, so racing resolutions never re-ignite. */
+  function resumeAudio(force) {
+    const ctx = ensureContext();
+    if (!ctx) { paint(); return Promise.resolve(false); }
+    if (ctx.state === 'running') { if (requested) engage(); else paint(); return Promise.resolve(true); }
+    if (resumeFlight && !force) { paint(); return resumeFlight.promise; }
+    const token = ++resumeToken;
+    let attempt;
+    try { attempt = ctx.resume ? ctx.resume() : null; } catch (_) { attempt = Promise.reject(_); }
+    const promise = Promise.resolve(attempt).catch(() => false).then(() => {
+      if (ac === ctx && ctx.state === 'running') {
+        if (pref && requested && !document.hidden) engage(); else paint();
+        return true;
+      }
+      paint();
+      return false;
+    }).then((ok) => {
+      if (resumeFlight && resumeFlight.token === token) resumeFlight = null;
+      return ok;
+    });
+    resumeFlight = { token, promise };
+    paint();
+    return promise;
+  }
+
+  function requestSound(press, forceResume) {
+    if (!pref) return;
+    requested = true;
+    pressOnStart = pressOnStart || !!press;
+    if (document.hidden) { paint(); return; }
+    resumeAudio(!!forceResume);
+  }
+
+  function silence() {
+    outputLive = false;
+    cancelAnimationFrame(raf); raf = 0;
+    if (g && running()) g.level(false);
+    clearTimeout(sleepT);
+    sleepT = setTimeout(() => {
+      if (ac && !outputLive && ac.state === 'running' && ac.suspend) Promise.resolve(ac.suspend()).catch(() => {});
+    }, 180);
+    paint();
   }
 
   /* the ticker: speed, warp, SCOPE duck, fallback bay switch */
@@ -260,56 +323,131 @@
       if (level < 0.6 || warpHigh) return;
       warpHigh = true;
     }
-    if (!audible() || !ac || ac.state !== 'running' || dial() === 'still') return;
+    if (!audible() || !ac || ac.state !== 'running') return;
     const now = ac.currentTime; if (now - lastWhoosh < MIX.whooshGap) return;
     lastWhoosh = now; stats.whooshes++; g.whoosh(dial() === 'calm' ? 0.6 : 1);
   }
-  const rouse = () => { if (!raf && ac && ac.state === 'running' && audible() && !document.hidden) loop(); };
-  addEventListener('scroll', rouse, { passive: true });
-  addEventListener('pointerdown', rouse, { passive: true });
-  addEventListener('keydown', rouse);
+  const rouse = () => { if (!raf && running() && audible()) loop(); };
   addEventListener('boneyard:switch', (e) => { rouse(); sawSwitchEvent = true; onSwitch(e.detail && e.detail.dir); });
   addEventListener('boneyard:warp', (e) => { rouse(); sawWarpEvent = true; onWarp(+(e.detail && e.detail.level) || 1, true); });
+
+  /* ---------- intent and browser activation ---------- */
+  let pointerActive = false, touchActive = false, scrollIntentUntil = 0, lastTrustedResume = -Infinity;
+  let autoflyClick = false, pendingSoundUntil = 0, completesPendingSound = false;
+  const now = () => performance.now();
+  const trusted = (e) => e && e.isTrusted === true;
+  const navKey = (e) => !e.altKey && !e.ctrlKey && !e.metaKey &&
+    ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' ', 'Spacebar'].includes(e.key) &&
+    !(e.target && e.target.closest && e.target.closest('input, select, textarea, [contenteditable="true"]'));
+
+  /* Pointer and touch starts can unlock Web Audio while the graph is still at zero. De-duplicate the paired
+     pointerdown/touchstart that mobile browsers often send for one finger. */
+  function unlockFromGesture() {
+    if (!pref || document.hidden) return;
+    const t = now(), force = t - lastTrustedResume > 80;
+    lastTrustedResume = t;
+    resumeAudio(force);
+  }
+  addEventListener('pointerdown', (e) => {
+    if (!trusted(e)) return;
+    if (e.target && e.target.closest && e.target.closest('#sound') && pending()) {
+      pendingSoundUntil = now() + 1500; pressOnStart = true;
+    }
+    pointerActive = true; scrollIntentUntil = now() + (e.pointerType === 'touch' ? 4000 : 800);
+    unlockFromGesture(); rouse();
+  }, { capture: true, passive: true });
+  addEventListener('pointerup', (e) => {
+    if (!trusted(e)) return;
+    pointerActive = false; scrollIntentUntil = now() + (e.pointerType === 'touch' ? 1800 : 700);
+  }, { capture: true, passive: true });
+  addEventListener('pointercancel', () => { pointerActive = false; scrollIntentUntil = now() + 700; }, { passive: true });
+  addEventListener('touchstart', (e) => {
+    if (!trusted(e)) return;
+    touchActive = true; scrollIntentUntil = now() + 4000; unlockFromGesture();
+  }, { capture: true, passive: true });
+  addEventListener('touchend', (e) => {
+    if (!trusted(e)) return;
+    touchActive = false; scrollIntentUntil = now() + 1800;
+  }, { capture: true, passive: true });
+  addEventListener('touchcancel', () => { touchActive = false; scrollIntentUntil = now() + 700; }, { passive: true });
+  addEventListener('wheel', (e) => {
+    if (!trusted(e)) return;
+    requestSound(false, false); rouse();
+  }, { capture: true, passive: true });
+  addEventListener('scroll', () => {
+    if (pointerActive || touchActive || now() < scrollIntentUntil) requestSound(false, false);
+    rouse();
+  }, { passive: true });
+  addEventListener('keydown', (e) => {
+    if (!trusted(e) || e.altKey || e.ctrlKey || e.metaKey || ['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) return;
+    if (e.target && e.target.closest && e.target.closest('#sound') && pending()) {
+      pendingSoundUntil = now() + 1500; pressOnStart = true;
+    }
+    unlockFromGesture();
+    if (navKey(e)) { scrollIntentUntil = now() + 1200; requestSound(false, false); }
+  }, true);
+
+  /* Capture proves that the app's synthetic boneyard:autofly event was dispatched synchronously by a real click. */
+  document.addEventListener('click', (e) => {
+    if (!trusted(e) || !e.target || !e.target.closest) return;
+    if (e.target.closest('#sound')) {
+      completesPendingSound = pending() || now() < pendingSoundUntil;
+      if (completesPendingSound) { pressOnStart = true; unlockFromGesture(); }
+      return;
+    }
+    const auto = e.target.closest('#autofly');
+    if (auto) {
+      autoflyClick = true; unlockFromGesture();
+      /* Clear in the next task. Some browsers run a microtask checkpoint between capture and target listeners. */
+      setTimeout(() => { autoflyClick = false; }, 0);
+      return;
+    }
+    if (e.target.closest('a[href^="#"], .nav-step')) {
+      scrollIntentUntil = now() + 1200; unlockFromGesture(); requestSound(false, false);
+    }
+  }, true);
+  addEventListener('boneyard:autofly', (e) => {
+    if (autoflyClick && e.detail && e.detail.active === true) requestSound(false, false);
+  });
 
   /* ---------- the button (delegated, so markup that lands late still works) ---------- */
   document.addEventListener('click', (e) => {
     const b = e.target.closest && e.target.closest('#sound'); if (!b) return;
-    explicit = true; armed = false;
-    if (allowed()) { pref = false; stillOk = false; store.set('off'); paint(); sleep(); return; }
-    pref = true; if (dial() === 'still') stillOk = true; store.set('on'); paint();
-    wake(true);
+    if (!trusted(e)) return;
+    if (completesPendingSound || pending()) {
+      completesPendingSound = false; pendingSoundUntil = 0;
+      if (!audible()) { pressOnStart = !outputLive; resumeAudio(true); } else paint();
+      return;
+    }
+    if (pref) {
+      pref = false; requested = false; pressOnStart = false; igniteOnStart = true;
+      store.set('off'); silence(); return;
+    }
+    pref = true; requested = true; pressOnStart = true; igniteOnStart = true;
+    store.set('on'); paint(); resumeAudio(true);
   });
-  /* default or remembered "on": the first real gesture of the visit starts it (a press on SOUND is the click's business) */
-  const QUIET_KEYS = new Set(['Tab', 'Escape', 'Shift', 'Control', 'Alt', 'Meta', 'CapsLock']);
-  const gesture = (e) => {
-    if (!armed || (e.target && e.target.closest && e.target.closest('#sound'))) return;
-    if (e.type === 'keydown' && (QUIET_KEYS.has(e.key) || e.ctrlKey || e.metaKey || e.altKey)) return;   /* a keyboard user reaches the control first */
-    if (navigator.userActivation && !navigator.userActivation.isActive) return;   /* a scroll swipe's touchend is not a gesture */
-    if (allowed()) wake(false);
-  };
-  addEventListener('pointerup', gesture, true);
-  addEventListener('keydown', gesture, true);
-  addEventListener('touchend', gesture, { capture: true, passive: true });
 
-  /* hidden tab: suspend; back: resume if still wanted (the tab was already unlocked by a gesture) */
+  /* Hidden tab: suspend. A visible tab resumes an already requested mix without another ignition clunk. */
   document.addEventListener('visibilitychange', () => {
     if (!ac) return;
-    if (document.hidden) { cancelAnimationFrame(raf); raf = 0; if (ac.state === 'running') ac.suspend(); }
-    else if (audible()) { ac.resume().then(() => { g.level(true); loop(); }).catch(() => {}); }
-  });
-  /* the dial: entering Still revokes the in-session consent (press SOUND again to have it back, no whooshes) */
-  document.addEventListener('change', (e) => {
-    if (!e.target || e.target.name !== 'dial') return;
-    if (e.target.value === 'still') stillOk = false;
-    if (!explicit) pref = false;   /* an untouched default follows the dial */
-    paint();
-    if (!allowed() || document.hidden) { sleep(); return; }
-    if (ac && ac.state === 'running') { g.level(true); loop(); } else wake(false);   /* the dial change is itself a gesture */
+    if (document.hidden) {
+      cancelAnimationFrame(raf); raf = 0;
+      if (ac.state === 'running' && ac.suspend) Promise.resolve(ac.suspend()).catch(() => {});
+      paint();
+    } else if (pref && requested) resumeAudio(false);
+    else paint();
   });
 
-  const boot = () => { if (!explicit) pref = false; armed = allowed(); paint(); };
+  const boot = () => paint();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true }); else boot();
 
   /* dev and test surface: the graph builder (for an OfflineAudioContext render) and live numbers */
-  window.BONEYARD_SOUND = { graph, MIX, stats, get context() { return ac; }, get on() { return allowed(); } };
+  window.BONEYARD_SOUND = {
+    graph, MIX, stats,
+    get context() { return ac; },
+    get on() { return pref; },
+    get pending() { return pending(); },
+    get playing() { return playing(); },
+    get outputLevel() { return outputLevel(); },
+  };
 })();

@@ -19,8 +19,9 @@ this is not a fully certified REVAMP release evidence pass.
 The original native-scroll ride and all eight real effects remain. The opening is now a procedural
 desert yard of physical CRT machines showing the work itself. Long default paragraphs became
 optional About disclosures. Named desktop navigation becomes one phone dock. Warp and Scope have
-explicit hold controls; Range, Relief, Terminator and Mark have tap/keyboard turns. The sound bed
-starts off. Still follows the OS motion preference; Save-Data chooses Calm and a lower canvas tier.
+explicit hold controls; Range, Relief, Terminator and Mark have tap/keyboard turns. The initial
+revamp kept sound off and followed OS motion preferences. The owner-requested follow-up below
+changes those defaults. Save-Data retains a lower canvas tier.
 
 The shelf uses actual effect captures, local search and role filters. A part opens a canvas-first
 workbench with validated parameters, reset, configured URLs, actual PNG export and configured HTML
@@ -94,3 +95,28 @@ rendering were not verified. CSS includes forced-color treatment and keyboard/to
 source inspection does not certify those device checks. Software Chromium can decline the WebGL
 tube, so hardware WebGL coverage remains a release check. Existing dated module budgets describe
 the prior measured implementation; this review does not relabel them as new measurements.
+
+## Cinematic tour and sound follow-up
+
+The owner requested a smoother cinematic tour, sound on scroll or Auto-fly, Full and sound-on
+defaults, and publication after polish. Travel now uses easing with zero velocity and acceleration
+at each end, exact scene positions, and 4.2-second scene holds. Pause, manual scroll and scene
+interaction return control; tab hiding stops the tour. Replay travels back to the opening.
+Resizing preserves the current scene and travel progress. Sound and motion controls stay usable
+throughout, with a visible 44px mute target and stable pressed feedback. Fresh Full and sound-on
+defaults honor this explicit request; saved motion and mute choices remain remembered.
+
+Sound stays silent before ride intent. First scroll requests the engine bed; Auto-fly starts it
+within the click gesture. Browsers that deny first-wheel playback show a one-tap pending state.
+Mute fades and suspends audio, persists after reload, and is respected by subsequent scrolling
+and Auto-fly. Still remains independent of the sound choice.
+
+`ride-checks.json` records 18 passing installed-Chromium checks, no page errors and no external
+requests. The first leg and dwell use real default timing. The complete nine-leg route test uses
+compressed configured timing. Checks include orientation resize during a hold, keyboard Tab,
+visible mute during flight, pause, wheel takeover, remembered mute, phone touch start/pause, 320px
+layout and 44px controls, Still, shelf completion, replay and Escape. The blocked-audio recovery
+test injects an AudioContext resume denial with actual native audio nodes and a trusted tap;
+it is a controlled integration test, not a hardware Safari autoplay observation. The in-app
+browser tour and pause were also exercised and visually inspected. `ride-phone.png` shows the
+updated phone controls. Physical-device and cross-browser limits above remain open.

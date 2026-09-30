@@ -23,8 +23,15 @@ The opening is a procedural desert observatory with CRT machines showing capture
 actual effects. Native scrolling carries you through eight full-screen bays. Named navigation
 and previous/next buttons provide a direct path. The phone dock opens a compact bay menu;
 warp and Scope have explicit hold buttons, and rotating objects have tap and keyboard turns.
-Sound is off until chosen. Reduced motion starts in Still; Save-Data starts in Calm at a lower
-canvas resolution. Necessary context and provenance are behind About, leaving the ride visual.
+Full motion and sound enabled are the defaults, as requested by the owner on 2026-09-30.
+The sound engine stays silent until scrolling or Auto-fly starts the ride. Some browsers require
+a tap to unlock audio after a first wheel scroll; the visible sound button handles that and mute.
+Explicit saved motion and mute choices persist. Save-Data keeps a lower canvas resolution.
+Necessary context and provenance are behind About, leaving the ride visual.
+
+Auto-fly eases between exact scene positions, pauses at each effect, and finishes at the shelf.
+Pause, manual scrolling, scene interaction and Escape return control immediately. Sound and motion
+settings remain usable during the tour. Hiding the tab pauses it; it does not advance in the background.
 
 The parts shelf is an image-led library with local search and role filters. Each part opens a
 canvas-first workbench with parameters, reset, a configured URL, a PNG frame export and an HTML
@@ -77,7 +84,9 @@ exists, the shelf shows a plain link and that part's og:image falls back to `og-
 With a local preview running, `node tools/measure.mjs` records a CPU-throttled localhost lab
 in `docs/revamp/lab.json`. `node tools/verify-artifacts.mjs` checks every standalone Still mount,
 exports and lifts four exact configured files, and renders the no-JavaScript paths. Both borrow
-the existing workstation Playwright runtime. This tooling is separate from the dependency-free
+the existing workstation Playwright runtime. `node tools/verify-ride.mjs` exercises tour timing,
+phone start/pause, manual takeover, sound activation, browser-blocked recovery and remembered mute.
+This tooling is separate from the dependency-free
 shipped page. See the review for actual conditions and untested browsers/devices.
 
 ## Deploy

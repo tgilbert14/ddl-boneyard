@@ -110,7 +110,10 @@ simply try `assets/` then `../assets/`). Fetch nothing from other hosts.
   live counter and write the number in your header.
 - **Still first.** Design the still frame before the motion.
 - **One vanishing point.** Anything with depth converges on `ctx.vp`.
-- **No autoplay audio.** SCOPE is the only bay with sound, and only while held.
+- **No pre-interaction audio.** The owner requested an enabled engine bed after scroll or Auto-fly
+  on 2026-09-30. A visible mute control and remembered explicit off remain available. Browser audio
+  activation is respected; a blocked first wheel scroll offers tap recovery. SCOPE's own tones
+  still sound only while held, and the engine ducks underneath them.
 - **The lift test.** `parts/<slug>.html` copied into an empty folder next to a copy of `assets/`
   must run with no requests to other hosts, show the still under reduced motion, and respond to the
   PARAMS row.

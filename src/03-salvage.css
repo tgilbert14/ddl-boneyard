@@ -18,6 +18,13 @@ html.js:not(.ignited) .yard__title { text-shadow: 0 0 22px var(--glow-far) !impo
 .shelf-link { padding: 0 10px; color: var(--ink); text-decoration: none; gap: 12px; font-size: 11px; }
 .shelf-link span { color: var(--amber); }
 .autofly, .sound { border-color: var(--line); min-height: 44px; background: var(--scrim-deep); border-radius: 2px; font-size: 10px; }
+.autofly { min-width: 84px; }
+.sound { position: relative; width: 44px; padding: 0; flex: none; }
+.sound svg { width: 21px; height: 21px; }
+.sound-muted { display: none; }
+.sound[data-state="off"] .sound-waves { display: none; }
+.sound[data-state="off"] .sound-muted { display: block; }
+.sound[data-state="pending"]::after { content: ''; position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); top: 6px; right: 6px; }
 .settings { position: relative; }
 .settings summary { cursor: pointer; padding: 0; list-style: none; width: 44px; border: 1px solid var(--line); background: var(--scrim-deep); }
 .settings summary::-webkit-details-marker { display: none; }
@@ -28,7 +35,6 @@ html.js:not(.ignited) .yard__title { text-shadow: 0 0 22px var(--glow-far) !impo
 .dial { flex-wrap: wrap; gap: 0; }
 .dial legend { position: static; width: 100%; height: auto; clip: auto; font-size: 10px; color: var(--ink-dim); margin-bottom: 12px; letter-spacing: .14em; }
 .dial label { flex: 1; min-height: 44px; padding: 8px; justify-content: center; font-size: 10px; }
-.settings-panel .sound { width: 100%; margin-top: 14px; }
 .bay-navigation { position: fixed; bottom: max(20px, env(safe-area-inset-bottom)); left: 50%; translate: -50% 0; width: min(92vw, 1040px); padding: 7px; border: 1px solid var(--line); background: var(--scrim-deep); display: flex; align-items: center; gap: 4px; z-index: 21; box-shadow: 0 6px 28px var(--field); }
 .index { position: static; padding: 0; margin: 0; flex: 1; display: flex; gap: 3px; }
 .index li { flex: 1; }
@@ -85,7 +91,8 @@ html.js:not(.ignited) .yard__title { text-shadow: 0 0 22px var(--glow-far) !impo
 .bay-still { display: none; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border: 1px solid var(--line); }
 #dev { bottom: 116px; }
 a, button, summary, .dial label { -webkit-tap-highlight-color: transparent; }
-.enter-ride:active, .parts-entry:active, .pull:active, .nav-step:active, .bay-menu:active, .autofly:active, .sound:active, .settings summary:active { transform: translateY(2px); }
+.enter-ride:active, .parts-entry:active, .pull:active, .nav-step:active, .bay-menu:active, .settings summary:active { transform: translateY(2px); }
+.autofly:active, .sound:active { background: var(--glow-far); box-shadow: inset 0 0 0 1px var(--amber); }
 .index a:active { background: var(--amber); color: var(--field); }
 @media (max-width: 1000px) and (min-width: 721px) { .nav-name { font-size: 9px; } .index a { padding-inline: 7px; } .hud__clock { display: none; } }
 @media (max-width: 720px) {
@@ -95,7 +102,7 @@ a, button, summary, .dial label { -webkit-tap-highlight-color: transparent; }
   .hud__clock { display: none; }
   .hud-actions { top: max(14px, env(safe-area-inset-top)); gap: 4px; }
   .shelf-link { font-size: 10px; gap: 7px; padding: 0 7px; }
-  .autofly { padding: 0 9px; font-size: 9px; background: transparent; border-color: transparent; }
+  .autofly { min-width: 68px; padding: 0 8px; font-size: 9px; background: transparent; border-color: transparent; }
   .settings summary { border-color: transparent; background: transparent; }
   .settings-panel { width: 245px; }
   .hud__readout { top: 72px; left: var(--hud-pad); right: var(--hud-pad); max-width: none; font-size: 9px; line-height: 1.6; }
@@ -129,6 +136,7 @@ a, button, summary, .dial label { -webkit-tap-highlight-color: transparent; }
   .signoff nav a { font-size: 10px; }
   #dev { bottom: 209px; max-height: 30svh; overflow: auto; }
 }
+@media (max-width: 380px) { .yard-brand span { display: none; } }
 @media (max-width: 370px) { .yard-brand span { display: none; } .plate h2 { font-size: 16px; } .pull { min-width: 76px; } .yard-entry { gap: 7px; } }
 @media (max-height: 560px) and (min-width: 721px) { .bay--yard { padding-top: 82px; } .yard__kicker { margin-bottom: 8px; } .yard__title { font-size: 7vw; } .yard__line { margin-top: 8px; } .yard-entry { bottom: 94px; } .hud__readout { top: 65px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto; } }

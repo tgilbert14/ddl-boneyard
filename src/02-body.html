@@ -22,13 +22,14 @@
   <div class="hud__readout hud__js" id="hud-readout" aria-live="off">The yard</div>
   <div class="hud-actions">
     <a class="shelf-link" href="parts/index.html">Parts <span aria-hidden="true">↗</span></a>
-    <button type="button" class="autofly hud__js" id="autofly" aria-pressed="false">Auto-fly</button>
-    <details class="settings hud__js" id="ride-settings"><summary aria-label="Motion and sound settings"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true"><path d="M3 5H17M3 10H17M3 15H17"/><circle cx="7" cy="5" r="2" fill="var(--field)"/><circle cx="13" cy="10" r="2" fill="var(--field)"/><circle cx="8" cy="15" r="2" fill="var(--field)"/></svg></summary>
+    <button type="button" class="autofly hud__js" id="autofly" aria-label="Start auto-fly" aria-pressed="false">Auto-fly</button>
+    <button type="button" class="sound hud__js" id="sound" aria-label="Sound on" aria-pressed="true" title="Mute sound" data-state="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9H7L12 5V19L7 15H3Z"/><g class="sound-waves"><path d="M16 8C18 10 18 14 16 16M19 5C23 9 23 15 19 19"/></g><path class="sound-muted" d="M16 9L22 15M22 9L16 15"/></svg></button>
+    <details class="settings hud__js" id="ride-settings"><summary aria-label="Motion settings"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true"><path d="M3 5H17M3 10H17M3 15H17"/><circle cx="7" cy="5" r="2" fill="var(--field)"/><circle cx="13" cy="10" r="2" fill="var(--field)"/><circle cx="8" cy="15" r="2" fill="var(--field)"/></svg></summary>
       <div class="settings-panel"><fieldset class="dial" id="dial"><legend>Motion</legend>
         <label><input type="radio" name="dial" id="dial-full" value="full"><span>Full</span></label>
         <label><input type="radio" name="dial" id="dial-calm" value="calm"><span>Calm</span></label>
         <label><input type="radio" name="dial" id="dial-still" value="still"><span>Still</span></label>
-      </fieldset><button type="button" class="sound" id="sound" aria-pressed="false">Sound off</button></div>
+      </fieldset></div>
     </details>
   </div>
   <nav class="bay-navigation" aria-label="Explore the eight bays">
@@ -81,7 +82,7 @@
 
   <section class="bay" id="scope" data-bay="7" data-slug="scope" data-holds="true" aria-labelledby="h-scope">
     <img class="bay-still" src="parts/stills/scope.webp" width="480" height="270" loading="lazy" alt="Scope, the designed still frame">
-    <div class="plate"><div class="plate-heading"><h2 id="h-scope"><span class="n">07</span>Scope</h2><a class="pull" href="parts/scope.html" aria-label="Pull Scope: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg><span>Pull part</span><span aria-hidden="true">↗</span></a></div><div class="plate-footer"><button type="button" class="bay-hold" aria-pressed="false">Hold to hear the trace <span aria-hidden="true">◉</span></button><details class="bay-info"><summary>About</summary><div class="bay-info-body"><p class="lineage">Oscilloscope XY mode · Lissajous figures, Jules Antoine Lissajous, 1857</p><p class="note">Hold the pointer or Space to hear two tones; the trace then draws the actual audio signal, left channel across and right channel up. Nothing on this row makes a sound unless you hold it down.</p></div></details></div></div>
+    <div class="plate"><div class="plate-heading"><h2 id="h-scope"><span class="n">07</span>Scope</h2><a class="pull" href="parts/scope.html" aria-label="Pull Scope: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg><span>Pull part</span><span aria-hidden="true">↗</span></a></div><div class="plate-footer"><button type="button" class="bay-hold" aria-pressed="false">Hold to hear the trace <span aria-hidden="true">◉</span></button><details class="bay-info"><summary>About</summary><div class="bay-info-body"><p class="lineage">Oscilloscope XY mode · Lissajous figures, Jules Antoine Lissajous, 1857</p><p class="note">Hold the pointer or Space to hear two tones; the trace then draws the actual audio signal, left channel across and right channel up. The engine bed fades down while the trace sings.</p></div></details></div></div>
   </section>
 
   <section class="bay" id="mark" data-bay="8" data-slug="mark" aria-labelledby="h-mark">

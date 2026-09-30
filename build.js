@@ -125,7 +125,7 @@ const page = `<!doctype html>
    The page is one ~240 KB file; its first paint lands long before the core boots, and flipping html.js then
    moved the whole main (measured CLS 1.0 at 4x CPU / slow 4G). JS off never runs this: the index layout. */
 (function(h){h.classList.add('js');var d=null;try{d=localStorage.getItem('boneyard_dial')}catch(_){}
-h.dataset.dial=(d==='full'||d==='calm'||d==='still')?d:(matchMedia('(prefers-reduced-motion: reduce)').matches?'still':navigator.connection&&navigator.connection.saveData?'calm':'full');})(document.documentElement);</script>
+h.dataset.dial=(d==='full'||d==='calm'||d==='still')?d:'full';})(document.documentElement);</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect x='6' y='6' width='84' height='84' rx='22' fill='%23030509' stroke='%238ef3ff' stroke-width='4'/%3E%3Cg fill='none' stroke='%238ef3ff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M48 22V76'/%3E%3Cpath d='M48 31L59 41 48 51 37 41Z'/%3E%3Cpath d='M36 76H60'/%3E%3C/g%3E%3C/svg%3E">
 <style>
 ${css}

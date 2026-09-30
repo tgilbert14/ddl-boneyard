@@ -1,0 +1,501 @@
+{
+  "passed": true,
+  "observed_at": "2026-09-30T19:04:34.184Z",
+  "base": "http://127.0.0.1:4186/",
+  "conditions": "Installed Chromium, normal autoplay policy, real first-leg timing; complete-route state test uses compressed configured timing. Phone is emulated Chromium, not hardware Safari.",
+  "checks": [
+    {
+      "name": "Fresh defaults: Full, sound enabled, silent before intent",
+      "motion": "full",
+      "y": 0,
+      "on": true,
+      "pending": false,
+      "audio": null,
+      "playing": false,
+      "outputLevel": 0,
+      "flight": null,
+      "autofly": false,
+      "soundState": "on",
+      "overflow": false
+    },
+    {
+      "name": "Auto-fly starts audio and travels monotonically with real default timing",
+      "samples": [
+        {
+          "motion": "full",
+          "y": 0,
+          "on": true,
+          "pending": false,
+          "audio": "running",
+          "playing": true,
+          "outputLevel": 0.25,
+          "flight": {
+            "phase": "travel",
+            "target": 1,
+            "from": 0,
+            "to": 900,
+            "fromBay": 0,
+            "fromOffset": 0,
+            "elapsed": 0,
+            "duration": 4.2
+          },
+          "autofly": true,
+          "soundState": "on",
+          "overflow": false
+        },
+        {
+          "motion": "full",
+          "y": 1,
+          "on": true,
+          "pending": false,
+          "audio": "running",
+          "playing": true,
+          "outputLevel": 0.25,
+          "flight": {
+            "phase": "travel",
+            "target": 1,
+            "from": 0,
+            "to": 900,
+            "fromBay": 0,
+            "fromOffset": 0,
+            "elapsed": 0.2000999999999999,
+            "duration": 4.2
+          },
+          "autofly": true,
+          "soundState": "on",
+          "overflow": false
+        },
+        {
+          "motion": "full",
+          "y": 7,
+          "on": true,
+          "pending": false,
+          "audio": "running",
+          "playing": true,
+          "outputLevel": 0.25,
+          "flight": {
+            "phase": "travel",
+            "target": 1,
+            "from": 0,
+            "to": 900,
+            "fromBay": 0,
+            "fromOffset": 0,
+            "elapsed": 0.4083,
+            "duration": 4.2
+          },
+          "autofly": true,
+          "soundState": "on",
+          "overflow": false
+        },
+        {
+          "motion": "full",
+          "y": 22,
+          "on": true,
+          "pending": false,
+          "audio": "running",
+          "playing": true,
+          "outputLevel": 0.25,
+          "flight": {
+            "phase": "travel",
+            "target": 1,
+            "from": 0,
+            "to": 900,
+            "fromBay": 0,
+            "fromOffset": 0,
+            "elapsed": 0.6083000000000001,
+            "duration": 4.2
+          },
+          "autofly": true,
+          "soundState": "on",
+          "overflow": false
+        },
+        {
+          "motion": "full",
+          "y": 47,
+          "on": true,
+          "pending": false,
+          "audio": "running",
+          "playing": true,
+          "outputLevel": 0.25,
+          "flight": {
+            "phase": "travel",
+            "target": 1,
+            "from": 0,
+            "to": 900,
+            "fromBay": 0,
+            "fromOffset": 0,
+            "elapsed": 0.8081000000000002,
+            "duration": 4.2
+          },
+          "autofly": true,
+          "soundState": "on",
+          "overflow": false
+        },
+        {
+          "motion": "full",
+          "y": 88,
+          "on": true,
+          "pending": false,
+          "audio": "running",
+          "playing": true,
+          "outputLevel": 0.25,
+          "flight": {
+            "phase": "travel",
+            "target": 1,
+            "from": 0,
+            "to": 900,
+            "fromBay": 0,
+            "fromOffset": 0,
+            "elapsed": 1.0250000000000004,
+            "duration": 4.2
+          },
+          "autofly": true,
+          "soundState": "on",
+          "overflow": false
+        },
+        {
+          "motion": "full",
+          "y": 137,
+          "on": true,
+          "pending": false,
+          "audio": "running",
+          "playing": true,
+          "outputLevel": 0.25,
+          "flight": {
+            "phase": "travel",
+            "target": 1,
+            "from": 0,
+            "to": 900,
+            "fromBay": 0,
+            "fromOffset": 0,
+            "elapsed": 1.2241000000000009,
+            "duration": 4.2
+          },
+          "autofly": true,
+          "soundState": "on",
+          "overflow": false
+        },
+        {
+          "motion": "full",
+          "y": 200,
+          "on": true,
+          "pending": false,
+          "audio": "running",
+          "playing": true,
+          "outputLevel": 0.25,
+          "flight": {
+            "phase": "travel",
+            "target": 1,
+            "from": 0,
+            "to": 900,
+            "fromBay": 0,
+            "fromOffset": 0,
+            "elapsed": 1.433400000000002,
+            "duration": 4.2
+          },
+          "autofly": true,
+          "soundState": "on",
+          "overflow": false
+        },
+        {
+          "motion": "full",
+          "y": 272,
+          "on": true,
+          "pending": false,
+          "audio": "running",
+          "playing": true,
+          "outputLevel": 0.25,
+          "flight": {
+            "phase": "travel",
+            "target": 1,
+            "from": 0,
+            "to": 900,
+            "fromBay": 0,
+            "fromOffset": 0,
+            "elapsed": 1.6417000000000024,
+            "duration": 4.2
+          },
+          "autofly": true,
+          "soundState": "on",
+          "overflow": false
+        }
+      ]
+    },
+    {
+      "name": "Exact Jump stop and deliberate dwell",
+      "motion": "full",
+      "y": 900,
+      "on": true,
+      "pending": false,
+      "audio": "running",
+      "playing": true,
+      "outputLevel": 0.25,
+      "flight": {
+        "phase": "hold",
+        "target": 1,
+        "elapsed": 0,
+        "duration": 4.2
+      },
+      "autofly": true,
+      "soundState": "on",
+      "overflow": false
+    },
+    {
+      "name": "Resize during dwell keeps the same scene",
+      "motion": "full",
+      "y": 390,
+      "on": true,
+      "pending": false,
+      "audio": "running",
+      "playing": true,
+      "outputLevel": 0.25,
+      "flight": {
+        "phase": "hold",
+        "target": 1,
+        "elapsed": 0.6334,
+        "duration": 4.2
+      },
+      "autofly": true,
+      "soundState": "on",
+      "overflow": false
+    },
+    {
+      "name": "Tab navigation does not interrupt tour",
+      "motion": "full",
+      "y": 900,
+      "on": true,
+      "pending": false,
+      "audio": "running",
+      "playing": true,
+      "outputLevel": 0.25,
+      "flight": {
+        "phase": "hold",
+        "target": 1,
+        "elapsed": 0.7667000000000003,
+        "duration": 4.2
+      },
+      "autofly": true,
+      "soundState": "on",
+      "overflow": false
+    },
+    {
+      "name": "Visible mute works without stopping tour",
+      "motion": "full",
+      "y": 900,
+      "on": false,
+      "pending": false,
+      "audio": "suspended",
+      "playing": false,
+      "outputLevel": 0,
+      "flight": {
+        "phase": "hold",
+        "target": 1,
+        "elapsed": 1.0500000000000007,
+        "duration": 4.2
+      },
+      "autofly": true,
+      "soundState": "off",
+      "overflow": false
+    },
+    {
+      "name": "Pause holds current position",
+      "motion": "full",
+      "y": 900,
+      "on": false,
+      "pending": false,
+      "audio": "suspended",
+      "playing": false,
+      "outputLevel": 0,
+      "flight": null,
+      "autofly": false,
+      "soundState": "off",
+      "overflow": false
+    },
+    {
+      "name": "Wheel takes over and explicit mute persists",
+      "motion": "full",
+      "y": 1030,
+      "on": false,
+      "pending": false,
+      "audio": "suspended",
+      "playing": false,
+      "outputLevel": 0,
+      "flight": null,
+      "autofly": false,
+      "soundState": "off",
+      "overflow": false
+    },
+    {
+      "name": "Mute survives reload",
+      "motion": "full",
+      "y": 1030,
+      "on": false,
+      "pending": false,
+      "audio": null,
+      "playing": false,
+      "outputLevel": 0,
+      "flight": null,
+      "autofly": false,
+      "soundState": "off",
+      "overflow": false
+    },
+    {
+      "name": "Phone tap starts and pauses exactly once",
+      "motion": "full",
+      "y": 0,
+      "on": true,
+      "pending": false,
+      "audio": "running",
+      "playing": true,
+      "outputLevel": 0.25,
+      "flight": null,
+      "autofly": false,
+      "soundState": "on",
+      "overflow": false
+    },
+    {
+      "name": "320px phone controls fit with 44px targets",
+      "motion": "full",
+      "y": 0,
+      "on": true,
+      "pending": false,
+      "audio": "running",
+      "playing": true,
+      "outputLevel": 0.25,
+      "flight": null,
+      "autofly": false,
+      "soundState": "on",
+      "overflow": false,
+      "controls": {
+        "overlap": false,
+        "buttons": [
+          {
+            "label": "Start auto-fly",
+            "width": 68,
+            "height": 44
+          },
+          {
+            "label": "Sound on",
+            "width": 44,
+            "height": 44
+          },
+          {
+            "label": "Motion settings",
+            "width": 44,
+            "height": 44
+          }
+        ]
+      }
+    },
+    {
+      "name": "Still disables flight while keeping sound independent",
+      "motion": "still",
+      "y": 0,
+      "on": true,
+      "pending": false,
+      "audio": "running",
+      "playing": true,
+      "outputLevel": 0.25,
+      "flight": null,
+      "autofly": false,
+      "soundState": "on",
+      "overflow": false
+    },
+    {
+      "name": "First wheel requests sound or truthfully offers tap fallback",
+      "motion": "full",
+      "y": 300,
+      "on": true,
+      "pending": true,
+      "audio": "suspended",
+      "playing": false,
+      "outputLevel": 0,
+      "flight": null,
+      "autofly": false,
+      "soundState": "pending",
+      "overflow": false
+    },
+    {
+      "name": "Tap unlocks blocked first-wheel audio",
+      "motion": "full",
+      "y": 300,
+      "on": true,
+      "pending": false,
+      "audio": "running",
+      "playing": true,
+      "outputLevel": 0.25,
+      "flight": null,
+      "autofly": false,
+      "soundState": "on",
+      "overflow": false
+    },
+    {
+      "name": "Injected wheel-policy denial recovers with one touch, without muting",
+      "motion": "full",
+      "y": 250,
+      "on": true,
+      "pending": false,
+      "audio": "running",
+      "playing": true,
+      "outputLevel": 0.0442708320915699,
+      "flight": null,
+      "autofly": false,
+      "soundState": "on",
+      "overflow": false,
+      "method": "AudioContext subclass denies non-activation resume; actual Web Audio nodes and a trusted tap."
+    },
+    {
+      "name": "Whole nine-leg route reaches shelf and stops (compressed timing)",
+      "motion": "full",
+      "y": 8100,
+      "on": true,
+      "pending": false,
+      "audio": "running",
+      "playing": true,
+      "outputLevel": 0.25,
+      "flight": null,
+      "autofly": false,
+      "soundState": "on",
+      "overflow": false
+    },
+    {
+      "name": "Replay returns smoothly instead of jumping to opening",
+      "motion": "full",
+      "y": 7937,
+      "on": true,
+      "pending": false,
+      "audio": "running",
+      "playing": true,
+      "outputLevel": 0.25,
+      "flight": {
+        "phase": "travel",
+        "target": 0,
+        "from": 8100,
+        "to": 0,
+        "fromBay": 9,
+        "fromOffset": 0,
+        "elapsed": 0.10840000000000144,
+        "duration": 0.8
+      },
+      "autofly": true,
+      "soundState": "on",
+      "overflow": false
+    },
+    {
+      "name": "Escape stops flight",
+      "motion": "full",
+      "y": 7937,
+      "on": true,
+      "pending": false,
+      "audio": "running",
+      "playing": true,
+      "outputLevel": 0.25,
+      "flight": null,
+      "autofly": false,
+      "soundState": "on",
+      "overflow": false
+    }
+  ],
+  "errors": [],
+  "external": []
+}

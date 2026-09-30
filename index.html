@@ -22,7 +22,7 @@
    The page is one ~240 KB file; its first paint lands long before the core boots, and flipping html.js then
    moved the whole main (measured CLS 1.0 at 4x CPU / slow 4G). JS off never runs this: the index layout. */
 (function(h){h.classList.add('js');var d=null;try{d=localStorage.getItem('boneyard_dial')}catch(_){}
-h.dataset.dial=(d==='full'||d==='calm'||d==='still')?d:(matchMedia('(prefers-reduced-motion: reduce)').matches?'still':navigator.connection&&navigator.connection.saveData?'calm':'full');})(document.documentElement);</script>
+h.dataset.dial=(d==='full'||d==='calm'||d==='still')?d:'full';})(document.documentElement);</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect x='6' y='6' width='84' height='84' rx='22' fill='%23030509' stroke='%238ef3ff' stroke-width='4'/%3E%3Cg fill='none' stroke='%238ef3ff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M48 22V76'/%3E%3Cpath d='M48 31L59 41 48 51 37 41Z'/%3E%3Cpath d='M36 76H60'/%3E%3C/g%3E%3C/svg%3E">
 <style>
 /* Embedded font copyright notices and licenses
@@ -683,6 +683,13 @@ html.js:not(.ignited) .yard__title { text-shadow: 0 0 22px var(--glow-far) !impo
 .shelf-link { padding: 0 10px; color: var(--ink); text-decoration: none; gap: 12px; font-size: 11px; }
 .shelf-link span { color: var(--amber); }
 .autofly, .sound { border-color: var(--line); min-height: 44px; background: var(--scrim-deep); border-radius: 2px; font-size: 10px; }
+.autofly { min-width: 84px; }
+.sound { position: relative; width: 44px; padding: 0; flex: none; }
+.sound svg { width: 21px; height: 21px; }
+.sound-muted { display: none; }
+.sound[data-state="off"] .sound-waves { display: none; }
+.sound[data-state="off"] .sound-muted { display: block; }
+.sound[data-state="pending"]::after { content: ''; position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--amber); top: 6px; right: 6px; }
 .settings { position: relative; }
 .settings summary { cursor: pointer; padding: 0; list-style: none; width: 44px; border: 1px solid var(--line); background: var(--scrim-deep); }
 .settings summary::-webkit-details-marker { display: none; }
@@ -693,7 +700,6 @@ html.js:not(.ignited) .yard__title { text-shadow: 0 0 22px var(--glow-far) !impo
 .dial { flex-wrap: wrap; gap: 0; }
 .dial legend { position: static; width: 100%; height: auto; clip: auto; font-size: 10px; color: var(--ink-dim); margin-bottom: 12px; letter-spacing: .14em; }
 .dial label { flex: 1; min-height: 44px; padding: 8px; justify-content: center; font-size: 10px; }
-.settings-panel .sound { width: 100%; margin-top: 14px; }
 .bay-navigation { position: fixed; bottom: max(20px, env(safe-area-inset-bottom)); left: 50%; translate: -50% 0; width: min(92vw, 1040px); padding: 7px; border: 1px solid var(--line); background: var(--scrim-deep); display: flex; align-items: center; gap: 4px; z-index: 21; box-shadow: 0 6px 28px var(--field); }
 .index { position: static; padding: 0; margin: 0; flex: 1; display: flex; gap: 3px; }
 .index li { flex: 1; }
@@ -750,7 +756,8 @@ html.js:not(.ignited) .yard__title { text-shadow: 0 0 22px var(--glow-far) !impo
 .bay-still { display: none; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border: 1px solid var(--line); }
 #dev { bottom: 116px; }
 a, button, summary, .dial label { -webkit-tap-highlight-color: transparent; }
-.enter-ride:active, .parts-entry:active, .pull:active, .nav-step:active, .bay-menu:active, .autofly:active, .sound:active, .settings summary:active { transform: translateY(2px); }
+.enter-ride:active, .parts-entry:active, .pull:active, .nav-step:active, .bay-menu:active, .settings summary:active { transform: translateY(2px); }
+.autofly:active, .sound:active { background: var(--glow-far); box-shadow: inset 0 0 0 1px var(--amber); }
 .index a:active { background: var(--amber); color: var(--field); }
 @media (max-width: 1000px) and (min-width: 721px) { .nav-name { font-size: 9px; } .index a { padding-inline: 7px; } .hud__clock { display: none; } }
 @media (max-width: 720px) {
@@ -760,7 +767,7 @@ a, button, summary, .dial label { -webkit-tap-highlight-color: transparent; }
   .hud__clock { display: none; }
   .hud-actions { top: max(14px, env(safe-area-inset-top)); gap: 4px; }
   .shelf-link { font-size: 10px; gap: 7px; padding: 0 7px; }
-  .autofly { padding: 0 9px; font-size: 9px; background: transparent; border-color: transparent; }
+  .autofly { min-width: 68px; padding: 0 8px; font-size: 9px; background: transparent; border-color: transparent; }
   .settings summary { border-color: transparent; background: transparent; }
   .settings-panel { width: 245px; }
   .hud__readout { top: 72px; left: var(--hud-pad); right: var(--hud-pad); max-width: none; font-size: 9px; line-height: 1.6; }
@@ -794,6 +801,7 @@ a, button, summary, .dial label { -webkit-tap-highlight-color: transparent; }
   .signoff nav a { font-size: 10px; }
   #dev { bottom: 209px; max-height: 30svh; overflow: auto; }
 }
+@media (max-width: 380px) { .yard-brand span { display: none; } }
 @media (max-width: 370px) { .yard-brand span { display: none; } .plate h2 { font-size: 16px; } .pull { min-width: 76px; } .yard-entry { gap: 7px; } }
 @media (max-height: 560px) and (min-width: 721px) { .bay--yard { padding-top: 82px; } .yard__kicker { margin-bottom: 8px; } .yard__title { font-size: 7vw; } .yard__line { margin-top: 8px; } .yard-entry { bottom: 94px; } .hud__readout { top: 65px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto; } }
@@ -867,13 +875,14 @@ html.js:not(.departed) #rooms { visibility:hidden; }
   <div class="hud__readout hud__js" id="hud-readout" aria-live="off">The yard</div>
   <div class="hud-actions">
     <a class="shelf-link" href="parts/index.html">Parts <span aria-hidden="true">↗</span></a>
-    <button type="button" class="autofly hud__js" id="autofly" aria-pressed="false">Auto-fly</button>
-    <details class="settings hud__js" id="ride-settings"><summary aria-label="Motion and sound settings"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true"><path d="M3 5H17M3 10H17M3 15H17"/><circle cx="7" cy="5" r="2" fill="var(--field)"/><circle cx="13" cy="10" r="2" fill="var(--field)"/><circle cx="8" cy="15" r="2" fill="var(--field)"/></svg></summary>
+    <button type="button" class="autofly hud__js" id="autofly" aria-label="Start auto-fly" aria-pressed="false">Auto-fly</button>
+    <button type="button" class="sound hud__js" id="sound" aria-label="Sound on" aria-pressed="true" title="Mute sound" data-state="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9H7L12 5V19L7 15H3Z"/><g class="sound-waves"><path d="M16 8C18 10 18 14 16 16M19 5C23 9 23 15 19 19"/></g><path class="sound-muted" d="M16 9L22 15M22 9L16 15"/></svg></button>
+    <details class="settings hud__js" id="ride-settings"><summary aria-label="Motion settings"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" aria-hidden="true"><path d="M3 5H17M3 10H17M3 15H17"/><circle cx="7" cy="5" r="2" fill="var(--field)"/><circle cx="13" cy="10" r="2" fill="var(--field)"/><circle cx="8" cy="15" r="2" fill="var(--field)"/></svg></summary>
       <div class="settings-panel"><fieldset class="dial" id="dial"><legend>Motion</legend>
         <label><input type="radio" name="dial" id="dial-full" value="full"><span>Full</span></label>
         <label><input type="radio" name="dial" id="dial-calm" value="calm"><span>Calm</span></label>
         <label><input type="radio" name="dial" id="dial-still" value="still"><span>Still</span></label>
-      </fieldset><button type="button" class="sound" id="sound" aria-pressed="false">Sound off</button></div>
+      </fieldset></div>
     </details>
   </div>
   <nav class="bay-navigation" aria-label="Explore the eight bays">
@@ -926,7 +935,7 @@ html.js:not(.departed) #rooms { visibility:hidden; }
 
   <section class="bay" id="scope" data-bay="7" data-slug="scope" data-holds="true" aria-labelledby="h-scope">
     <img class="bay-still" src="parts/stills/scope.webp" width="480" height="270" loading="lazy" alt="Scope, the designed still frame">
-    <div class="plate"><div class="plate-heading"><h2 id="h-scope"><span class="n">07</span>Scope</h2><a class="pull" href="parts/scope.html" aria-label="Pull Scope: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg><span>Pull part</span><span aria-hidden="true">↗</span></a></div><div class="plate-footer"><button type="button" class="bay-hold" aria-pressed="false">Hold to hear the trace <span aria-hidden="true">◉</span></button><details class="bay-info"><summary>About</summary><div class="bay-info-body"><p class="lineage">Oscilloscope XY mode · Lissajous figures, Jules Antoine Lissajous, 1857</p><p class="note">Hold the pointer or Space to hear two tones; the trace then draws the actual audio signal, left channel across and right channel up. Nothing on this row makes a sound unless you hold it down.</p></div></details></div></div>
+    <div class="plate"><div class="plate-heading"><h2 id="h-scope"><span class="n">07</span>Scope</h2><a class="pull" href="parts/scope.html" aria-label="Pull Scope: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg><span>Pull part</span><span aria-hidden="true">↗</span></a></div><div class="plate-footer"><button type="button" class="bay-hold" aria-pressed="false">Hold to hear the trace <span aria-hidden="true">◉</span></button><details class="bay-info"><summary>About</summary><div class="bay-info-body"><p class="lineage">Oscilloscope XY mode · Lissajous figures, Jules Antoine Lissajous, 1857</p><p class="note">Hold the pointer or Space to hear two tones; the trace then draws the actual audio signal, left channel across and right channel up. The engine bed fades down while the trace sings.</p></div></details></div></div>
   </section>
 
   <section class="bay" id="mark" data-bay="8" data-slug="mark" aria-labelledby="h-mark">
@@ -1220,7 +1229,7 @@ const bootBoneyardRide = () => {
     liveZone: 0.3,            /* |p| < liveZone: the room is switched on */
     focal: 2.0,               /* units: far-frame scale = focal / (focal + d) */
     slowFrame: 20, slowCount: 30, scaleSteps: [1, 0.75, 0.5],
-    autoflyBaysPerSecond: 1 / 9, autoflyDwell: 3,
+    autoflyTravel: 4.2, autoflyDwell: 4.2, autoflyOpening: 0.35,
     minStateS: 0.35,   /* a room holds on or off at least this long: fast scrubbing cannot strobe switches (WCAG 2.3.1) */
     greetingsAt: 4, chevronAt: 8,
     /* which canvas corridor plays in the gap between two bays (SWITCH plays on every transition) */
@@ -1254,7 +1263,7 @@ const bootBoneyardRide = () => {
   /* the dial attribute goes on early so the CSS stills apply before first paint; the full wiring is below */
   const rmq = matchMedia('(prefers-reduced-motion: reduce)');
   const storedDial = keep.get('boneyard_dial');
-  html.dataset.dial = ['full', 'calm', 'still'].includes(storedDial) ? storedDial : (rmq.matches ? 'still' : navigator.connection?.saveData ? 'calm' : 'full');
+  html.dataset.dial = ['full', 'calm', 'still'].includes(storedDial) ? storedDial : 'full';
   ctx.dial = html.dataset.dial;
 
   /* ---------- geometry ---------- */
@@ -1544,32 +1553,72 @@ const bootBoneyardRide = () => {
     else if (!liveTimer) liveTimer = setTimeout(() => { liveTimer = 0; paintLive(); }, wait);
   };
 
-  /* ---------- Auto-fly: a visible button, reading pace, any input stops it ---------- */
-  let autofly = false, dwell = 0, dwellAt = -1;
+  /* ---------- Auto-fly: authored travel, exact scene stops, immediate manual takeover ---------- */
+  let autofly = false, flight = null;
+  const flyTop = (i) => Math.min(bays[i].top, Math.max(0, document.documentElement.scrollHeight - H));
+  const flyEase = (p) => p * p * p * (10 + p * (-15 + 6 * p));
+  function flyLeg(i) {
+    const from = window.scrollY, to = flyTop(i), distance = Math.abs(to - from) / Math.max(1, len);
+    const fromBay = bays.reduce((best, b) => b.top <= from ? b.i : best, 0);
+    flight = { phase: 'travel', target: i, from, to, fromBay, fromOffset: (from - bays[fromBay].top) / len, elapsed: 0,
+      duration: Math.max(0.8, CFG.autoflyTravel * Math.sqrt(distance) * (ctx.dial === 'calm' ? 1.25 : 1)) };
+  }
+  function flyHold(i, duration) { flight = { phase: 'hold', target: i, elapsed: 0, duration }; }
   function setAutofly(on) {
     if (on === autofly) return;
     if (on && ctx.dial === 'still') return;
     autofly = on;
     hud.autofly.setAttribute('aria-pressed', String(on));
-    hud.autofly.textContent = on ? 'Stop' : 'Auto-fly';
+    hud.autofly.setAttribute('aria-label', on ? 'Pause auto-fly' : 'Start auto-fly');
+    hud.autofly.textContent = on ? 'Pause' : 'Auto-fly';
     html.classList.toggle('autofly', on);
-    if (on) { dwell = 0; dwellAt = -1; if (scrollY >= bays[LAST].el.offsetTop - 2) window.scrollTo({ top: 0, behavior: 'auto' }); }
+    if (on) {
+      const y = window.scrollY;
+      const near = bays.reduce((best, b) => Math.abs(flyTop(b.i) - y) < Math.abs(flyTop(best) - y) ? b.i : best, 0);
+      if (y >= flyTop(LAST) - 2) flyLeg(0);     /* replay returns through the corridor, never a hard jump */
+      else if (Math.abs(flyTop(near) - y) < 2) flyHold(near, near === 0 ? CFG.autoflyOpening : CFG.autoflyDwell);
+      else flyLeg(bays.find((b) => flyTop(b.i) > y + 2)?.i ?? LAST);
+    } else flight = null;
+    dispatchEvent(new CustomEvent('boneyard:autofly', { detail: { active: on } }));
     wake();
   }
   hud.autofly.addEventListener('click', () => setAutofly(!autofly));
   for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown']) {
-    addEventListener(type, (e) => { if (autofly && !(['pointerdown', 'keydown'].includes(type) && e.target?.closest?.('#autofly'))) setAutofly(false); }, { passive: true, capture: true });
+    addEventListener(type, (e) => {
+      if (!autofly) return;
+      if (type !== 'wheel' && e.target?.closest?.('#autofly, #sound, #ride-settings')) return;
+      if (type === 'keydown' && ['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) return;
+      setAutofly(false);
+    }, { passive: true, capture: true });
   }
+  addEventListener('pagehide', () => setAutofly(false));
+  addEventListener('blur', () => setAutofly(false));
+  document.addEventListener('visibilitychange', () => { if (document.hidden) setAutofly(false); });
+  addEventListener('resize', () => {
+    if (!autofly || !flight) return;
+    if (flight.phase === 'hold') window.scrollTo({ top: flyTop(flight.target), behavior: 'instant' });
+    else {
+      flight.from = bays[flight.fromBay].top + flight.fromOffset * len;
+      flight.to = flyTop(flight.target);
+      const p = Math.min(1, flight.elapsed / flight.duration);
+      window.scrollTo({ top: flight.from + (flight.to - flight.from) * flyEase(p), behavior: 'instant' });
+    }
+  });
   function flyStep(dt) {
-    if (!autofly) return;
-    const near = Math.round(scrollY / len);
-    const p = (scrollY - bays[near].top) / len;
-    if (Math.abs(p) < 0.012 && dwellAt !== near) { dwell += dt; if (dwell < CFG.autoflyDwell) return; dwellAt = near; dwell = 0; }
-    const top = bays[LAST].top;
-    if (scrollY >= top - 1) { setAutofly(false); return; }
-    const next = Math.min(top, scrollY + len * CFG.autoflyBaysPerSecond * dt * (ctx.dial === 'calm' ? 0.5 : 1));
-    const target = bays[Math.min(LAST, near + 1)].top;
-    window.scrollTo({ top: (next > target - 0.5 && scrollY < target) ? target : next, behavior: 'auto' });
+    if (!autofly || !flight) return;
+    flight.elapsed += dt;
+    if (flight.phase === 'hold') {
+      if (flight.elapsed < flight.duration) return;
+      if (flight.target >= LAST) { setAutofly(false); return; }
+      flyLeg(flight.target + 1); return;
+    }
+    const p = Math.min(1, flight.elapsed / flight.duration);
+    const ease = flyEase(p);  /* zero velocity and acceleration at each end */
+    window.scrollTo({ top: flight.from + (flight.to - flight.from) * ease, behavior: 'instant' });
+    if (p === 1) {
+      if (flight.target >= LAST) setAutofly(false);
+      else flyHold(flight.target, flight.target === 0 ? CFG.autoflyOpening : CFG.autoflyDwell);
+    }
   }
 
   /* ---------- ?dev=1: the tweak row for the current bay's PARAMS ---------- */
@@ -1619,7 +1668,7 @@ const bootBoneyardRide = () => {
     wake();
   }
   applyDial(html.dataset.dial, false);
-  rmq.addEventListener('change', () => { if (!keep.get('boneyard_dial')) applyDial(rmq.matches ? 'still' : navigator.connection?.saveData ? 'calm' : 'full', false); });
+  rmq.addEventListener('change', () => { if (!keep.get('boneyard_dial') && rmq.matches) applyDial('still', false); });
   hud.dial.addEventListener('change', (e) => { if (e.target.checked) applyDial(e.target.value, true); });
 
   /* ---------- the world task ---------- */
@@ -1710,7 +1759,7 @@ const bootBoneyardRide = () => {
   setTimeout(() => { if (window.scrollY < 4 && ctx.dial === 'full' && cue) { cue.classList.add('pulse'); } }, CFG.chevronAt * 1000);
 
   /* dev surface: the measured numbers, never the HUD's business unless ?dev=1 */
-  window.BONEYARD_RIDE = { ctx, bays, layers, get corridor() { return corridor; }, stats: Ticker.stats, CFG, get current() { return current; } };
+  window.BONEYARD_RIDE = { ctx, bays, layers, get corridor() { return corridor; }, stats: Ticker.stats, CFG, get current() { return current; }, get autofly() { return autofly; }, get flight() { return flight && { ...flight }; } };
 };
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootBoneyardRide, { once: true });
 else bootBoneyardRide();
@@ -2469,16 +2518,16 @@ else bootBoneyardRide();
 })();
 
 
-/* BONEYARD SOUND · the opt-in engine room (PUNCH item 7)
- * what        one SOUND button in settings. Off until a visitor opts in; an explicit choice is remembered. When on: a low synth engine bed whose pitch and filter
+/* BONEYARD SOUND · the gesture-led engine room (PUNCH item 7)
+ * what        one SOUND button in the header. Sound is enabled by default, but stays silent until a visitor scrolls,
+ *             uses ride navigation or starts Auto-fly. An explicit on or off choice is remembered. When sounding: a low synth engine bed whose pitch and filter
  *             follow scroll speed, a CRT relay clunk plus a high-voltage whine tick on every tube switch, a rising
  *             filtered-noise whoosh with a pitch sweep when a hyperspace warp crosses 0.6. SCOPE keeps its own tone.
- * law         no autoplay before a real gesture. No AudioContext exists until the visitor's first pointerup /
- *             keydown / touchend (scroll and wheel are not activation), and then the bed rises over 1.5 s behind one
- *             soft switch-on clunk. No gate, no overlay: the page runs silent until then. An explicit off is stored
- *             and wins. Default OFF under the dial's Still or prefers-reduced-motion.
- *             Hidden tab suspends the context. The dial's Still mutes it unless SOUND is pressed while in Still,
- *             and even then no whooshes. The bed ducks to near zero while SCOPE is current and held.
+ * law         no playback before real ride intent. Pointer, touch and keyboard gestures may unlock a silent context;
+ *             a scroll, navigation action or active Auto-fly request starts the bed. A wheel alone cannot unlock audio
+ *             in every browser, so a blocked request is shown as pending and the SOUND button completes it. An explicit
+ *             stored off always wins. Sound is independent of the motion dial. Hidden tabs suspend the context.
+ *             The bed ducks to near zero while SCOPE is current and held.
  * wiring      no BAYS registration and no core edit: a self-starting IIFE that reads window.BONEYARD_RIDE
  *             (camera.v, share.warp, pointer.down, current) on its own rAF while running, and listens for the
  *             window CustomEvents boneyard:switch {dir, slug} and boneyard:warp {level}. Until those events exist,
@@ -2630,55 +2679,118 @@ else bootBoneyardRide();
 
   /* ---------- the live rig ---------- */
   let ac = null, g = null, raf = 0;
-  /* the choice: an explicit 'off' wins; 'on' is on; nothing stored = on, unless Still or reduced motion */
-  const quiet = () => (window.BONEYARD_RIDE ? window.BONEYARD_RIDE.ctx.dial : document.documentElement.dataset.dial) === 'still' || matchMedia('(prefers-reduced-motion: reduce)').matches;
   const saved = store.get();
-  let pref = saved === 'on';              /* resolved at boot, once the core has set the dial */
-  let explicit = saved === 'on' || saved === 'off';
-  let stillOk = false;                    /* SOUND pressed while the dial sits on Still */
-  let armed = false;                      /* remembered "on" waiting for this visit's first gesture */
+  let pref = saved !== 'off';              /* fresh visits and remembered on both begin enabled */
+  let requested = false;                   /* a ride action has asked for audible playback */
+  let outputLive = false;                  /* the graph's master has been raised */
+  let igniteOnStart = true, pressOnStart = false;
+  let resumeFlight = null, resumeToken = 0, sleepT = 0;
   let lastClunk = { on: -1, off: -1 }, lastWhoosh = -1, warpHigh = false, sawSwitchEvent = false, prevBay = null;
   let sm = 0, lastY = window.scrollY, yMovedAt = 0;
   const stats = { clunks: 0, whooshes: 0, freq: 0, speed: 0, ducked: false };
 
   const ride = () => window.BONEYARD_RIDE || null;
   const dial = () => { const r = ride(); return (r && r.ctx.dial) || document.documentElement.dataset.dial || 'full'; };
-  const allowed = () => pref && (dial() !== 'still' || stillOk);
-  const audible = () => allowed() && !!ac && !document.hidden;
+  const running = () => !!ac && ac.state === 'running';
+  const audible = () => pref && requested && outputLive && running() && !document.hidden;
+  const outputLevel = () => g ? g.master.gain.value : 0;
+  const playing = () => audible() && outputLevel() > 0;
+  const pending = () => pref && requested && !document.hidden && (!ACtx || !running() || !outputLive);
   const btn = () => document.getElementById('sound');
 
   function paint() {
     const b = btn(); if (!b) return;
-    const on = allowed();
-    b.setAttribute('aria-pressed', on ? 'true' : 'false');
-    b.dataset.state = on ? 'on' : 'off';
+    const wait = pending(), state = !pref ? 'off' : wait ? 'pending' : 'on';
+    b.setAttribute('aria-pressed', pref ? 'true' : 'false');
+    b.dataset.state = state;
+    if (!pref) {
+      b.setAttribute('aria-label', 'Sound off');
+      b.title = 'Turn on sound';
+    } else if (wait) {
+      b.setAttribute('aria-label', 'Sound pending. Tap to start sound');
+      b.title = ACtx ? 'Tap to start sound' : 'Sound is unavailable in this browser';
+    } else if (audible()) {
+      b.setAttribute('aria-label', 'Sound on');
+      b.title = 'Mute sound';
+    } else {
+      b.setAttribute('aria-label', 'Sound on');
+      b.title = 'Mute sound';
+    }
     const label = b.querySelector('[data-label]') || (b.children.length ? null : b);
-    if (label) label.textContent = on ? 'Sound on' : 'Sound off';
+    if (label) label.textContent = state === 'pending' ? 'Sound pending' : state === 'on' ? 'Sound on' : 'Sound off';
   }
 
-  /* create or resume the context: only ever called from inside a user gesture */
-  function wake(press) {
-    if (!ACtx) return;
-    if (!ac) { ac = new ACtx(); g = graph(ac); }
-    const p = ac.state !== 'running' && ac.resume ? ac.resume() : null;
-    /* armed stays true until the context is really running: without activation Chrome leaves resume() pending
-       forever, so clearing it here left the default-on sound silent for the whole visit (Smaug round 2, KILL 2) */
-    Promise.resolve(p).catch(() => {}).then(() => {
-      if (ac.state !== 'running') { armed = allowed(); return; }   /* blocked: try again on the next gesture */
-      armed = false;
-      if (!audible()) { sleep(); return; }
-      g.level(true);
-      g.ignite(ac.currentTime, !press);   /* switch-on clunk + bed rise: 0.6 s on a press, 1.5 s and soft on the first gesture */
-      loop();
-    });
-  }
-  let sleepT = 0;
-  function sleep() {
-    if (!ac) return;
-    cancelAnimationFrame(raf); raf = 0;
-    g.level(false);
+  function engage() {
+    if (!g || !pref || !requested || document.hidden || !running()) { paint(); return; }
     clearTimeout(sleepT);
-    sleepT = setTimeout(() => { if (ac && !audible() && ac.state === 'running') ac.suspend(); }, 180);
+    if (!outputLive) {
+      outputLive = true;
+      g.level(true);
+      if (igniteOnStart) {
+        g.ignite(ac.currentTime, !pressOnStart);   /* explicit SOUND is quick; ride intent gets the softer 1.5 s rise */
+        igniteOnStart = false;
+      }
+      pressOnStart = false;
+    }
+    loop();
+    paint();
+  }
+
+  function ensureContext() {
+    if (ac || !ACtx) return ac;
+    try {
+      ac = new ACtx(); g = graph(ac);
+      if (ac.addEventListener) ac.addEventListener('statechange', () => {
+        if (running() && pref && requested && !document.hidden) engage();
+        else paint();
+      });
+    } catch (_) { ac = null; g = null; }
+    return ac;
+  }
+
+  /* A wheel-started resume can remain pending indefinitely. Normal input shares one in-flight resume, while a
+     later trusted gesture may force a fresh call. engage() is idempotent, so racing resolutions never re-ignite. */
+  function resumeAudio(force) {
+    const ctx = ensureContext();
+    if (!ctx) { paint(); return Promise.resolve(false); }
+    if (ctx.state === 'running') { if (requested) engage(); else paint(); return Promise.resolve(true); }
+    if (resumeFlight && !force) { paint(); return resumeFlight.promise; }
+    const token = ++resumeToken;
+    let attempt;
+    try { attempt = ctx.resume ? ctx.resume() : null; } catch (_) { attempt = Promise.reject(_); }
+    const promise = Promise.resolve(attempt).catch(() => false).then(() => {
+      if (ac === ctx && ctx.state === 'running') {
+        if (pref && requested && !document.hidden) engage(); else paint();
+        return true;
+      }
+      paint();
+      return false;
+    }).then((ok) => {
+      if (resumeFlight && resumeFlight.token === token) resumeFlight = null;
+      return ok;
+    });
+    resumeFlight = { token, promise };
+    paint();
+    return promise;
+  }
+
+  function requestSound(press, forceResume) {
+    if (!pref) return;
+    requested = true;
+    pressOnStart = pressOnStart || !!press;
+    if (document.hidden) { paint(); return; }
+    resumeAudio(!!forceResume);
+  }
+
+  function silence() {
+    outputLive = false;
+    cancelAnimationFrame(raf); raf = 0;
+    if (g && running()) g.level(false);
+    clearTimeout(sleepT);
+    sleepT = setTimeout(() => {
+      if (ac && !outputLive && ac.state === 'running' && ac.suspend) Promise.resolve(ac.suspend()).catch(() => {});
+    }, 180);
+    paint();
   }
 
   /* the ticker: speed, warp, SCOPE duck, fallback bay switch */
@@ -2731,58 +2843,133 @@ else bootBoneyardRide();
       if (level < 0.6 || warpHigh) return;
       warpHigh = true;
     }
-    if (!audible() || !ac || ac.state !== 'running' || dial() === 'still') return;
+    if (!audible() || !ac || ac.state !== 'running') return;
     const now = ac.currentTime; if (now - lastWhoosh < MIX.whooshGap) return;
     lastWhoosh = now; stats.whooshes++; g.whoosh(dial() === 'calm' ? 0.6 : 1);
   }
-  const rouse = () => { if (!raf && ac && ac.state === 'running' && audible() && !document.hidden) loop(); };
-  addEventListener('scroll', rouse, { passive: true });
-  addEventListener('pointerdown', rouse, { passive: true });
-  addEventListener('keydown', rouse);
+  const rouse = () => { if (!raf && running() && audible()) loop(); };
   addEventListener('boneyard:switch', (e) => { rouse(); sawSwitchEvent = true; onSwitch(e.detail && e.detail.dir); });
   addEventListener('boneyard:warp', (e) => { rouse(); sawWarpEvent = true; onWarp(+(e.detail && e.detail.level) || 1, true); });
+
+  /* ---------- intent and browser activation ---------- */
+  let pointerActive = false, touchActive = false, scrollIntentUntil = 0, lastTrustedResume = -Infinity;
+  let autoflyClick = false, pendingSoundUntil = 0, completesPendingSound = false;
+  const now = () => performance.now();
+  const trusted = (e) => e && e.isTrusted === true;
+  const navKey = (e) => !e.altKey && !e.ctrlKey && !e.metaKey &&
+    ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' ', 'Spacebar'].includes(e.key) &&
+    !(e.target && e.target.closest && e.target.closest('input, select, textarea, [contenteditable="true"]'));
+
+  /* Pointer and touch starts can unlock Web Audio while the graph is still at zero. De-duplicate the paired
+     pointerdown/touchstart that mobile browsers often send for one finger. */
+  function unlockFromGesture() {
+    if (!pref || document.hidden) return;
+    const t = now(), force = t - lastTrustedResume > 80;
+    lastTrustedResume = t;
+    resumeAudio(force);
+  }
+  addEventListener('pointerdown', (e) => {
+    if (!trusted(e)) return;
+    if (e.target && e.target.closest && e.target.closest('#sound') && pending()) {
+      pendingSoundUntil = now() + 1500; pressOnStart = true;
+    }
+    pointerActive = true; scrollIntentUntil = now() + (e.pointerType === 'touch' ? 4000 : 800);
+    unlockFromGesture(); rouse();
+  }, { capture: true, passive: true });
+  addEventListener('pointerup', (e) => {
+    if (!trusted(e)) return;
+    pointerActive = false; scrollIntentUntil = now() + (e.pointerType === 'touch' ? 1800 : 700);
+  }, { capture: true, passive: true });
+  addEventListener('pointercancel', () => { pointerActive = false; scrollIntentUntil = now() + 700; }, { passive: true });
+  addEventListener('touchstart', (e) => {
+    if (!trusted(e)) return;
+    touchActive = true; scrollIntentUntil = now() + 4000; unlockFromGesture();
+  }, { capture: true, passive: true });
+  addEventListener('touchend', (e) => {
+    if (!trusted(e)) return;
+    touchActive = false; scrollIntentUntil = now() + 1800;
+  }, { capture: true, passive: true });
+  addEventListener('touchcancel', () => { touchActive = false; scrollIntentUntil = now() + 700; }, { passive: true });
+  addEventListener('wheel', (e) => {
+    if (!trusted(e)) return;
+    requestSound(false, false); rouse();
+  }, { capture: true, passive: true });
+  addEventListener('scroll', () => {
+    if (pointerActive || touchActive || now() < scrollIntentUntil) requestSound(false, false);
+    rouse();
+  }, { passive: true });
+  addEventListener('keydown', (e) => {
+    if (!trusted(e) || e.altKey || e.ctrlKey || e.metaKey || ['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) return;
+    if (e.target && e.target.closest && e.target.closest('#sound') && pending()) {
+      pendingSoundUntil = now() + 1500; pressOnStart = true;
+    }
+    unlockFromGesture();
+    if (navKey(e)) { scrollIntentUntil = now() + 1200; requestSound(false, false); }
+  }, true);
+
+  /* Capture proves that the app's synthetic boneyard:autofly event was dispatched synchronously by a real click. */
+  document.addEventListener('click', (e) => {
+    if (!trusted(e) || !e.target || !e.target.closest) return;
+    if (e.target.closest('#sound')) {
+      completesPendingSound = pending() || now() < pendingSoundUntil;
+      if (completesPendingSound) { pressOnStart = true; unlockFromGesture(); }
+      return;
+    }
+    const auto = e.target.closest('#autofly');
+    if (auto) {
+      autoflyClick = true; unlockFromGesture();
+      /* Clear in the next task. Some browsers run a microtask checkpoint between capture and target listeners. */
+      setTimeout(() => { autoflyClick = false; }, 0);
+      return;
+    }
+    if (e.target.closest('a[href^="#"], .nav-step')) {
+      scrollIntentUntil = now() + 1200; unlockFromGesture(); requestSound(false, false);
+    }
+  }, true);
+  addEventListener('boneyard:autofly', (e) => {
+    if (autoflyClick && e.detail && e.detail.active === true) requestSound(false, false);
+  });
 
   /* ---------- the button (delegated, so markup that lands late still works) ---------- */
   document.addEventListener('click', (e) => {
     const b = e.target.closest && e.target.closest('#sound'); if (!b) return;
-    explicit = true; armed = false;
-    if (allowed()) { pref = false; stillOk = false; store.set('off'); paint(); sleep(); return; }
-    pref = true; if (dial() === 'still') stillOk = true; store.set('on'); paint();
-    wake(true);
+    if (!trusted(e)) return;
+    if (completesPendingSound || pending()) {
+      completesPendingSound = false; pendingSoundUntil = 0;
+      if (!audible()) { pressOnStart = !outputLive; resumeAudio(true); } else paint();
+      return;
+    }
+    if (pref) {
+      pref = false; requested = false; pressOnStart = false; igniteOnStart = true;
+      store.set('off'); silence(); return;
+    }
+    pref = true; requested = true; pressOnStart = true; igniteOnStart = true;
+    store.set('on'); paint(); resumeAudio(true);
   });
-  /* default or remembered "on": the first real gesture of the visit starts it (a press on SOUND is the click's business) */
-  const QUIET_KEYS = new Set(['Tab', 'Escape', 'Shift', 'Control', 'Alt', 'Meta', 'CapsLock']);
-  const gesture = (e) => {
-    if (!armed || (e.target && e.target.closest && e.target.closest('#sound'))) return;
-    if (e.type === 'keydown' && (QUIET_KEYS.has(e.key) || e.ctrlKey || e.metaKey || e.altKey)) return;   /* a keyboard user reaches the control first */
-    if (navigator.userActivation && !navigator.userActivation.isActive) return;   /* a scroll swipe's touchend is not a gesture */
-    if (allowed()) wake(false);
-  };
-  addEventListener('pointerup', gesture, true);
-  addEventListener('keydown', gesture, true);
-  addEventListener('touchend', gesture, { capture: true, passive: true });
 
-  /* hidden tab: suspend; back: resume if still wanted (the tab was already unlocked by a gesture) */
+  /* Hidden tab: suspend. A visible tab resumes an already requested mix without another ignition clunk. */
   document.addEventListener('visibilitychange', () => {
     if (!ac) return;
-    if (document.hidden) { cancelAnimationFrame(raf); raf = 0; if (ac.state === 'running') ac.suspend(); }
-    else if (audible()) { ac.resume().then(() => { g.level(true); loop(); }).catch(() => {}); }
-  });
-  /* the dial: entering Still revokes the in-session consent (press SOUND again to have it back, no whooshes) */
-  document.addEventListener('change', (e) => {
-    if (!e.target || e.target.name !== 'dial') return;
-    if (e.target.value === 'still') stillOk = false;
-    if (!explicit) pref = false;   /* an untouched default follows the dial */
-    paint();
-    if (!allowed() || document.hidden) { sleep(); return; }
-    if (ac && ac.state === 'running') { g.level(true); loop(); } else wake(false);   /* the dial change is itself a gesture */
+    if (document.hidden) {
+      cancelAnimationFrame(raf); raf = 0;
+      if (ac.state === 'running' && ac.suspend) Promise.resolve(ac.suspend()).catch(() => {});
+      paint();
+    } else if (pref && requested) resumeAudio(false);
+    else paint();
   });
 
-  const boot = () => { if (!explicit) pref = false; armed = allowed(); paint(); };
+  const boot = () => paint();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true }); else boot();
 
   /* dev and test surface: the graph builder (for an OfflineAudioContext render) and live numbers */
-  window.BONEYARD_SOUND = { graph, MIX, stats, get context() { return ac; }, get on() { return allowed(); } };
+  window.BONEYARD_SOUND = {
+    graph, MIX, stats,
+    get context() { return ac; },
+    get on() { return pref; },
+    get pending() { return pending(); },
+    get playing() { return playing(); },
+    get outputLevel() { return outputLevel(); },
+  };
 })();
 
 
