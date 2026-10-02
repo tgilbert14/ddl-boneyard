@@ -1,20 +1,23 @@
 /* BONEYARD SOUND · the gesture-led engine room (PUNCH item 7)
  * what        one SOUND button in the header. Sound is enabled by default, but stays silent until a visitor scrolls,
- *             uses ride navigation or starts Auto-fly. An explicit on or off choice is remembered. When sounding: a low synth engine bed whose pitch and filter
+ *             uses ride navigation, fires Gate or starts Auto-fly. An explicit on or off choice is remembered. When sounding: a low synth engine bed whose pitch and filter
  *             follow scroll speed, a CRT relay clunk plus a high-voltage whine tick on every tube switch, a rising
- *             filtered-noise whoosh with a pitch sweep when a hyperspace warp crosses 0.6. SCOPE keeps its own tone.
+ *             filtered-noise whoosh with a pitch sweep when a hyperspace warp crosses 0.6 or Gate begins a Full traversal.
+ *             Gate's charge also raises the existing engine bed. SCOPE keeps its own tone.
  * law         no playback before real ride intent. Pointer, touch and keyboard gestures may unlock a silent context;
- *             a scroll, navigation action or active Auto-fly request starts the bed. A wheel alone cannot unlock audio
+ *             a scroll, navigation action, Fire gate or active Auto-fly request starts the bed. A wheel alone cannot unlock audio
  *             in every browser, so a blocked request is shown as pending and the SOUND button completes it. An explicit
  *             stored off always wins. Sound is independent of the motion dial. Hidden tabs suspend the context.
  *             The bed ducks to near zero while SCOPE is current and held.
  * wiring      no BAYS registration and no core edit: a self-starting IIFE that reads window.BONEYARD_RIDE
- *             (camera.v, share.warp, pointer.down, current) on its own rAF while running, and listens for the
- *             window CustomEvents boneyard:switch {dir, slug} and boneyard:warp {level}. Until those events exist,
+ *             (camera.v, share.warp, share.gateEnergy, pointer.down, current) on its own rAF while running, and listens for
+ *             the window CustomEvents boneyard:switch {dir, slug}, boneyard:warp {level} and boneyard:gate {phase:'transit'}. Until those events exist,
  *             a change of the current bay is the fallback switch trigger and share.warp the fallback warp.
  * mix         voices -> master gain 0.25 -> DynamicsCompressor (brick-wall limiter, -3 dB) -> destination.
  *             Measured offline (OfflineAudioContext, 10 s script, 2026-09-29): idle bed -27 LUFS, full-speed bed -16.5
  *             LUFS, switch clunk peak -8.4 dBFS, first-gesture clunk -20 dBFS, whoosh peak -5.5 dBFS, whole script -21 LUFS.
+ *             Gate graph check (2026-10-01, 6 s mono 48 kHz offline charge + 0.48 s / 0.85 whoosh): -23.0 LUFS,
+ *             -9.8 dBFS true peak. Script-specific measurements, not acoustic or hardware-phone levels.
  * deps        none · Web Audio · 2026-09
  * license     MIT, Desert Data Labs LLC
  */
@@ -136,8 +139,9 @@
     }
 
     /* the whoosh: bandpassed noise rising 250 Hz to 5 kHz, a filtered saw sweeping up, a sub boom at the top */
-    function whoosh(amt, when) {
-      const w = when == null ? ac.currentTime : when, g = MIX.whoosh * (amt == null ? 1 : amt), rise = 1.1;
+    function whoosh(amt, when, riseSeconds) {
+      const rise = Number.isFinite(riseSeconds) ? Math.max(0.35, Math.min(1.1, riseSeconds)) : 1.1;
+      const w = when == null ? ac.currentTime : when, g = MIX.whoosh * (amt == null ? 1 : amt);
       const n = noise(w, rise + 0.5), bp = ac.createBiquadFilter(), ne = ac.createGain();
       bp.type = 'bandpass'; bp.Q.value = 1.3;
       bp.frequency.setValueAtTime(250, w); bp.frequency.exponentialRampToValueAtTime(5000, w + rise);
@@ -287,11 +291,13 @@
       if (now - yMovedAt > 600) v = Math.min(v, 0.5);             /* the ride's loop may have stopped with a stale v */
       if (now - yMovedAt > 1500) v = 0;                          /* parked: let the flywheel settle so the loop can rest */
       const warp = c ? (c.share.warp || 0) : 0;
-      const target = Math.max(1 - Math.exp(-v / MIX.speedRef), warp * 0.9);
+      const cur = r ? r.bays[Math.max(0, r.current)] : null;
+      const gateValue = cur?.slug === 'gate' && cur.m?.state === 'on' && c ? Number(c.share.gateEnergy) : 0;
+      const gate = Number.isFinite(gateValue) ? Math.max(0, Math.min(1, gateValue)) : 0;
+      const target = Math.max(1 - Math.exp(-v / MIX.speedRef), warp * 0.9, gate * 0.75);
       sm += (target - sm) * (1 - Math.exp(-dt / (target > sm ? 0.12 : 0.6)));   /* flywheel: spins up fast, runs down slow */
       stats.speed = sm; stats.freq = g.speed(sm);
       /* SCOPE duck */
-      const cur = r ? r.bays[Math.max(0, r.current)] : null;
       const duck = !!(cur && cur.slug === 'scope' && c && c.pointer.down);
       if (duck !== stats.ducked) { stats.ducked = duck; g.ducked(duck); }
       /* fallback switch: the current bay changed and no boneyard:switch event has been seen */
@@ -300,9 +306,9 @@
         prevBay = r.current;
       }
       /* fallback warp */
-      if (!sawWarpEvent) onWarp(warp);
+      if (!sawWarpEvent) onWarp(cur?.slug === 'gate' ? 0 : warp);
       /* rest: nothing moving, no warp, no duck, the flywheel spun down: stop asking for frames (Smaug W1) */
-      if (sm < 0.01 && warp < 0.01 && !duck && now - yMovedAt > 1500) { cancelAnimationFrame(raf); raf = 0; }
+      if (sm < 0.01 && warp < 0.01 && gate < 0.01 && !duck && now - yMovedAt > 1500) { cancelAnimationFrame(raf); raf = 0; }
     };
     raf = requestAnimationFrame(step);
   }
@@ -317,7 +323,7 @@
     if (kind === 'on') g.clunk(1, now); else g.clunk(-1, now, 0.4, true);
   }
   let sawWarpEvent = false;
-  function onWarp(level, fromEvent) {
+  function onWarp(level, fromEvent, riseSeconds, amount) {
     if (!fromEvent) {                   /* polled share.warp: our own hysteresis; the event already has one */
       if (level < 0.3) warpHigh = false;
       if (level < 0.6 || warpHigh) return;
@@ -325,11 +331,20 @@
     }
     if (!audible() || !ac || ac.state !== 'running') return;
     const now = ac.currentTime; if (now - lastWhoosh < MIX.whooshGap) return;
-    lastWhoosh = now; stats.whooshes++; g.whoosh(dial() === 'calm' ? 0.6 : 1);
+    lastWhoosh = now; stats.whooshes++; g.whoosh(amount == null ? (dial() === 'calm' ? 0.6 : 1) : amount, undefined, riseSeconds);
   }
   const rouse = () => { if (!raf && running() && audible()) loop(); };
   addEventListener('boneyard:switch', (e) => { rouse(); sawSwitchEvent = true; onSwitch(e.detail && e.detail.dir); });
-  addEventListener('boneyard:warp', (e) => { rouse(); sawWarpEvent = true; onWarp(+(e.detail && e.detail.level) || 1, true); });
+  addEventListener('boneyard:warp', (e) => {
+    const r = ride(), cur = r && r.bays[Math.max(0, r.current)];
+    if (cur?.slug === 'gate') return;  /* Gate's own traversal event owns its synchronized voice. */
+    rouse(); sawWarpEvent = true; onWarp(+(e.detail && e.detail.level) || 1, true);
+  });
+  addEventListener('boneyard:gate', (e) => {
+    const r = ride(), cur = r && r.bays[Math.max(0, r.current)];
+    if (e.detail?.phase !== 'transit' || dial() !== 'full' || cur?.slug !== 'gate') return;
+    rouse(); onWarp(1, true, 0.48, 0.85);
+  });
 
   /* ---------- intent and browser activation ---------- */
   let pointerActive = false, touchActive = false, scrollIntentUntil = 0, lastTrustedResume = -Infinity;
@@ -402,7 +417,7 @@
       setTimeout(() => { autoflyClick = false; }, 0);
       return;
     }
-    if (e.target.closest('a[href^="#"], .nav-step')) {
+    if (e.target.closest('a[href^="#"], .nav-step, .bay-launch')) {
       scrollIntentUntil = now() + 1200; unlockFromGesture(); requestSound(false, false);
     }
   }, true);

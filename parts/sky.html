@@ -382,6 +382,7 @@ h2, .panel__head h2 { margin: 0; color: var(--ink-dim); font: 500 10px/1.2 var(-
 .module-actions:empty { display: none; }
 .module-actions:not(:empty) { margin-top: 8px; }
 button { min-height: 36px; padding: 7px 9px; cursor: pointer; color: var(--ink); background: var(--field-2); border: 1px solid var(--line); border-radius: var(--radius); font: 500 10px/1.2 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; transition: border-color 120ms, color 120ms, background-color 120ms, translate 80ms; }
+.module-actions button { min-height:44px;min-width:44px; }
 button:hover:not(:disabled) { color: var(--phosphor-core); border-color: var(--phosphor-dim); }
 button:active:not(:disabled) { translate: 0 1px; background: color-mix(in srgb, var(--phosphor-dim) 16%, var(--field-2)); }
 button[aria-pressed="true"] { color: var(--field); background: var(--amber); border-color: var(--amber); box-shadow: 0 0 16px color-mix(in srgb, var(--amber) 28%, transparent); }
@@ -1153,6 +1154,15 @@ const BONEYARD = (() => {
         else setStatus('Terrain is not ready yet.');
       });
       hints.push('Move over the terrain or use Rain burst');
+    }
+    if (handle && typeof handle.launch === 'function') {
+      const button = actionButton('Fire gate', () => {
+        if (handle.launch() !== false) {
+          buttonState(button, 'ok');
+          setStatus(ctx.dial === 'still' ? 'Gate energized. Still frame ready.' : ctx.dial === 'calm' ? 'Gate energized. Calm motion.' : 'Gate firing.');
+        } else setStatus('Gate is not ready yet.');
+      });
+      hints.push('Fire gate to charge and travel through');
     }
     if (HOLDS) {
       holdButton = actionButton('Hold', (e) => {

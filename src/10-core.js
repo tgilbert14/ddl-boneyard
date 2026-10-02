@@ -173,6 +173,7 @@ const bootBoneyardRide = () => {
   }
   function switchOff(b, dir) {
     const m = b.m; m.state = 'off'; m.offAt = t;
+    m.handle.deactivate?.();
     const flash = ctx.dial === 'full' && t - lastFlash > 0.5;
     if (flash) lastFlash = t;
     const p = switcher ? switcher.handle.play(m, 'off', { still: ctx.dial === 'still', flash, dir }) : Promise.resolve(true);
@@ -265,7 +266,7 @@ const bootBoneyardRide = () => {
   /* ---------- pointer: store only; the loop reads ---------- */
   const ptr = ctx.pointer;
   let ptrTx = 0.5, ptrTy = 0.5;
-  addEventListener('pointermove', (e) => { ptrTx = e.clientX / W; ptrTy = e.clientY / H; ptr.x = e.clientX; ptr.y = e.clientY; ptr.present = true; wake(); }, { passive: true });
+  addEventListener('pointermove', (e) => { ptrTx = e.clientX / W; ptrTy = e.clientY / H; ptr.x = e.clientX; ptr.y = e.clientY; ptr.present = true; if (ctx.dial !== 'still') wake(); }, { passive: true });
   /* touch: a hold only counts after 180 ms, so a scroll swipe (pointercancel lands at 132 to 151 ms) never
      starts SCOPE's voice or JUMP's warp. Mouse and pen hold at once. */
   let holdT = 0;
@@ -319,14 +320,18 @@ const bootBoneyardRide = () => {
     const b = bays.find((bay) => bay.slug === button.dataset.slug);
     b?.m?.handle.turn?.(Number(button.dataset.turn)); wake();
   }));
-  document.querySelectorAll('.bay-rain').forEach((button) => {
+  document.querySelectorAll('.bay-rain,.bay-launch').forEach((button) => {
     let feedback = 0;
+    const status = button.parentElement.querySelector('.action-status');
     button.addEventListener('click', () => {
       const b = bays.find((bay) => bay.slug === button.dataset.slug);
-      if (!b?.m?.handle.rain?.()) return;
-      clearTimeout(feedback); button.classList.add('is-fired'); wake();
+      const handle = b?.m?.handle, action = button.matches('.bay-launch') ? 'launch' : 'rain';
+      if (typeof handle?.[action] !== 'function' || handle[action]() === false) { if (status) status.textContent = 'Gate is not ready yet.'; return; }
+      clearTimeout(feedback); button.classList.add('is-fired'); if (ctx.dial !== 'still') wake();
+      if (status) status.textContent = ctx.dial === 'still' ? 'Gate energized. Still frame ready.' : ctx.dial === 'calm' ? 'Gate energized.' : 'Gate firing.';
       feedback = setTimeout(() => button.classList.remove('is-fired'), 450);
     });
+    addEventListener('pagehide', () => { clearTimeout(feedback); button.classList.remove('is-fired'); if (status) status.textContent = ''; });
   });
   document.querySelectorAll('.bay-hold').forEach((button) => {
     const hold = () => { if (ctx.dial === 'still') return; ptr.down = true; button.classList.add('is-held'); button.setAttribute('aria-pressed', 'true'); wake(); };

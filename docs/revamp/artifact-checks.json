@@ -1,5 +1,5 @@
 {
-  "date": "2026-09-30T19:41:31.640Z",
+  "date": "2026-10-02T02:57:54.258Z",
   "conditions": "Local Chromium, DPR 1, reduced motion, 17 standalone pages plus four exact export API artifacts lifted with adjacent assets. User download buttons are exercised separately in the visible browser.",
   "results": [
     {
@@ -12,8 +12,8 @@
         852
       ],
       "canvas": [
-        320,
-        260
+        1050,
+        852
       ],
       "errors": []
     },
@@ -276,7 +276,7 @@
         "survey": 0.24,
         "haze": 1.1
       },
-      "htmlBytes": 165117,
+      "htmlBytes": 165867,
       "errors": []
     },
     {
@@ -286,7 +286,7 @@
         "cruise": 9,
         "scrollGain": 12,
         "settle": 0.45,
-        "lanes": 5,
+        "lanes": 9,
         "lanePool": 64,
         "stripPerUnit": 44,
         "paceSpread": 0.35,
@@ -294,26 +294,39 @@
         "ceilH": 1.15,
         "focalK": 0.62,
         "fog": 20,
-        "gain": 1.9968,
-        "sat": 1.72,
-        "edge": 0.78,
-        "shove": 0.9,
-        "haze": 0.38,
-        "coreW": 0.05,
-        "coreH": 0.012,
-        "bloomW": 0.22,
-        "bloomH": 0.065,
-        "bloom": 0.2,
-        "eyeDark": 0.9,
-        "rim": 0.54,
+        "gain": 1.9966,
+        "sat": 1.82,
+        "edge": 0.82,
+        "shove": 0.65,
+        "haze": 0.42,
+        "coreW": 0.12,
+        "coreH": 0.1,
+        "bloomW": 0.23,
+        "bloomH": 0.16,
+        "bloom": 0.28,
+        "eyeDark": 0.84,
+        "rim": 0.62,
         "ribSpacing": 1.65,
         "ribWidth": 0.075,
         "ribShade": 0.58,
-        "sideShade": 0.28,
-        "toneKnee": 214,
-        "stillDolly": 23.5
+        "sideShade": 0.32,
+        "toneKnee": 218,
+        "stillDolly": 23.5,
+        "segments": 12,
+        "aperture": 0.27,
+        "apertureAspect": 0.78,
+        "frameWidth": 0.27,
+        "frameDepth": 0.11,
+        "segmentGap": 0.045,
+        "idleEnergy": 0.62,
+        "chargeTime": 1.05,
+        "travelTime": 0.82,
+        "recoveryTime": 1.15,
+        "scanRate": 0.24,
+        "burst": 0.72,
+        "shakePx": 2.4
       },
-      "htmlBytes": 168479,
+      "htmlBytes": 184683,
       "errors": []
     },
     {
@@ -325,7 +338,7 @@
         "sceneryDensity": 1,
         "screenSpill": 0.62
       },
-      "htmlBytes": 166684,
+      "htmlBytes": 166335,
       "errors": []
     },
     {
@@ -360,7 +373,7 @@
         "release": 0.28,
         "fftSize": 256
       },
-      "htmlBytes": 168641,
+      "htmlBytes": 169172,
       "errors": []
     },
     {

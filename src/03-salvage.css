@@ -156,11 +156,13 @@ html:not(.js) .bay-info-body { position: static; width: auto; max-height: none; 
 #row-main { touch-action: pan-y pinch-zoom; }
 
 .scene-actions { display:flex;gap:4px;align-items:center; }.scene-actions .interaction-cue { margin-left:8px; }
-.bay-hold,.bay-turn,.bay-steer,.bay-rain { background:transparent;border:1px solid var(--line);color:var(--ink-dim);font:10px var(--font-mono);cursor:pointer;min-height:44px;min-width:44px;touch-action:none; }
-.bay-rain { padding:0 12px;touch-action:manipulation;display:flex;gap:15px;align-items:center; }
+.action-status { position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap; }
+.bay-hold,.bay-turn,.bay-steer,.bay-rain,.bay-launch { background:transparent;border:1px solid var(--line);color:var(--ink-dim);font:10px var(--font-mono);cursor:pointer;min-height:44px;min-width:44px;touch-action:none; }
+.bay-rain,.bay-launch { padding:0 12px;touch-action:manipulation;display:flex;gap:15px;align-items:center; }
+.bay-launch { border-color:var(--amber);color:var(--amber); }
 .bay-hold { border-color:var(--phosphor-dim);padding:0 12px;display:flex;align-items:center;gap:15px; }
-.bay-hold span { color:var(--phosphor); }.bay-hold:hover,.bay-turn:hover,.bay-steer:hover,.bay-rain:hover { color:var(--phosphor);border-color:var(--phosphor); }
-.bay-hold.is-held,.bay-hold:active,.bay-steer:active,.bay-turn:active,.bay-rain:active,.bay-rain.is-fired { background:var(--amber);color:var(--field);border-color:var(--amber);box-shadow:0 0 24px var(--amber-wash); }.bay-hold.is-held span{color:var(--field)}
+.bay-hold span { color:var(--phosphor); }.bay-hold:hover,.bay-turn:hover,.bay-steer:hover,.bay-rain:hover,.bay-launch:hover { color:var(--phosphor);border-color:var(--phosphor); }
+.bay-hold.is-held,.bay-hold:active,.bay-steer:active,.bay-turn:active,.bay-rain:active,.bay-rain.is-fired,.bay-launch:active,.bay-launch.is-fired { background:var(--amber);color:var(--field);border-color:var(--amber);box-shadow:0 0 24px var(--amber-wash); }.bay-hold.is-held span{color:var(--field)}
 html[data-dial="still"] .bay-hold,html[data-dial="still"] .bay-steer { opacity:.45; }
 .plate-footer { margin-top:10px; }.bay-info summary{min-height:44px;}
 @media(max-width:720px){.bay-hold{font-size:9px}.scene-actions .interaction-cue{font-size:8px}.bay-turn,.bay-steer{font-size:13px}}
