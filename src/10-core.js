@@ -328,7 +328,7 @@ const bootBoneyardRide = () => {
       const handle = b?.m?.handle, action = button.matches('.bay-launch') ? 'launch' : 'rain';
       if (typeof handle?.[action] !== 'function' || handle[action]() === false) { if (status) status.textContent = 'Gate is not ready yet.'; return; }
       clearTimeout(feedback); button.classList.add('is-fired'); if (ctx.dial !== 'still') wake();
-      if (status) status.textContent = ctx.dial === 'still' ? 'Gate energized. Still frame ready.' : ctx.dial === 'calm' ? 'Gate energized.' : 'Gate firing.';
+      if (status) status.textContent = ctx.dial === 'still' ? 'Travel frame selected.' : ctx.dial === 'calm' ? 'Gentle boost engaged.' : 'Boost engaged.';
       feedback = setTimeout(() => button.classList.remove('is-fired'), 450);
     });
     addEventListener('pagehide', () => { clearTimeout(feedback); button.classList.remove('is-fired'); if (status) status.textContent = ''; });

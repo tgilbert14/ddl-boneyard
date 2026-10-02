@@ -1,4 +1,7 @@
-# Gate rebuild, 2026-10-01
+# Gate reactor brief, 2026-10-01: rejected direction
+
+Historical brief for revision b87011b. The owner rejected this rendered direction after
+publication. See [the travel correction](travel-brief.md) for the current mechanism.
 
 Owner feedback: "gate 2 sucks.. i need you do go all out and ramp it up!!"
 Baseline: ec9a2b5edf15f18ee951d173cad15faa788f7100, live GitHub Pages Gate.

@@ -63,6 +63,7 @@ const out = path.resolve(options.out || `/private/tmp/boneyard-gate-${stamp}`);
 const shots = path.join(out, 'screenshots');
 const downloads = path.join(out, 'downloads');
 const liftDir = path.join(out, 'lift');
+await Promise.all([fs.rm(shots, {recursive: true, force: true}), fs.rm(downloads, {recursive: true, force: true}), fs.rm(liftDir, {recursive: true, force: true})]);
 await Promise.all([fs.mkdir(shots, {recursive: true}), fs.mkdir(downloads, {recursive: true})]);
 
 const report = {
@@ -74,7 +75,7 @@ const report = {
     browser: 'Installed Chromium from tools/browser-runtime.mjs',
     deviceScaleFactor: 1,
     motion: 'Normal Full motion unless the named check changes the visible dial',
-    cpu: 'Standalone Gate at 1440x900 with the harness ticker stopped through the visible Still control. For the budget measurement, ctx.dial is set to Full only inside the test and each of 30 conditioning ticks plus every measured tick is paced by one requestAnimationFrame; actual callback cadence supplies dt (capped at 0.05 s) and is reported. The real handle.launch() begins the measured factory charge, travel, recovery, and one post-settle second at progress 0 with a centered inactive pointer. A separately labeled back-to-back fixed-dt stress loop is also reported and is not treated as normal-rate budget evidence. Labels use published PARAMS durations, not private state names. performance.now surrounds handle.tick only. Costs include synchronous JavaScript and Canvas 2D work charged to that call; they exclude asynchronous GPU, compositor, paint, screenshots, network, thermal behavior, and hardware-phone performance.',
+    cpu: 'Standalone Gate at 1440x900 with the harness ticker stopped through the visible Still control. For the budget measurement, ctx.dial is set to Full only inside the test and each of 30 conditioning ticks plus every measured tick is paced by one requestAnimationFrame; actual callback cadence supplies dt (capped at 0.05 s) and is reported. The real handle.launch() begins the measured rise, surge, settle, and one post-boost second at progress 0 with a centered inactive pointer. A separately labeled back-to-back fixed-dt stress loop is also reported and is not treated as normal-rate budget evidence. Labels use the published PARAMS durations, not private state names. performance.now surrounds handle.tick only. Costs include synchronous JavaScript and Canvas 2D work charged to that call; they exclude asynchronous GPU, compositor, paint, screenshots, network, thermal behavior, and hardware-phone performance.',
     phones: 'Chromium touch/mobile emulation, not hardware Safari or Android certification.',
   },
   checks: [],
@@ -211,18 +212,18 @@ function requireVisibleChange(before, after, label, minimum = {mean: 0.15, perce
   return diff;
 }
 
-function factoryDurations(params) {
-  const charge = Number(params.chargeTime), travel = Number(params.travelTime), recovery = Number(params.recoveryTime);
-  assert.ok([charge, travel, recovery].every((value) => Number.isFinite(value) && value > 0), 'Gate publishes positive charge/travel/recovery PARAMS');
-  const total = charge + travel + recovery;
-  assert.ok(total <= 12, 'Factory launch remains bounded to at most 12 seconds');
-  return {charge, travel, recovery, total};
+function boostDurations(params) {
+  const rise = Number(params.chargeTime), surge = Number(params.travelTime), settle = Number(params.recoveryTime);
+  assert.ok([rise, surge, settle].every((value) => Number.isFinite(value) && value > 0), 'Gate publishes positive rise/surge/settle durations');
+  const total = rise + surge + settle;
+  assert.ok(total <= 12, 'Boost remains bounded to at most 12 seconds');
+  return {rise, surge, settle, total};
 }
 
 async function partState(page) {
   return page.evaluate(() => {
     const reg = window.BAYS.find((entry) => entry.slug === 'gate');
-    const button = [...document.querySelectorAll('#module-actions button')].find((entry) => entry.textContent.trim() === 'Fire gate');
+    const button = [...document.querySelectorAll('#module-actions button')].find((entry) => entry.textContent.trim() === 'Boost');
     const box = button?.getBoundingClientRect();
     const canvas = document.getElementById('part');
     return {
@@ -298,7 +299,7 @@ function assertCommonGateState(state, label) {
   assert.equal(state.launch, true, label + ' exposes launch');
   assert.equal(state.overflow, false, label + ' has no horizontal overflow');
   assert.ok(state.button && state.button.width >= 44 && state.button.height >= 44,
-    `${label} Fire gate target is at least 44px in both dimensions; measured ${JSON.stringify(state.button)}`);
+    `${label} Boost target is at least 44px in both dimensions; measured ${JSON.stringify(state.button)}`);
   assert.deepEqual(state.registration && {slug: state.registration.slug, title: state.registration.title}, {slug: 'gate', title: 'Gate'}, label + ' keeps Gate identity');
   assert.equal(state.registration.ownsPixel, false, label + ' removes fixed pixel registration');
   assert.equal(state.canvas.dataPixel, false, label + ' has no data-pixel canvas marker');
@@ -392,11 +393,11 @@ try {
         await main.evaluate(() => document.getElementById('gate').scrollIntoView({block: 'start', behavior: 'instant'}));
         await delay(main, 180);
         const clearance = await mainActionClearance(main);
-        assert.equal(clearance.centerHit, true, 'Ride ' + view.name + ' Fire center is the actual hit target at the Gate anchor');
-        assert.equal(clearance.overlap.width * clearance.overlap.height, 0, 'Ride ' + view.name + ' Fire bounds do not overlap fixed bay navigation');
-        assert.ok(clearance.verticalClearance >= 0, `Ride ${view.name} Fire has nonnegative navigation clearance; measured ${clearance.verticalClearance}px`);
+        assert.equal(clearance.centerHit, true, 'Ride ' + view.name + ' Boost center is the actual hit target at the Gate anchor');
+        assert.equal(clearance.overlap.width * clearance.overlap.height, 0, 'Ride ' + view.name + ' Boost bounds do not overlap fixed bay navigation');
+        assert.ok(clearance.verticalClearance >= 0, `Ride ${view.name} Boost has nonnegative navigation clearance; measured ${clearance.verticalClearance}px`);
         assert.ok(clearance.action.left >= 0 && clearance.action.top >= 0 && clearance.action.right <= clearance.viewport.width && clearance.action.bottom <= clearance.viewport.height,
-          'Ride ' + view.name + ' Fire bounds remain inside the viewport at the Gate anchor');
+          'Ride ' + view.name + ' Boost bounds remain inside the viewport at the Gate anchor');
         await main.screenshot({path: shot('main-' + view.name + '-live')});
 
         const part = await openPage(context, 'layout-part-' + view.name);
@@ -415,7 +416,7 @@ try {
     return states;
   });
 
-  await scenario('Fire reports unavailable before the sunset strip loads, then launches after release', async () => {
+  await scenario('Boost reports unavailable before the sunset strip loads, then works after release', async () => {
     async function heldAssetPage(context, label, url) {
       const page = await openPage(context, label);
       let release;
@@ -435,9 +436,9 @@ try {
       const page = held.page;
       await page.waitForFunction(() => !!window.BONEYARD_PART?.handle && typeof BONEYARD_PART.handle.launch === 'function');
       await page.evaluate(() => { window.__heldPartEvents = 0; addEventListener('boneyard:gate', () => window.__heldPartEvents++); });
-      const fire = page.getByRole('button', {name: 'Fire gate', exact: true});
+      const boost = page.getByRole('button', {name: 'Boost', exact: true});
       const stateBefore = await page.evaluate(() => BONEYARD_PART.handle.state);
-      await fire.click();
+      await boost.click();
       const unavailable = await page.evaluate(() => ({
         status: document.querySelector('#status[role="status"]')?.textContent,
         feedback: document.querySelector('#module-actions button')?.dataset.state || null,
@@ -448,11 +449,18 @@ try {
       assert.deepEqual(unavailable, {status: 'Gate is not ready yet.', feedback: null, events: 0, gateEnergy: 0, state: stateBefore});
       releasePart(); await waitPart(page);
       const before = await canvasFrame(page, '#part');
-      await fire.click(); await page.waitForFunction(() => document.querySelector('#module-actions button')?.dataset.state === 'ok');
-      const durations = factoryDurations(await page.evaluate(() => ({...BONEYARD_PART.params})));
-      await delay(page, durations.charge * 450);
+      await boost.click(); await page.waitForFunction(() => document.querySelector('#module-actions button')?.dataset.state === 'ok');
+      const readyImmediate = await page.evaluate(() => ({
+        state: BONEYARD_PART.handle.state,
+        feedback: document.querySelector('#module-actions button')?.dataset.state || null,
+        status: document.querySelector('#status[role="status"]')?.textContent,
+      }));
+      assert.deepEqual(readyImmediate, {state: 'spool', feedback: 'ok', status: 'Boost engaged.'}, 'ready standalone Boost enters spool and confirms the action synchronously');
+      await page.waitForFunction(() => BONEYARD_PART.handle.state === 'spool' && Number(BONEYARD_PART.ctx.share.gateEnergy) > 0);
+      const durations = boostDurations(await page.evaluate(() => ({...BONEYARD_PART.params})));
+      await delay(page, durations.rise * 450);
       const after = await canvasFrame(page, '#part');
-      receipts.part = {unavailable, readyDiff: requireVisibleChange(before, after, 'released standalone Fire')};
+      receipts.part = {unavailable, readyImmediate, readyDiff: requireVisibleChange(before, after, 'released standalone Boost')};
     } finally { releasePart(); await partContext.close(); }
 
     const rideContext = await browser.newContext({viewport: {width: 1440, height: 900}, deviceScaleFactor: 1});
@@ -465,9 +473,9 @@ try {
         return !!gate?.m?.handle && typeof gate.m.handle.launch === 'function';
       });
       await page.evaluate(() => { window.__heldRideEvents = 0; addEventListener('boneyard:gate', () => window.__heldRideEvents++); });
-      const fire = page.locator('.bay-launch[data-slug="gate"]');
+      const boost = page.locator('.bay-launch[data-slug="gate"]');
       const stateBefore = await page.evaluate(() => BONEYARD_RIDE.bays.find((bay) => bay.slug === 'gate').m.handle.state);
-      await fire.click();
+      await boost.click();
       const unavailable = await page.evaluate(() => ({
         status: document.querySelector('#gate .action-status[role="status"]')?.textContent,
         feedback: document.querySelector('.bay-launch[data-slug="gate"]')?.classList.contains('is-fired'),
@@ -477,53 +485,110 @@ try {
       }));
       assert.deepEqual(unavailable, {status: 'Gate is not ready yet.', feedback: false, events: 0, gateEnergy: 0, state: stateBefore});
       releaseRide(); await waitMain(page);
-      await fire.click();
-      const durations = factoryDurations(await page.evaluate(() => ({...BONEYARD_RIDE.bays.find((bay) => bay.slug === 'gate').m.params})));
-      await delay(page, durations.charge * 450);
+      await boost.click();
+      const readyImmediate = await page.evaluate(() => {
+        const gate = BONEYARD_RIDE.bays.find((bay) => bay.slug === 'gate');
+        return {
+          status: document.querySelector('#gate .action-status[role="status"]')?.textContent,
+          feedback: document.querySelector('.bay-launch[data-slug="gate"]')?.classList.contains('is-fired'),
+          state: gate.m.handle.state,
+        };
+      });
+      assert.deepEqual(readyImmediate, {status: 'Boost engaged.', feedback: true, state: 'spool'}, 'ready ride Boost enters spool and confirms the action synchronously');
+      await page.waitForFunction(() => {
+        const gate = BONEYARD_RIDE.bays.find((bay) => bay.slug === 'gate');
+        return gate.m.handle.state === 'spool' && Number(BONEYARD_RIDE.ctx.share.gateEnergy) > 0;
+      });
+      const durations = boostDurations(await page.evaluate(() => ({...BONEYARD_RIDE.bays.find((bay) => bay.slug === 'gate').m.params})));
+      await delay(page, durations.rise * 450);
       const ready = await page.evaluate(() => ({
         status: document.querySelector('#gate .action-status[role="status"]')?.textContent,
         gateEnergy: Number(BONEYARD_RIDE.ctx.share.gateEnergy) || 0,
       }));
-      assert.equal(ready.status, 'Gate firing.'); assert.ok(ready.gateEnergy > 0, 'released ride Fire enters charge');
-      receipts.ride = {unavailable, ready};
+      assert.equal(ready.status, 'Boost engaged.'); assert.ok(ready.gateEnergy > 0, 'released ride Boost enters its rise');
+      receipts.ride = {unavailable, readyImmediate, ready};
     } finally { releaseRide(); await rideContext.close(); }
     return receipts;
   });
 
-  await scenario('actual keyboard Fire runs a bounded, visible, repeatable Full flight', async () => {
+  await scenario('actual keyboard Boost runs a bounded, visible, repeatable Full surge', async () => {
     const context = await browser.newContext({viewport: {width: 1440, height: 900}, deviceScaleFactor: 1});
     try {
-      const page = await openPage(context, 'part-full-flight');
+      const page = await openPage(context, 'part-full-boost');
       await page.goto(site('parts/gate.html'), {waitUntil: 'networkidle'}); await waitPart(page);
-      const durations = factoryDurations(await page.evaluate(() => ({...BONEYARD_PART.params})));
-      const fire = page.getByRole('button', {name: 'Fire gate', exact: true});
-      const idleStart = await canvasFrame(page, '#part');
-      await delay(page, durations.charge * 550);
-      const live = await canvasFrame(page, '#part'), idleDrift = frameDiff(idleStart, live);
+      const durations = boostDurations(await page.evaluate(() => ({...BONEYARD_PART.params})));
+      const boost = page.getByRole('button', {name: 'Boost', exact: true});
+      await page.evaluate(() => {
+        window.__gateMotionSamples = [];
+        window.__gateBoostAt = Infinity;
+        const sample = () => {
+          const readout = String(BONEYARD_PART.ctx.readouts.gate || '');
+          const match = readout.match(/([0-9]+(?:\.[0-9]+)?)\s*u\/s/);
+          window.__gateMotionSamples.push({atMs: performance.now(), state: BONEYARD_PART.handle.state, speed: match ? Number(match[1]) : null, readout});
+        };
+        sample(); window.__gateMotionTimer = setInterval(sample, 25);
+      });
+      const cruiseStart = await canvasFrame(page, '#part');
+      await delay(page, durations.rise * 550);
+      const cruise = await canvasFrame(page, '#part');
+      const baseCruiseChange = requireVisibleChange(cruiseStart, cruise, 'continuous base cruise');
       await page.locator('#stage').screenshot({path: shot('stage-desktop-live')});
-      await fire.focus(); await page.keyboard.press('Enter');
+      await boost.focus(); await page.evaluate(() => { window.__gateBoostAt = performance.now(); }); await page.keyboard.press('Enter');
       await page.waitForFunction(() => document.querySelector('#module-actions button')?.dataset.state === 'ok');
 
-      await delay(page, durations.charge * 550);
-      const charge = await canvasFrame(page, '#part');
-      await page.locator('#stage').screenshot({path: shot('stage-desktop-charge')});
-      await delay(page, durations.charge * 450 + durations.travel * 520);
-      const traversal = await canvasFrame(page, '#part');
-      await page.locator('#stage').screenshot({path: shot('stage-desktop-traversal')});
-      await delay(page, durations.travel * 480 + durations.recovery * 1000 + 220);
-      const settled = await canvasFrame(page, '#part');
-      await page.locator('#stage').screenshot({path: shot('stage-desktop-settled')});
+      await delay(page, durations.rise * 550);
+      const rise = await canvasFrame(page, '#part');
+      await page.locator('#stage').screenshot({path: shot('stage-desktop-rise')});
+      await delay(page, durations.rise * 450 + durations.surge * 520);
+      const surge = await canvasFrame(page, '#part');
+      await page.locator('#stage').screenshot({path: shot('stage-desktop-surge')});
+      await delay(page, durations.surge * 480 + durations.settle * 1000 + 220);
+      const postBoost = await canvasFrame(page, '#part');
+      await page.locator('#stage').screenshot({path: shot('stage-desktop-post-boost')});
 
-      const liveToCharge = requireVisibleChange(live, charge, 'Full charge');
-      const liveToTraversal = requireVisibleChange(live, traversal, 'Full traversal');
-      assert.ok(liveToCharge.meanAbsRgb > idleDrift.meanAbsRgb * 1.2 + 0.05,
-        `Full charge change must exceed same-duration idle drift (charge ${liveToCharge.meanAbsRgb}, idle ${idleDrift.meanAbsRgb})`);
-      await fire.focus(); await page.keyboard.press('Enter');
+      const motionEvidence = await page.evaluate(() => {
+        clearInterval(window.__gateMotionTimer);
+        const readout = String(BONEYARD_PART.ctx.readouts.gate || ''), match = readout.match(/([0-9]+(?:\.[0-9]+)?)\s*u\/s/);
+        window.__gateMotionSamples.push({atMs: performance.now(), state: BONEYARD_PART.handle.state, speed: match ? Number(match[1]) : null, readout});
+        return {boostAtMs: window.__gateBoostAt, samples: window.__gateMotionSamples.slice()};
+      });
+      const numericMotion = motionEvidence.samples.filter((sample) => Number.isFinite(sample.speed));
+      assert.ok(numericMotion.length > 20, 'public Gate readout supplies normal-speed motion samples');
+      assert.ok(numericMotion.every((sample) => sample.speed > 0), 'public Gate speed stays strictly forward through cruise, rise, surge, and settle');
+      const phaseOrder = ['glide', 'spool', 'transit', 'settle', 'glide'];
+      let phaseAt = -1;
+      const observedOrder = phaseOrder.map((phase) => {
+        phaseAt = motionEvidence.samples.findIndex((sample, index) => index > phaseAt && sample.state === phase);
+        assert.ok(phaseAt >= 0, `actual Boost reaches ordered public state ${phase}`);
+        return {phase, sampleIndex: phaseAt};
+      });
+      const baselineSpeeds = numericMotion.filter((sample) => sample.atMs < motionEvidence.boostAtMs).map((sample) => sample.speed);
+      const transitSpeeds = numericMotion.filter((sample) => sample.state === 'transit').map((sample) => sample.speed);
+      const settleSpeeds = numericMotion.filter((sample) => sample.state === 'settle').map((sample) => sample.speed);
+      assert.ok(baselineSpeeds.length > 0 && transitSpeeds.length > 0 && settleSpeeds.length > 0, 'motion receipt samples baseline, transit, and settle speeds');
+      const baselineMin = Math.min(...baselineSpeeds), baselineMax = Math.max(...baselineSpeeds), transitMax = Math.max(...transitSpeeds);
+      const settleMin = Math.min(...settleSpeeds), lastSettleSpeed = settleSpeeds.at(-1), finalSpeed = numericMotion.at(-1).speed;
+      assert.ok(baselineMin > 0, `base cruise remains forward at a minimum ${baselineMin} u/s`);
+      assert.ok(transitMax > baselineMax, `Boost transit maximum ${transitMax} u/s exceeds pre-Boost baseline ${baselineMax} u/s`);
+      assert.ok(settleMin > 0, `Boost settle remains forward at a minimum ${settleMin} u/s`);
+      assert.ok(lastSettleSpeed < transitMax, `late settle speed ${lastSettleSpeed} u/s has fallen from the transit maximum ${transitMax} u/s`);
+      assert.ok(finalSpeed <= lastSettleSpeed, `post-Boost glide ${finalSpeed} u/s continues toward the ${baselineMax} u/s baseline`);
+      motionEvidence.summary = {phaseOrder: observedOrder, baselineMin, baselineMax, transitMax, settleMin, lastSettleSpeed, finalSpeed, finalState: motionEvidence.samples.at(-1).state};
+      motionEvidence.limit = 'Direction evidence comes from the module public state and computed speed readout. Frame differences establish visible animation only; world distance is not exposed.';
+
+      const cruiseToRise = requireVisibleChange(cruise, rise, 'Full Boost rise');
+      const cruiseToSurge = requireVisibleChange(cruise, surge, 'Full Boost surge');
+      await boost.focus(); await page.keyboard.press('Enter');
       await page.waitForFunction(() => document.querySelector('#module-actions button')?.dataset.state === 'ok');
-      await delay(page, durations.charge * 550);
+      await delay(page, durations.rise * 550);
       const repeat = await canvasFrame(page, '#part');
-      const repeatChange = requireVisibleChange(settled, repeat, 'repeat charge after the factory settle interval');
-      return {durations, idleStart: frameMeta(idleStart), live: frameMeta(live), charge: frameMeta(charge), traversal: frameMeta(traversal), settled: frameMeta(settled), repeat: frameMeta(repeat), diffs: {idleDrift, liveToCharge, liveToTraversal, repeatChange}};
+      const repeatChange = requireVisibleChange(postBoost, repeat, 'repeat Boost after the settle interval');
+      return {
+        durations,
+        cruiseStart: frameMeta(cruiseStart), cruise: frameMeta(cruise), rise: frameMeta(rise), surge: frameMeta(surge), postBoost: frameMeta(postBoost), repeat: frameMeta(repeat),
+        diffs: {baseCruiseChange, cruiseToRise, cruiseToSurge, repeatChange},
+        motionEvidence,
+      };
     } finally { await context.close(); }
   });
 
@@ -534,16 +599,17 @@ try {
       await page.goto(site('parts/gate.html'), {waitUntil: 'networkidle'}); await waitPart(page);
       await page.getByLabel('Designed still', {exact: true}).check();
       await page.waitForFunction(() => BONEYARD.Ticker.size === 0);
+      assert.equal(await page.evaluate(() => BONEYARD_PART.handle.state), 'still', 'visible Still control puts the module in its public still state');
       const paced = await page.evaluate(async () => {
         const part = BONEYARD_PART, handle = part.handle, ctx = part.ctx;
         const pointer = Object.assign({}, ctx.pointer, {nx: 0.5, ny: 0.5, present: false, down: false});
         const canvas = document.getElementById('part'), stage = document.getElementById('stage').getBoundingClientRect();
-        const charge = Number(part.params.chargeTime), travel = Number(part.params.travelTime), recovery = Number(part.params.recoveryTime);
-        const sequence = charge + travel + recovery;
-        const buckets = () => ({charge: {cost: [], cadence: []}, travel: {cost: [], cadence: []}, recovery: {cost: [], cadence: []}, settled: {cost: [], cadence: []}});
+        const rise = Number(part.params.chargeTime), surge = Number(part.params.travelTime), settle = Number(part.params.recoveryTime);
+        const sequence = rise + surge + settle;
+        const buckets = () => ({rise: {cost: [], cadence: []}, surge: {cost: [], cadence: []}, settle: {cost: [], cadence: []}, cruise: {cost: [], cadence: []}});
         const intervals = buckets(), costs = [], cadence = [];
         const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
-        const phase = (elapsed) => elapsed <= charge ? 'charge' : elapsed <= charge + travel ? 'travel' : elapsed <= sequence ? 'recovery' : 'settled';
+        const phase = (elapsed) => elapsed <= rise ? 'rise' : elapsed <= rise + surge ? 'surge' : elapsed <= sequence ? 'settle' : 'cruise';
         function stats(values) {
           const sorted = values.slice().sort((a, b) => a - b), sum = sorted.reduce((total, value) => total + value, 0);
           return {samples: sorted.length, meanMs: sum / sorted.length, p95Ms: sorted[Math.floor((sorted.length - 1) * 0.95)], maxMs: sorted.at(-1)};
@@ -567,22 +633,26 @@ try {
         ctx.dial = 'still'; handle.still(t);
         return {
           mode: 'requestAnimationFrame-paced normal-rate calls', warmups: 30, measured: costs.length, progress: 0, launchAccepted,
-          configuredSeconds: {charge, travel, recovery, postSettle: 1},
+          configuredSeconds: {rise, surge, settle, postBoostCruise: 1},
           actualElapsedSeconds: elapsed,
           total: {costMs: stats(costs), cadenceMs: stats(cadence)},
           intervals: Object.fromEntries(Object.entries(intervals).map(([key, values]) => [key, {costMs: stats(values.cost), cadenceMs: stats(values.cadence)}])),
           backing: [canvas.width, canvas.height], stageCss: [stage.width, stage.height], tickerAfter: BONEYARD.Ticker.size,
         };
       });
-      await page.evaluate(() => { window.__gatePacedCpuHandle = BONEYARD_PART.handle; });
+      await page.evaluate(() => {
+        window.__gatePacedCpuHandle = BONEYARD_PART.handle;
+        BONEYARD_PART.ctx.readouts.gate = '__awaiting_gate_asset__';
+      });
       await page.getByRole('button', {name: 'Reset', exact: true}).click();
-      await page.waitForFunction(() => BONEYARD_PART.handle && BONEYARD_PART.handle !== window.__gatePacedCpuHandle && BONEYARD.Ticker.size === 0);
+      await page.waitForFunction(() => BONEYARD_PART.handle && BONEYARD_PART.handle !== window.__gatePacedCpuHandle
+        && BONEYARD.Ticker.size === 0 && BONEYARD_PART.ctx.readouts.gate !== '__awaiting_gate_asset__');
       const stress = await page.evaluate(() => {
         const part = BONEYARD_PART, handle = part.handle, ctx = part.ctx;
         const pointer = Object.assign({}, ctx.pointer, {nx: 0.5, ny: 0.5, present: false, down: false});
-        const charge = Number(part.params.chargeTime), travel = Number(part.params.travelTime), recovery = Number(part.params.recoveryTime);
-        const sequence = charge + travel + recovery, dt = 1 / 60;
-        const intervals = {charge: [], travel: [], recovery: [], settled: []}, costs = [];
+        const rise = Number(part.params.chargeTime), surge = Number(part.params.travelTime), settle = Number(part.params.recoveryTime);
+        const sequence = rise + surge + settle, dt = 1 / 60;
+        const intervals = {rise: [], surge: [], settle: [], cruise: []}, costs = [];
         function stats(values) {
           const sorted = values.slice().sort((a, b) => a - b), sum = sorted.reduce((total, value) => total + value, 0);
           return {samples: sorted.length, meanMs: sum / sorted.length, p95Ms: sorted[Math.floor((sorted.length - 1) * 0.95)], maxMs: sorted.at(-1)};
@@ -593,14 +663,14 @@ try {
         for (let i = 0; i < measured; i++) {
           const elapsed = (i + 1) * dt;
           t += dt; const start = performance.now(); handle.tick(dt, t, 0, pointer); const cost = performance.now() - start;
-          const label = elapsed <= charge ? 'charge' : elapsed <= charge + travel ? 'travel' : elapsed <= sequence ? 'recovery' : 'settled';
+          const label = elapsed <= rise ? 'rise' : elapsed <= rise + surge ? 'surge' : elapsed <= sequence ? 'settle' : 'cruise';
           costs.push(cost); intervals[label].push(cost);
         }
         ctx.dial = 'still'; handle.still(t);
         return {
           mode: 'back-to-back fixed-dt stress calls with no frame pacing', budgetEvidence: false,
           warmups: 30, measured, dtSeconds: dt, progress: 0, launchAccepted,
-          configuredSeconds: {charge, travel, recovery, postSettle: 1},
+          configuredSeconds: {rise, surge, settle, postBoostCruise: 1},
           total: {costMs: stats(costs)},
           intervals: Object.fromEntries(Object.entries(intervals).map(([key, values]) => [key, {costMs: stats(values)}])),
           tickerAfter: BONEYARD.Ticker.size,
@@ -611,67 +681,70 @@ try {
       for (const sample of samples) {
         for (const key of ['meanMs', 'p95Ms', 'maxMs']) sample[key] = Number(sample[key].toFixed(3));
       }
+      report.cpu = cpu;
       assert.equal(paced.tickerAfter, 0); assert.equal(stress.tickerAfter, 0);
-      assert.equal(paced.launchAccepted, true, 'ready Full Gate accepts the paced launch choreography');
-      assert.equal(stress.launchAccepted, true, 'ready Full Gate accepts the stress launch choreography');
-      assert.ok(Object.values(paced.intervals).every((interval) => interval.costMs.samples > 0 && interval.cadenceMs.samples > 0), 'paced CPU receipt samples cost and actual cadence for every configured launch interval');
-      assert.ok(Object.values(stress.intervals).every((interval) => interval.costMs.samples > 0), 'stress CPU receipt samples every configured launch interval');
+      assert.equal(paced.launchAccepted, true, 'ready Full Gate accepts the paced Boost choreography');
+      assert.equal(stress.launchAccepted, true, 'ready Full Gate accepts the stress Boost choreography');
+      assert.ok(Object.values(paced.intervals).every((interval) => interval.costMs.samples > 0 && interval.cadenceMs.samples > 0), 'paced CPU receipt samples cost and actual cadence for every configured Boost interval');
+      assert.ok(Object.values(stress.intervals).every((interval) => interval.costMs.samples > 0), 'stress CPU receipt samples every configured Boost interval');
       assert.ok(paced.total.costMs.meanMs < 4,
-        `requestAnimationFrame-paced Gate launch mean synchronous JS/Canvas tick cost ${paced.total.costMs.meanMs} ms does not stay below the 4 ms contract budget; receipt ${JSON.stringify(cpu)}`);
+        `requestAnimationFrame-paced Gate Boost mean synchronous JS/Canvas tick cost ${paced.total.costMs.meanMs} ms does not stay below the 4 ms contract budget; receipt ${JSON.stringify(cpu)}`);
       return cpu;
     } finally { await context.close(); }
   });
 
   let exportReceipt = null;
-  exportReceipt = await scenario('Still cancellation, authored Fire, PNG, PARAMS, HTML, and pagehide cleanup work', async () => {
+  exportReceipt = await scenario('Still cancellation, selected travel frame, PNG, PARAMS, HTML, and pagehide cleanup work', async () => {
     const context = await browser.newContext({viewport: {width: 1440, height: 900}, deviceScaleFactor: 1, acceptDownloads: true});
     try {
       const page = await openPage(context, 'part-still-exports');
       await page.goto(site('parts/gate.html'), {waitUntil: 'networkidle'}); await waitPart(page);
-      const durations = factoryDurations(await page.evaluate(() => ({...BONEYARD_PART.params})));
+      const durations = boostDurations(await page.evaluate(() => ({...BONEYARD_PART.params})));
       await page.evaluate(() => { window.__gateTransitEvents = []; addEventListener('boneyard:gate', (event) => window.__gateTransitEvents.push(event.detail || {})); });
-      const fire = page.getByRole('button', {name: 'Fire gate', exact: true});
-      await fire.click(); await delay(page, durations.charge * 300);
+      const boost = page.getByRole('button', {name: 'Boost', exact: true});
+      await boost.click(); await delay(page, durations.rise * 300);
       await page.getByLabel('Designed still', {exact: true}).check();
       await page.waitForFunction(() => BONEYARD.Ticker.size === 0);
       const stillA = await canvasFrame(page, '#part');
       await page.locator('#stage').screenshot({path: shot('stage-desktop-still')});
-      await delay(page, Math.max(250, durations.charge * 1000 + 100));
+      await delay(page, Math.max(250, durations.rise * 1000 + 100));
       const stillB = await canvasFrame(page, '#part');
       assert.equal(frameMeta(stillB).sha256, frameMeta(stillA).sha256, 'switching to Still cancels motion and freezes the authored frame');
-      assert.equal(await page.evaluate(() => window.__gateTransitEvents.length), 0, 'canceled charge emits no traversal event');
+      assert.equal(await page.evaluate(() => window.__gateTransitEvents.length), 0, 'canceled Boost rise emits no transit event');
 
-      await fire.click();
+      await boost.click();
       await page.waitForFunction(() => document.querySelector('#module-actions button')?.dataset.state === 'ok');
-      const fired = await canvasFrame(page, '#part');
-      const stillFireChange = requireVisibleChange(stillA, fired, 'Still Fire authored frame');
-      assert.equal(await page.evaluate(() => BONEYARD.Ticker.size), 0, 'Still Fire starts no ticker');
+      assert.equal(await page.locator('#status[role="status"]').textContent(), 'Travel frame selected.');
+      assert.equal(await page.evaluate(() => BONEYARD_PART.handle.state), 'still', 'Still Boost keeps the module in its public still state');
+      const selected = await canvasFrame(page, '#part');
+      const stillSelectionChange = requireVisibleChange(stillA, selected, 'Still Boost selected travel frame');
+      assert.equal(await page.evaluate(() => BONEYARD.Ticker.size), 0, 'Still Boost starts no ticker');
       await delay(page, 260);
-      const firedLater = await canvasFrame(page, '#part');
-      assert.equal(frameMeta(firedLater).sha256, frameMeta(fired).sha256, 'Still Fire is synchronous and stable');
-      await page.locator('#stage').screenshot({path: shot('stage-desktop-still-fired')});
+      const selectedLater = await canvasFrame(page, '#part');
+      assert.equal(frameMeta(selectedLater).sha256, frameMeta(selected).sha256, 'Still Boost selection is synchronous and stable');
+      await page.locator('#stage').screenshot({path: shot('stage-desktop-still-selected')});
 
-      const firedBacking = fired.source.slice();
+      const selectedBacking = selected.source.slice();
       await page.setViewportSize({width: 900, height: 1200});
-      await page.waitForFunction(([w, h]) => { const canvas = document.getElementById('part'); return canvas.width !== w || canvas.height !== h; }, firedBacking);
-      assert.equal(await page.evaluate(() => BONEYARD.Ticker.size), 0, 'Still Fire portrait resize starts no ticker');
-      await page.locator('#stage').screenshot({path: shot('stage-portrait-still-fired')});
+      await page.waitForFunction(([w, h]) => { const canvas = document.getElementById('part'); return canvas.width !== w || canvas.height !== h; }, selectedBacking);
+      assert.equal(await page.evaluate(() => BONEYARD.Ticker.size), 0, 'Still Boost portrait resize starts no ticker');
+      await page.locator('#stage').screenshot({path: shot('stage-portrait-still-selected')});
       await page.setViewportSize({width: 1440, height: 900});
-      await page.waitForFunction(([w, h]) => { const canvas = document.getElementById('part'); return canvas.width === w && canvas.height === h; }, firedBacking);
+      await page.waitForFunction(([w, h]) => { const canvas = document.getElementById('part'); return canvas.width === w && canvas.height === h; }, selectedBacking);
       const retained = await canvasFrame(page, '#part');
-      assert.equal(frameMeta(retained).sha256, frameMeta(fired).sha256, 'Still Fire composition survives orientation resize and return');
-      requireVisibleChange(stillA, retained, 'retained Still Fire composition');
-      assert.equal(await page.evaluate(() => BONEYARD.Ticker.size), 0, 'resized Still Fire remains ticker-free');
+      assert.equal(frameMeta(retained).sha256, frameMeta(selected).sha256, 'selected Still travel frame survives orientation resize and return');
+      requireVisibleChange(stillA, retained, 'retained Still travel frame');
+      assert.equal(await page.evaluate(() => BONEYARD.Ticker.size), 0, 'resized Still selection remains ticker-free');
 
       const selectedDataUrl = await page.locator('#part').evaluate((canvas) => canvas.toDataURL('image/png'));
       const pngDownloadPromise = page.waitForEvent('download');
       await page.getByRole('button', {name: 'Save PNG', exact: true}).click();
       const pngDownload = await pngDownloadPromise;
-      const pngPath = path.join(downloads, 'gate-still-fired.png');
+      const pngPath = path.join(downloads, 'gate-still-selected.png');
       await pngDownload.saveAs(pngPath);
       const pngBytes = await fs.readFile(pngPath);
       const pngPixels = await compareDownloadedPng(page, selectedDataUrl, pngBytes);
-      assert.equal(pngPixels.mismatchPixels, 0, 'decoded Save PNG pixels equal the selected Still Fire frame');
+      assert.equal(pngPixels.mismatchPixels, 0, 'decoded Save PNG pixels equal the selected Still travel frame');
 
       const disclosure = page.locator('#params-disclosure');
       if (!(await disclosure.evaluate((node) => node.open))) await disclosure.locator('summary').click();
@@ -683,8 +756,10 @@ try {
       const gainAfter = await gain.inputValue(), frameAfterGain = await canvasFrame(page, '#part');
       assert.notEqual(gainAfter, gainBefore, 'keyboard changes the data-param=gain slider');
       assert.equal(Number(gainAfter), await page.evaluate(() => BONEYARD_PART.params.gain));
-      const gainChange = requireVisibleChange(frameBeforeGain, frameAfterGain, 'keyboard gain change', {mean: 0.04, percent: 0.08});
-      await page.locator('#stage').screenshot({path: shot('stage-desktop-still-fired-gain')});
+      const gainChange = frameDiff(frameBeforeGain, frameAfterGain);
+      assert.ok(gainChange.meanAbsRgb >= 0.04 && gainChange.maxRgb >= 1,
+        `keyboard gain change did not update the authored frame (${JSON.stringify(gainChange)})`);
+      await page.locator('#stage').screenshot({path: shot('stage-desktop-still-selected-gain')});
 
       const htmlDownloadPromise = page.waitForEvent('download');
       const expectedParams = await page.evaluate(() => ({...BONEYARD_PART.params}));
@@ -694,13 +769,13 @@ try {
       await htmlDownload.saveAs(htmlPath);
       const source = await fs.readFile(htmlPath, 'utf8'), config = configFromHtml(source);
       assert.equal(config.slug, 'gate'); assert.equal(config.motion, 'still'); assert.equal(Number(config.params.gain), Number(gainAfter));
-      assert.deepEqual(config.params, expectedParams, 'Save HTML persists every factory PARAMS key and configured value');
+      assert.deepEqual(config.params, expectedParams, 'Save HTML persists every published PARAMS key and configured value');
       assert.match(source, /src\/41-gate\.js/); assert.match(source, /slug:\s*['"]gate['"]/); assert.match(source, /title:\s*['"]Gate['"]/);
       assert.match(source, /sunset-strip\.png/); assert.match(source, /id=["']save-png["']/); assert.match(source, /id=["']save-html["']/);
 
       await page.getByLabel('Designed still', {exact: true}).uncheck();
       await page.waitForFunction(() => BONEYARD.Ticker.size > 0);
-      await fire.click();
+      await boost.click();
       const beforePartPagehide = await page.evaluate(() => ({
         handle: !!window.BONEYARD_PART?.handle,
         ticker: BONEYARD.Ticker.size,
@@ -723,12 +798,12 @@ try {
       const cleanup = await page.evaluate((key) => JSON.parse(sessionStorage.getItem(key)), pagehideKey);
       assert.deepEqual(cleanup, {handle: false, ticker: 0, moduleActions: 0, statefulButtons: 0}, 'actual pagehide destroys the part and clears transient controls');
 
-      return {htmlPath, pngPath, configuredGain: Number(gainAfter), config, expectedParams, stillFireChange, retainedAfterResize: frameMeta(retained), gainChange, pngPixels, beforePartPagehide, cleanup};
+      return {htmlPath, pngPath, configuredGain: Number(gainAfter), config, expectedParams, stillSelectionChange, retainedAfterResize: frameMeta(retained), gainChange, pngPixels, beforePartPagehide, cleanup};
     } finally { await context.close(); }
   });
 
   if (exportReceipt) {
-    await scenario('downloaded HTML lifts with relative assets and preserves config and Fire', async () => {
+    await scenario('downloaded HTML lifts with relative assets and preserves config and Boost', async () => {
       await fs.mkdir(liftDir, {recursive: true});
       await fs.cp(path.join(root, 'assets'), path.join(liftDir, 'assets'), {recursive: true});
       const liftedName = 'gate-configured.html';
@@ -746,19 +821,19 @@ try {
         const embedded = await page.locator('#boneyard-part-config').textContent();
         assert.equal(JSON.parse(embedded).params.gain, exportReceipt.configuredGain);
         const before = await canvasFrame(page, '#part');
-        const fire = page.getByRole('button', {name: 'Fire gate', exact: true});
-        await fire.click(); await page.waitForFunction(() => document.querySelector('#module-actions button')?.dataset.state === 'ok');
-        const stillFired = await canvasFrame(page, '#part');
-        const stillDiff = requireVisibleChange(before, stillFired, 'lifted Still Fire');
+        const boost = page.getByRole('button', {name: 'Boost', exact: true});
+        await boost.click(); await page.waitForFunction(() => document.querySelector('#module-actions button')?.dataset.state === 'ok');
+        const stillSelected = await canvasFrame(page, '#part');
+        const stillDiff = requireVisibleChange(before, stillSelected, 'lifted Still Boost selection');
         assert.equal(await page.evaluate(() => BONEYARD.Ticker.size), 0);
         await page.getByLabel('Designed still', {exact: true}).uncheck();
         await page.waitForFunction(() => BONEYARD.Ticker.size > 0);
         const live = await canvasFrame(page, '#part');
-        const durations = factoryDurations(await page.evaluate(() => ({...BONEYARD_PART.params})));
-        await fire.click(); await delay(page, durations.charge * 550);
-        const liveFired = await canvasFrame(page, '#part');
-        const liveDiff = requireVisibleChange(live, liveFired, 'lifted Full Fire');
-        await page.locator('#stage').screenshot({path: shot('stage-lifted-configured-fire')});
+        const durations = boostDurations(await page.evaluate(() => ({...BONEYARD_PART.params})));
+        await boost.click(); await delay(page, durations.rise * 550);
+        const liveBoost = await canvasFrame(page, '#part');
+        const liveDiff = requireVisibleChange(live, liveBoost, 'lifted Full Boost');
+        await page.locator('#stage').screenshot({path: shot('stage-lifted-configured-boost')});
         assert.ok(assetResponses.some((entry) => entry.label === 'lifted-gate' && entry.status === 200), 'lifted Gate loads sunset-strip.png from adjacent assets/');
         return {state, persistedGain: exportReceipt.configuredGain, stillDiff, liveDiff, liftBase: serving.base};
       } finally {
@@ -767,17 +842,17 @@ try {
       }
     });
   } else {
-    report.failures.push({name: 'downloaded HTML lifts with relative assets and preserves config and Fire', error: 'Skipped because the export scenario did not produce HTML.'});
+    report.failures.push({name: 'downloaded HTML lifts with relative assets and preserves config and Boost', error: 'Skipped because the export scenario did not produce HTML.'});
   }
 
-  await scenario('main Full Fire starts sound, traverses once, and respects mute and Still', async () => {
+  await scenario('main Full Boost starts sound, emits one transit voice, and respects mute and Still', async () => {
     const context = await browser.newContext({viewport: {width: 1440, height: 900}, deviceScaleFactor: 1});
     try {
       const page = await openPage(context, 'main-sound');
       await page.goto(site('#gate'), {waitUntil: 'networkidle'}); await waitMain(page);
       const initial = await mainState(page);
       assert.equal(initial.sound.on, true); assert.equal(initial.sound.context, null); assert.equal(initial.sound.playing, false); assert.equal(initial.sound.outputLevel, 0);
-      const durations = factoryDurations(await page.evaluate(() => ({...BONEYARD_RIDE.bays.find((bay) => bay.slug === 'gate').m.params})));
+      const durations = boostDurations(await page.evaluate(() => ({...BONEYARD_RIDE.bays.find((bay) => bay.slug === 'gate').m.params})));
       await page.evaluate(() => {
         window.__gateMainEvents = [];
         window.__gatePreDispatch = [];
@@ -799,66 +874,74 @@ try {
           if (entry) entry.whooshesAfterHandlers = BONEYARD_SOUND.stats.whooshes;
         });
       });
-      const fire = page.locator('.bay-launch[data-slug="gate"]');
+      const boost = page.locator('.bay-launch[data-slug="gate"]');
       const whooshes0 = await page.evaluate(() => BONEYARD_SOUND.stats.whooshes);
-      await fire.click();
-      await delay(page, durations.charge * 450);
-      const chargeCheckpoint = await page.evaluate(() => ({
+      await boost.click();
+      await delay(page, durations.rise * 450);
+      const riseCheckpoint = await page.evaluate(() => ({
         whooshes: BONEYARD_SOUND.stats.whooshes,
         transitEvents: window.__gateMainEvents.filter((event) => event.detail.phase === 'transit').length,
       }));
-      assert.equal(chargeCheckpoint.whooshes, whooshes0, 'charge does not trigger the traversal voice early');
-      assert.equal(chargeCheckpoint.transitEvents, 0, 'charge has not emitted the traversal event early');
-      await page.screenshot({path: shot('main-desktop-charge')});
+      assert.equal(riseCheckpoint.whooshes, whooshes0, 'Boost rise does not trigger the transit voice early');
+      assert.equal(riseCheckpoint.transitEvents, 0, 'Boost rise has not emitted the transit event early');
+      await page.screenshot({path: shot('main-desktop-rise')});
       await page.waitForFunction(() => BONEYARD_SOUND.playing, null, {timeout: 5000});
-      await page.waitForFunction((before) => BONEYARD_SOUND.stats.whooshes > before, whooshes0, {timeout: Math.ceil((durations.charge + durations.travel + 3) * 1000)});
-      await page.screenshot({path: shot('main-desktop-traversal')});
+      await page.waitForFunction(() => window.__gateMainEvents.some((event) => event.detail.phase === 'transit'), null,
+        {timeout: Math.ceil((durations.rise + durations.surge + 3) * 1000)});
+      await page.screenshot({path: shot('main-desktop-surge')});
       const afterFirst = await page.evaluate(() => ({
         whooshes: BONEYARD_SOUND.stats.whooshes,
         events: window.__gateMainEvents.slice(),
         preDispatch: window.__gatePreDispatch.slice(),
-        fired: document.querySelector('.bay-launch[data-slug="gate"]').classList.contains('is-fired'),
+        feedbackActive: document.querySelector('.bay-launch[data-slug="gate"]').classList.contains('is-fired'),
         status: document.querySelector('#gate .action-status').textContent,
         sound: {on: BONEYARD_SOUND.on, playing: BONEYARD_SOUND.playing, context: BONEYARD_SOUND.context?.state || null},
       }));
-      assert.equal(afterFirst.whooshes, whooshes0 + 1, 'one Full traversal adds exactly one whoosh');
+      assert.equal(afterFirst.whooshes, whooshes0 + 1, 'one Full Boost transit adds exactly one whoosh');
       const transitEvents = afterFirst.events.filter((event) => event.detail.phase === 'transit');
-      assert.equal(transitEvents.length, 1, 'one Full traversal event is emitted');
+      assert.equal(transitEvents.length, 1, 'one Full Boost transit event is emitted');
       const preDispatchTransit = afterFirst.preDispatch.filter((event) => event.detail.phase === 'transit');
       assert.equal(preDispatchTransit.length, 1, 'one Gate transit reaches dispatch');
-      assert.equal(preDispatchTransit[0].whooshes, whooshes0, 'no generic voice fires before the Gate traversal event is dispatched');
-      assert.equal(transitEvents[0].whooshesAfterHandlers, whooshes0 + 1, 'the Gate traversal event starts exactly one voice');
+      assert.equal(preDispatchTransit[0].whooshes, whooshes0, 'no generic voice fires before the Gate transit event is dispatched');
+      assert.equal(transitEvents[0].whooshesAfterHandlers, whooshes0 + 1, 'the Gate transit event starts exactly one voice');
       assert.equal(afterFirst.sound.on, true); assert.equal(afterFirst.sound.playing, true); assert.equal(afterFirst.sound.context, 'running');
-      assert.equal(afterFirst.fired, false, 'brief visual button feedback has settled');
-      assert.equal(afterFirst.status, 'Gate firing.', 'assistive Fire status remains announced after visual feedback settles');
+      assert.equal(afterFirst.feedbackActive, false, 'brief visual button feedback has settled');
+      assert.equal(afterFirst.status, 'Boost engaged.', 'assistive Boost status remains announced after visual feedback settles');
       await delay(page, durations.total * 1000 + 180);
-      await page.screenshot({path: shot('main-desktop-settled')});
+      await page.screenshot({path: shot('main-desktop-post-boost')});
 
       await page.getByRole('button', {name: 'Sound on', exact: true}).click();
       await page.waitForFunction(() => !BONEYARD_SOUND.on && !BONEYARD_SOUND.playing);
       const mutedWhooshes = await page.evaluate(() => BONEYARD_SOUND.stats.whooshes);
-      await fire.click(); await delay(page, (durations.charge + durations.travel + 0.3) * 1000);
+      await boost.click(); await delay(page, (durations.rise + durations.surge + 0.3) * 1000);
       const muted = await page.evaluate(() => ({on: BONEYARD_SOUND.on, playing: BONEYARD_SOUND.playing, whooshes: BONEYARD_SOUND.stats.whooshes}));
-      assert.equal(muted.on, false); assert.equal(muted.playing, false); assert.equal(muted.whooshes, mutedWhooshes, 'muted Fire adds no whoosh');
-      await delay(page, (durations.recovery + 0.2) * 1000);
+      assert.equal(muted.on, false); assert.equal(muted.playing, false); assert.equal(muted.whooshes, mutedWhooshes, 'muted Boost adds no whoosh');
+      await delay(page, (durations.settle + 0.2) * 1000);
 
       await setRideDial(page, 'Still');
       await page.waitForFunction(() => BONEYARD.Ticker.size === 0, null, {timeout: 4000});
       const beforeStill = await canvasFrame(page, '.room[data-slug="gate"] canvas');
       const eventsBeforeStill = await page.evaluate(() => window.__gateMainEvents.length);
-      await fire.click();
+      await boost.click();
       const afterStill = await canvasFrame(page, '.room[data-slug="gate"] canvas');
-      const stillDiff = requireVisibleChange(beforeStill, afterStill, 'main Still Fire');
-      assert.equal(await page.evaluate(() => BONEYARD.Ticker.size), 0, 'main Still Fire does not wake the host ticker');
+      const stillDiff = requireVisibleChange(beforeStill, afterStill, 'main Still Boost selection');
+      assert.equal(await page.evaluate(() => BONEYARD.Ticker.size), 0, 'main Still Boost does not wake the host ticker');
       await page.mouse.move(700, 300);
       await delay(page, 80);
       assert.equal(await page.evaluate(() => BONEYARD.Ticker.size), 0, 'pointermove in Still does not wake the host ticker');
-      await delay(page, (durations.charge + durations.travel + 0.3) * 1000);
-      const still = await page.evaluate(() => ({events: window.__gateMainEvents.length, whooshes: BONEYARD_SOUND.stats.whooshes, ticker: BONEYARD.Ticker.size, soundOn: BONEYARD_SOUND.on}));
-      assert.equal(still.events, eventsBeforeStill, 'Still Fire emits no traversal event');
-      assert.equal(still.whooshes, mutedWhooshes, 'Still Fire adds no whoosh');
-      assert.equal(still.ticker, 0); assert.equal(still.soundOn, false);
-      await page.screenshot({path: shot('main-desktop-still-fired')});
+      await delay(page, (durations.rise + durations.surge + 0.3) * 1000);
+      const still = await page.evaluate(() => ({
+        events: window.__gateMainEvents.length,
+        whooshes: BONEYARD_SOUND.stats.whooshes,
+        ticker: BONEYARD.Ticker.size,
+        soundOn: BONEYARD_SOUND.on,
+        status: document.querySelector('#gate .action-status').textContent,
+        handleState: BONEYARD_RIDE.bays.find((bay) => bay.slug === 'gate').m.handle.state,
+      }));
+      assert.equal(still.events, eventsBeforeStill, 'Still Boost emits no transit event');
+      assert.equal(still.whooshes, mutedWhooshes, 'Still Boost adds no whoosh');
+      assert.equal(still.ticker, 0); assert.equal(still.soundOn, false); assert.equal(still.status, 'Travel frame selected.'); assert.equal(still.handleState, 'still');
+      await page.screenshot({path: shot('main-desktop-still-selected')});
 
       await setRideDial(page, 'Full');
       const pagehideKey = '__boneyard_gate_main_pagehide';
@@ -866,46 +949,55 @@ try {
         sessionStorage.removeItem(key);
         addEventListener('pagehide', () => sessionStorage.setItem(key, JSON.stringify({
           autofly: window.BONEYARD_RIDE?.autofly,
-          fired: document.querySelector('.bay-launch[data-slug="gate"]')?.classList.contains('is-fired'),
+          feedbackActive: document.querySelector('.bay-launch[data-slug="gate"]')?.classList.contains('is-fired'),
           status: document.querySelector('#gate .action-status')?.textContent,
         })), {once: true});
       }, pagehideKey);
-      await fire.click(); await page.getByRole('button', {name: 'Start auto-fly', exact: true}).click();
+      await boost.click(); await page.getByRole('button', {name: 'Start auto-fly', exact: true}).click();
       const beforeMainPagehide = await page.evaluate(() => ({
         autofly: BONEYARD_RIDE.autofly,
-        fired: document.querySelector('.bay-launch[data-slug="gate"]').classList.contains('is-fired'),
+        feedbackActive: document.querySelector('.bay-launch[data-slug="gate"]').classList.contains('is-fired'),
         status: document.querySelector('#gate .action-status').textContent,
       }));
-      assert.deepEqual(beforeMainPagehide, {autofly: true, fired: true, status: 'Gate firing.'});
+      assert.deepEqual(beforeMainPagehide, {autofly: true, feedbackActive: true, status: 'Boost engaged.'});
       await page.goto(site('parts/gate.html?from=main-pagehide'), {waitUntil: 'networkidle'}); await waitPart(page);
       const cleanup = await page.evaluate((key) => JSON.parse(sessionStorage.getItem(key)), pagehideKey);
-      assert.deepEqual(cleanup, {autofly: false, fired: false, status: ''}, 'main pagehide clears Auto-fly and launch feedback');
-      return {initial: initial.sound, durations, whooshes0, chargeCheckpoint, afterFirst, muted, still, stillDiff, beforeMainPagehide, cleanup};
+      assert.deepEqual(cleanup, {autofly: false, feedbackActive: false, status: ''}, 'main pagehide clears Auto-fly and Boost feedback');
+      return {initial: initial.sound, durations, whooshes0, riseCheckpoint, afterFirst, muted, still, stillDiff, beforeMainPagehide, cleanup};
     } finally { await context.close(); }
   });
 
-  await scenario('Calm Fire is visible and removes traversal punch and event', async () => {
+  await scenario('Calm Boost is visible and emits no Full transit punch or voice', async () => {
     const context = await browser.newContext({viewport: {width: 1440, height: 900}, deviceScaleFactor: 1});
     try {
       const page = await openPage(context, 'main-calm');
       await page.goto(site('#gate'), {waitUntil: 'networkidle'}); await waitMain(page);
       await setRideDial(page, 'Calm');
       await page.evaluate(() => { window.__gateCalmEvents = []; addEventListener('boneyard:gate', (event) => window.__gateCalmEvents.push(event.detail || {})); });
-      const durations = factoryDurations(await page.evaluate(() => ({...BONEYARD_RIDE.bays.find((bay) => bay.slug === 'gate').m.params})));
+      const durations = boostDurations(await page.evaluate(() => ({...BONEYARD_RIDE.bays.find((bay) => bay.slug === 'gate').m.params})));
       const before = await canvasFrame(page, '.room[data-slug="gate"] canvas');
       await page.locator('.bay-launch[data-slug="gate"]').click();
-      await delay(page, (durations.charge + durations.travel * 0.5) * 1000);
+      await delay(page, (durations.rise + durations.surge * 0.5) * 1000);
       const active = await canvasFrame(page, '.room[data-slug="gate"] canvas');
-      const diff = requireVisibleChange(before, active, 'Calm Fire');
-      const calm = await page.evaluate(() => ({dial: BONEYARD_RIDE.ctx.dial, punch: BONEYARD_RIDE.ctx.share.punch || 0, shake: BONEYARD_RIDE.ctx.share.shake || null, events: window.__gateCalmEvents.length, whooshes: BONEYARD_SOUND.stats.whooshes}));
-      assert.equal(calm.dial, 'calm'); assert.ok(Math.abs(calm.punch) < 0.01); assert.equal(calm.shake, null);
-      assert.equal(calm.events, 0, 'Calm has no Full traversal event'); assert.equal(calm.whooshes, 0, 'Calm has no Full traversal whoosh');
-      await page.screenshot({path: shot('main-desktop-calm-fire')});
+      const diff = requireVisibleChange(before, active, 'Calm Boost');
+      const calm = await page.evaluate(() => ({
+        dial: BONEYARD_RIDE.ctx.dial,
+        gateEnergy: Number(BONEYARD_RIDE.ctx.share.gateEnergy) || 0,
+        punch: BONEYARD_RIDE.ctx.share.punch || 0,
+        shake: BONEYARD_RIDE.ctx.share.shake || null,
+        events: window.__gateCalmEvents.length,
+        whooshes: BONEYARD_SOUND.stats.whooshes,
+        status: document.querySelector('#gate .action-status').textContent,
+      }));
+      assert.equal(calm.dial, 'calm'); assert.ok(calm.gateEnergy > 0, 'Calm Boost produces a gentle energized response'); assert.ok(Math.abs(calm.punch) < 0.01); assert.equal(calm.shake, null);
+      assert.equal(calm.events, 0, 'Calm has no Full transit event'); assert.equal(calm.whooshes, 0, 'Calm has no Full transit whoosh');
+      assert.equal(calm.status, 'Gentle boost engaged.');
+      await page.screenshot({path: shot('main-desktop-calm-boost')});
       return {durations, diff, calm};
     } finally { await context.close(); }
   });
 
-  await scenario('scrolling Gate off during charge deactivates shared energy without remounting or resuming', async () => {
+  await scenario('scrolling Gate off during Boost rise deactivates shared energy without remounting or resuming', async () => {
     const context = await browser.newContext({viewport: {width: 1440, height: 900}, deviceScaleFactor: 1});
     try {
       const page = await openPage(context, 'main-deactivate');
@@ -924,15 +1016,16 @@ try {
         };
       });
       assert.equal(setup.currentSlug, 'gate'); assert.equal(setup.hasDeactivate, true, 'Gate exposes optional deactivate lifecycle hook');
-      const durations = factoryDurations(await page.evaluate(() => ({...BONEYARD_RIDE.bays.find((bay) => bay.slug === 'gate').m.params})));
+      const durations = boostDurations(await page.evaluate(() => ({...BONEYARD_RIDE.bays.find((bay) => bay.slug === 'gate').m.params})));
       await page.locator('.bay-launch[data-slug="gate"]').click();
-      await delay(page, durations.charge * 400);
+      await delay(page, durations.rise * 400);
       const activeShare = await page.evaluate(() => {
-        const share = BONEYARD_RIDE.ctx.share;
-        return {gateEnergy: Number(share.gateEnergy) || 0, warp: Number(share.warp) || 0, punch: Number(share.punch) || 0, events: window.__gateDeactivateEvents.length};
+        const gate = BONEYARD_RIDE.bays.find((bay) => bay.slug === 'gate'), share = BONEYARD_RIDE.ctx.share;
+        return {gateEnergy: Number(share.gateEnergy) || 0, warp: Number(share.warp) || 0, punch: Number(share.punch) || 0, events: window.__gateDeactivateEvents.length, handleState: gate.m.handle.state};
       });
-      assert.ok(activeShare.gateEnergy > 0 || activeShare.warp > 0 || activeShare.punch > 0, 'charge owns visible shared energy before deactivation');
-      assert.equal(activeShare.events, 0, 'scroll starts before traversal');
+      assert.ok(activeShare.gateEnergy > 0 || activeShare.warp > 0 || activeShare.punch > 0, 'Boost rise owns visible shared energy before deactivation');
+      assert.equal(activeShare.events, 0, 'scroll starts before transit');
+      assert.equal(activeShare.handleState, 'spool', 'the canceled Boost is still in its public spool state before scrolling off');
 
       const target = setup.top + setup.height * 0.37;
       const startY = await page.evaluate(() => scrollY);
@@ -951,6 +1044,7 @@ try {
           mounted: !!gate.m,
           sameHandle: gate.m?.handle === window.__gateDeactivateHandle,
           roomState: gate.m?.state,
+          handleState: gate.m?.handle.state,
           share: {
             gateEnergy: Number(share.gateEnergy) || 0,
             warp: Number(share.warp) || 0,
@@ -966,7 +1060,7 @@ try {
       }, {top: setup.top, height: setup.height});
       assert.equal(off.current, setup.current, '0.37 bay progress retains the current bay index');
       assert.equal(off.currentSlug, 'gate', '0.37 bay progress still reports Gate as current');
-      assert.equal(off.mounted, true); assert.equal(off.sameHandle, true); assert.equal(off.roomState, 'off');
+      assert.equal(off.mounted, true); assert.equal(off.sameHandle, true); assert.equal(off.roomState, 'off'); assert.equal(off.handleState, 'glide', 'deactivate resets the canceled Boost to glide');
       assert.deepEqual({
         gateEnergy: off.share.gateEnergy,
         warp: off.share.warp,
@@ -992,10 +1086,19 @@ try {
       await page.mouse.wheel(0, setup.top - yOff);
       await page.waitForFunction(() => {
         const gate = BONEYARD_RIDE.bays.find((bay) => bay.slug === 'gate');
-        return Math.abs(scrollY - gate.el.offsetTop) < 3 && gate.m?.state === 'on' && gate.m.handle === window.__gateDeactivateHandle;
+        return Math.abs(scrollY - gate.el.offsetTop) < 3 && gate.m?.state === 'on' && gate.m.handle === window.__gateDeactivateHandle
+          && gate.m.handle.state === 'glide' && /\bglide\s*·/.test(String(BONEYARD_RIDE.ctx.readouts.gate || ''));
       }, null, {timeout: 5000});
+      const reactivatedCruise = await page.evaluate(() => {
+        const gate = BONEYARD_RIDE.bays.find((bay) => bay.slug === 'gate');
+        const readout = String(BONEYARD_RIDE.ctx.readouts.gate || ''), match = readout.match(/([0-9]+(?:\.[0-9]+)?)\s*u\/s/);
+        return {readout, speed: match ? Number(match[1]) : null, configuredCruise: Number(gate.m.params.cruise), state: gate.m.handle.state};
+      });
+      assert.equal(reactivatedCruise.state, 'glide'); assert.ok(Number.isFinite(reactivatedCruise.speed) && reactivatedCruise.speed > 0);
+      assert.ok(Math.abs(reactivatedCruise.speed - reactivatedCruise.configuredCruise) <= 0.11,
+        `deactivate resets boosted speed to Full cruise (${JSON.stringify(reactivatedCruise)})`);
       const eventsOnReturn = await page.evaluate(() => window.__gateDeactivateEvents.length);
-      await delay(page, (durations.charge + durations.travel + 0.35) * 1000);
+      await delay(page, (durations.rise + durations.surge + 0.35) * 1000);
       const returned = await page.evaluate(() => {
         const gate = BONEYARD_RIDE.bays.find((bay) => bay.slug === 'gate');
         return {
@@ -1003,13 +1106,14 @@ try {
           currentSlug: BONEYARD_RIDE.bays[BONEYARD_RIDE.current]?.slug,
           sameHandle: gate.m?.handle === window.__gateDeactivateHandle,
           roomState: gate.m?.state,
+          handleState: gate.m?.handle.state,
           events: window.__gateDeactivateEvents.length,
         };
       });
-      assert.equal(returned.current, setup.current); assert.equal(returned.currentSlug, 'gate'); assert.equal(returned.sameHandle, true); assert.equal(returned.roomState, 'on');
-      assert.equal(returned.events, eventsOnReturn, 'returning on the same handle does not resume the canceled flight or emit transit');
+      assert.equal(returned.current, setup.current); assert.equal(returned.currentSlug, 'gate'); assert.equal(returned.sameHandle, true); assert.equal(returned.roomState, 'on'); assert.equal(returned.handleState, 'glide', 'returning on the same handle stays in cruise');
+      assert.equal(returned.events, eventsOnReturn, 'returning on the same handle does not resume the canceled Boost or emit transit');
       await page.screenshot({path: shot('main-desktop-gate-reactivated-idle')});
-      return {setup, durations, activeShare, off, settledShare, returned};
+      return {setup, durations, activeShare, off, settledShare, reactivatedCruise, returned};
     } finally { await context.close(); }
   });
 
@@ -1018,20 +1122,20 @@ try {
     try {
       const page = await openPage(context, 'main-phone-interaction');
       await page.goto(site('#gate'), {waitUntil: 'networkidle'}); await waitMain(page);
-      const fire = page.locator('.bay-launch[data-slug="gate"]');
-      const touchAction = await page.evaluate(() => ({main: getComputedStyle(document.getElementById('row-main')).touchAction, fire: getComputedStyle(document.querySelector('.bay-launch[data-slug="gate"]')).touchAction}));
-      assert.match(touchAction.main, /pan-y/); assert.match(touchAction.fire, /manipulation/);
+      const boost = page.locator('.bay-launch[data-slug="gate"]');
+      const touchAction = await page.evaluate(() => ({main: getComputedStyle(document.getElementById('row-main')).touchAction, boost: getComputedStyle(document.querySelector('.bay-launch[data-slug="gate"]')).touchAction}));
+      assert.match(touchAction.main, /pan-y/); assert.match(touchAction.boost, /manipulation/);
       await page.getByRole('button', {name: 'Start auto-fly', exact: true}).tap();
       await page.waitForFunction(() => BONEYARD_RIDE.autofly);
       const before = await canvasFrame(page, '.room[data-slug="gate"] canvas');
       const yBefore = await page.evaluate(() => scrollY);
-      await fire.tap();
+      await boost.tap();
       await page.waitForFunction(() => !BONEYARD_RIDE.autofly);
       await delay(page, 520);
-      const yAfter = await page.evaluate(() => scrollY), fired = await canvasFrame(page, '.room[data-slug="gate"] canvas');
-      assert.ok(Math.abs(yAfter - yBefore) < 2, `Fire moved outer scroll from ${yBefore} to ${yAfter}`);
-      const diff = requireVisibleChange(before, fired, 'phone coarse Fire tap');
-      await page.screenshot({path: shot('main-phone-coarse-fire')});
+      const yAfter = await page.evaluate(() => scrollY), boosted = await canvasFrame(page, '.room[data-slug="gate"] canvas');
+      assert.ok(Math.abs(yAfter - yBefore) < 2, `Boost moved outer scroll from ${yBefore} to ${yAfter}`);
+      const diff = requireVisibleChange(before, boosted, 'phone coarse Boost tap');
+      await page.screenshot({path: shot('main-phone-coarse-boost')});
 
       const swipeStart = await page.evaluate(() => scrollY);
       await nativeTouchSwipe(context, page, {x: 20, y: 680}, {x: 20, y: 280});

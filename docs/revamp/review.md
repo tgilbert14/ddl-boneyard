@@ -120,3 +120,15 @@ test injects an AudioContext resume denial with actual native audio nodes and a 
 it is a controlled integration test, not a hardware Safari autoplay observation. The in-app
 browser tour and pause were also exercised and visually inspected. `ride-phone.png` shows the
 updated phone controls. Physical-device and cross-browser limits above remain open.
+
+## Gate travel correction, 2026-10-01
+
+The owner rejected the published reactor Gate and asked for retro travel through something.
+The replacement is a continuously moving, full-viewport vector canyon with sunset-derived
+light ribbons, staggered one-sided fins and a smooth forward Boost. Phone composition and
+normal-speed motion were reviewed through multiple rendered iterations. The dedicated
+local Gate suite passed 11 scenarios; the wider artifact checks passed 17 parts, three
+no-JavaScript paths and four configured lifts, and the ride suite passed 19 checks.
+See [the correction review](gate/travel-review.md) and the adjacent
+`ddl-boneyard-flight-release-20261001` receipt for exact release evidence. Internal review
+and publication do not imply owner acceptance of the replacement build.

@@ -913,7 +913,7 @@ html.js:not(.departed) #rooms { visibility:hidden; }
 
   <section class="bay" id="gate" data-bay="2" data-slug="gate" aria-labelledby="h-gate">
     <img class="bay-still" src="parts/stills/gate.webp" width="480" height="270" loading="lazy" alt="Gate, the designed still frame">
-    <div class="plate"><div class="plate-heading"><h2 id="h-gate"><span class="n">02</span>Gate</h2><a class="pull" href="parts/gate.html" aria-label="Pull Gate: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg><span>Pull part</span><span aria-hidden="true">↗</span></a></div><div class="plate-footer"><div class="scene-actions"><button type="button" class="bay-launch" data-slug="gate">Fire gate <span aria-hidden="true">↗</span></button><span class="action-status" role="status"></span></div><details class="bay-info"><summary>About</summary><div class="bay-info-body"><p class="lineage">Slit-scan · Douglas Trumbull, 2001: A Space Odyssey, 1968</p><p class="note">A reactor gateway powered by one column of a real Sonoran sunset. Fire it and ride through the light.</p></div></details></div></div>
+    <div class="plate"><div class="plate-heading"><h2 id="h-gate"><span class="n">02</span>Gate</h2><a class="pull" href="parts/gate.html" aria-label="Pull Gate: open this part on its own page"><svg viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7.5" width="10" height="6.5" rx="1.5"/><path d="M8 1.5v6M5.5 4 8 1.5 10.5 4"/></svg><span>Pull part</span><span aria-hidden="true">↗</span></a></div><div class="plate-footer"><div class="scene-actions"><button type="button" class="bay-launch" data-slug="gate">Boost <span aria-hidden="true">»</span></button><span class="action-status" role="status"></span></div><details class="bay-info"><summary>About</summary><div class="bay-info-body"><p class="lineage">Slit-scan · Douglas Trumbull, 2001: A Space Odyssey, 1968</p><p class="note">Fly through a neon canyon drawn from one column of a real Sonoran sunset. Boost to pick up speed.</p></div></details></div></div>
   </section>
 
   <section class="bay" id="range" data-bay="3" data-slug="range" aria-labelledby="h-range">
@@ -1532,7 +1532,7 @@ const bootBoneyardRide = () => {
       const handle = b?.m?.handle, action = button.matches('.bay-launch') ? 'launch' : 'rain';
       if (typeof handle?.[action] !== 'function' || handle[action]() === false) { if (status) status.textContent = 'Gate is not ready yet.'; return; }
       clearTimeout(feedback); button.classList.add('is-fired'); if (ctx.dial !== 'still') wake();
-      if (status) status.textContent = ctx.dial === 'still' ? 'Gate energized. Still frame ready.' : ctx.dial === 'calm' ? 'Gate energized.' : 'Gate firing.';
+      if (status) status.textContent = ctx.dial === 'still' ? 'Travel frame selected.' : ctx.dial === 'calm' ? 'Gentle boost engaged.' : 'Boost engaged.';
       feedback = setTimeout(() => button.classList.remove('is-fired'), 450);
     });
     addEventListener('pagehide', () => { clearTimeout(feedback); button.classList.remove('is-fired'); if (status) status.textContent = ''; });
@@ -2789,12 +2789,12 @@ else bootBoneyardRide();
 
 /* BONEYARD SOUND · the gesture-led engine room (PUNCH item 7)
  * what        one SOUND button in the header. Sound is enabled by default, but stays silent until a visitor scrolls,
- *             uses ride navigation, fires Gate or starts Auto-fly. An explicit on or off choice is remembered. When sounding: a low synth engine bed whose pitch and filter
+ *             uses ride navigation, boosts Gate or starts Auto-fly. An explicit on or off choice is remembered. When sounding: a low synth engine bed whose pitch and filter
  *             follow scroll speed, a CRT relay clunk plus a high-voltage whine tick on every tube switch, a rising
- *             filtered-noise whoosh with a pitch sweep when a hyperspace warp crosses 0.6 or Gate begins a Full traversal.
- *             Gate's charge also raises the existing engine bed. SCOPE keeps its own tone.
+ *             filtered-noise whoosh with a pitch sweep when a hyperspace warp crosses 0.6 or Gate reaches its Full boost.
+ *             Gate's speed rise also raises the existing engine bed. SCOPE keeps its own tone.
  * law         no playback before real ride intent. Pointer, touch and keyboard gestures may unlock a silent context;
- *             a scroll, navigation action, Fire gate or active Auto-fly request starts the bed. A wheel alone cannot unlock audio
+ *             a scroll, navigation action, Boost or active Auto-fly request starts the bed. A wheel alone cannot unlock audio
  *             in every browser, so a blocked request is shown as pending and the SOUND button completes it. An explicit
  *             stored off always wins. Sound is independent of the motion dial. Hidden tabs suspend the context.
  *             The bed ducks to near zero while SCOPE is current and held.
@@ -2958,7 +2958,7 @@ else bootBoneyardRide();
   let outputLive = false;                  /* the graph's master has been raised */
   let igniteOnStart = true, pressOnStart = false;
   let resumeFlight = null, resumeToken = 0, sleepT = 0;
-  let lastClunk = { on: -1, off: -1 }, lastWhoosh = -1, warpHigh = false, sawSwitchEvent = false, prevBay = null;
+  let lastClunk = { on: -1, off: -1 }, lastWhoosh = -Infinity, warpHigh = false, sawSwitchEvent = false, prevBay = null;
   let sm = 0, lastY = window.scrollY, yMovedAt = 0;
   const stats = { clunks: 0, whooshes: 0, freq: 0, speed: 0, ducked: false };
 
@@ -3126,7 +3126,7 @@ else bootBoneyardRide();
   addEventListener('boneyard:switch', (e) => { rouse(); sawSwitchEvent = true; onSwitch(e.detail && e.detail.dir); });
   addEventListener('boneyard:warp', (e) => {
     const r = ride(), cur = r && r.bays[Math.max(0, r.current)];
-    if (cur?.slug === 'gate') return;  /* Gate's own traversal event owns its synchronized voice. */
+    if (cur?.slug === 'gate') return;  /* Gate's own surge event owns its synchronized voice. */
     rouse(); sawWarpEvent = true; onWarp(+(e.detail && e.detail.level) || 1, true);
   });
   addEventListener('boneyard:gate', (e) => {
@@ -4664,77 +4664,71 @@ else bootBoneyardRide();
 
 
 /* BONEYARD PART · 02 · GATE
- * technique   a high-resolution segmented reactor gate around a bounded low-resolution slit-scan energy texture,
- *             with beveled metal, deep aperture walls, mechanical clamps and a scroll-lit industrial hangar
+ * technique   a full-viewport 1/z slit canyon with continuous source-lit ribbons, offset one-sided shutter fins,
+ *             longitudinal phosphor tracks and a camera that always flies forward through wrapped depth stations
  * lineage     Douglas Trumbull's slit-scan for 2001: A Space Odyssey (1968), after John Whitney's slit-scan
- *             experiments (1950s and 1960s); vector arcade display hardware and practical miniature lighting
- * original    the living aperture samples ONE column of Tim Gilbert's own 2025-03-01 Sonoran sunset photograph,
- *             resampled to 1 x 1024 (assets/sunset-strip.png, provenance in sunset-strip.json); reactor structure,
- *             barrel ribs and the cyan/amber channel accents use BONEYARD's supplied phosphor and amber tokens
- * not         a film recreation, a video, a photo, or a physical reactor simulation. The sunset supplies the energy
- *             texture while the original code-built machine supplies its structure, depth and launch choreography.
- * deps        none · Canvas 2D + bounded ImageData texture · 2026-10
- * budget      0.597 ms mean, 0.700 ms p95 in rAF-paced launch at 1050 x 852 DPR1, local Chromium; target <4 ms
- *             synchronous JS/Canvas API cost; async GPU/paint excluded. Stress conditions: docs/revamp/gate/review.md
+ *             experiments (1950s and 1960s); vector arcade flight displays and practical backlit miniatures
+ * original    the amber, coral and rose ribbons sample ONE column of Tim Gilbert's own 2025-03-01 Sonoran sunset
+ *             photograph, resampled to 1 x 1024 (assets/sunset-strip.png, provenance in sunset-strip.json);
+ *             the canyon, asymmetric shutters and cyan structural tracks are original code-built geometry
+ * not         a film recreation, a video, a photo, or a texture-mapped tunnel. The photograph supplies bounded
+ *             light colors while projected world geometry supplies motion and occlusion.
+ * deps        none · high-resolution Canvas 2D perspective geometry · 2026-10
+ * budget      target <4 ms mean for requestAnimationFrame-paced normal-rate tick calls at desktop DPR1; synchronous
+ *             JavaScript and Canvas API cost only, with compositor, paint, GPU, network and thermal work excluded
  * api         mount(canvas, params, ctx) -> { tick, resize, still, deactivate, destroy, params, launch(), state }
  * license     MIT, Desert Data Labs LLC
  */
 /* HOW IT WORKS
- * Gate is a physical machine before it is a light effect. Three chamfered hangar frames establish far depth. A dark
- * extruded chassis, twelve separate face segments, paired highlight and shadow edges, four piston clamps and floor
- * anchors establish near and middle depth even with emissives removed. The center is a bounded aperture, not a full
- * screen carpet. Its small ImageData buffer maps the sunset strip into narrow longitudinal channels. Canvas 2D lays
- * those channels behind a dark barrel of occluding ribs, advancing shells, a tiny core and a thick inner bezel.
+ * The camera travels through a dark four-sided canyon. Every point is authored in world space, bent along a shallow
+ * deterministic flight path, then projected through a near plane with x' = focal * x / z and y' = focal * y / z.
+ * Opaque wall, ceiling and floor cells are painted from far to near, so nearer geometry hides what is behind it.
+ * Four sunset-sampled ribbons run down those surfaces, bounded by thin phosphor tracks and crisp dark seams. Each
+ * ribbon is divided into stable world-depth color slices with a narrow hot core and a restrained outer shoulder.
+ * They are real longitudinal faces, not a screen gradient, and their colored cells grow and leave the viewport as
+ * the camera crosses each station.
  *
- * launch() starts a bounded sequence advanced only by the host ticker: charge, traverse, settle, energized idle.
- * Charge scans the face segments and retracts the clamps. Traverse accelerates the sunset texture through the throat,
- * sends one amber pressure ring across the chassis and publishes a short shared punch. Settle closes the mechanism
- * onto a stronger energized hold. Calm keeps the charge response but removes the pressure ring and reduces travel.
- * Still draws one deterministic energized pose synchronously and starts no clock or loop.
+ * A single shutter fin occupies each station, alternating left, ceiling, right and floor. No station closes into a
+ * ring. At the default glide, a fin passes the camera about once per second and the wrapped replacement appears at
+ * the far end. launch() only adds forward speed: spool, transit and settle all advance the same distance accumulator,
+ * then return to the living glide. Full emits one transit event and carries a short physical shake. Calm moves gently
+ * with no event, punch or shake. Still renders one selected travel frame synchronously; launch() selects a second
+ * stable frame and resize preserves that choice without starting a clock.
  */
 (() => {
   'use strict';
   const PARAMS = {
-    cruise: 9,             /* inherited control: base sunset-flow rate */
-    scrollGain: 12,        /* inherited control: extra flow from positive bay progress */
-    settle: 0.45,          /* pointer shove response */
-    lanes: 9,              /* energy arms inside the aperture */
-    lanePool: 64,          /* deterministic phase family, retained for configured exports */
-    stripPerUnit: 44,      /* sunset sample density through the throat */
-    paceSpread: 0.35,      /* asymmetry of the energy folds */
-    floorH: 1, ceilH: 1.15,
-    focalK: 0.62,          /* hangar perspective strength */
-    fog: 20,               /* far-hangar falloff */
-    gain: 1.34,            /* sunset energy exposure */
-    sat: 1.82,             /* sunset saturation about its own luma */
-    edge: 0.82,            /* aperture edge falloff */
-    shove: 0.65,           /* pointer parallax inside the fixed machine */
-    haze: 0.42,            /* local energy halo behind the chassis */
-    coreW: 0.12, coreH: 0.1, /* throat size inside the aperture */
-    bloomW: 0.23, bloomH: 0.16,
-    bloom: 0.28,
-    eyeDark: 0.84,
-    rim: 0.62,
-    ribSpacing: 1.65, ribWidth: 0.075, ribShade: 0.58,
-    sideShade: 0.32,
-    toneKnee: 218,
-    stillDolly: 23.5,
-    segments: 12,
-    aperture: 0.27,        /* width fraction before portrait fitting */
-    apertureAspect: 0.78,
-    frameWidth: 0.27,
-    frameDepth: 0.11,
-    segmentGap: 0.045,
-    idleEnergy: 0.62,
-    chargeTime: 1.05,
-    travelTime: 0.82,
+    cruise: 2.9,           /* world units per second: 2.55 spacing gives one near pass about every 0.88 s */
+    calmCruise: 0.62,
+    scrollGain: 0.8,       /* modest extra forward speed after the bay hold; outer scroll remains native */
+    settle: 0.34,          /* speed and pointer response */
+    corridorW: 2.06,
+    floorH: 1.24,
+    ceilH: 1.14,
+    focalK: 0.74,
+    near: 0.48,
+    fog: 34,               /* far draw distance */
+    ribSpacing: 2.55,
+    ribWidth: 0.19,
+    finReach: 0.27,
+    finSpan: 0.5,
+    lanePool: 32,          /* sunset palette entries */
+    stripPerUnit: 1.1,
+    gain: 1.08,
+    sat: 1.84,
+    toneKnee: 216,
+    idleEnergy: 0.96,
+    railAlpha: 0.7,
+    sideShade: 0.88,
+    shove: 0.18,
+    stillDolly: 18.35,
+    chargeTime: 0.5,
+    travelTime: 1.3,
     recoveryTime: 1.15,
-    scanRate: 0.24,
-    burst: 0.72,
-    shakePx: 2.4,
+    burst: 3.2,
+    shakePx: 1.85,
   };
 
-  const TAU = Math.PI * 2;
   const clamp = (x, a, b, fallback) => Number.isFinite(Number(x)) ? Math.max(a, Math.min(b, Number(x))) : fallback;
   const smooth = (a, b, x) => { const u = Math.max(0, Math.min(1, (x - a) / Math.max(1e-6, b - a))); return u * u * (3 - 2 * u); };
   const mod = (x, n) => ((x % n) + n) % n;
@@ -4742,522 +4736,391 @@ else bootBoneyardRide();
   function assetUrls(ctx, name) {
     const bases = (ctx.assetBases && ctx.assetBases.length) ? ctx.assetBases.slice()
       : (location.pathname.includes('/parts/') ? ['../assets/', 'assets/'] : ['assets/', '../assets/']);
-    return bases.map((b) => new URL(b + name, document.baseURI).href);
+    return bases.map((base) => new URL(base + name, document.baseURI).href);
   }
 
   function mount(canvas, params, ctx) {
     const g = canvas.getContext('2d', { alpha: false });
-    let w = canvas.width, h = canvas.height, bd = 1, px = 1, dead = false, ready = false, lastTick = 0;
-    let raw = null, energyCanvas = null, energyCtx = null, energyImage = null, energy32 = null;
-    let eRad = null, eAng = null, eNx = null, eNy = null;
-    let state = 'idle', seqT = 0, energyPhase = 0, shove = 0, kick = 0, clock = 0, energized = 0.68;
-    let stillFired = false;
-    let lastPose = null, ownsShare = false;
-    let bandR = 246, bandG = 116, bandB = 67, hotR = 255, hotG = 143, hotB = 76;
-    let bandCss = 'rgb(246,116,67)', hotCss = 'rgb(255,143,76)', roseCss = 'rgb(245,121,103)';
-    const EW = 192, EH = 128, LUTN = 2048, LUTMASK = LUTN - 1;
-    const sinLut = new Float32Array(LUTN);
-    ctx.share.gateEnergy = 0; ownsShare = true;
-    for (let i = 0; i < LUTN; i++) sinLut[i] = Math.sin(i * TAU / LUTN);
+    let w = canvas.width, h = canvas.height, bd = 1, px = 1;
+    let raw = null, palette = [], ready = false, dead = false, lastTick = 0;
+    let distance = clamp(params.stillDolly, -4096, 4096, 18.35);
+    let speed = clamp(params.cruise, 0.2, 20, 2.9), shove = 0, clock = 0, kick = 0;
+    let state = 'glide', seqT = 0, stillFired = false, transitSent = false, ownsShare = false;
 
-    function initEnergy() {
-      energyCanvas = document.createElement('canvas'); energyCanvas.width = EW; energyCanvas.height = EH;
-      energyCtx = energyCanvas.getContext('2d', { alpha: false });
-      energyImage = energyCtx.createImageData(EW, EH); energy32 = new Uint32Array(energyImage.data.buffer);
-      const n = EW * EH; eRad = new Float32Array(n); eAng = new Float32Array(n); eNx = new Float32Array(n); eNy = new Float32Array(n);
-      for (let y = 0, i = 0; y < EH; y++) for (let x = 0; x < EW; x++, i++) {
-        const nx = (x + 0.5 - EW * 0.5) / (EW * 0.5), ny = (y + 0.5 - EH * 0.5) / (EH * 0.5);
-        eNx[i] = nx; eNy[i] = ny; eRad[i] = Math.sqrt(nx * nx + ny * ny); eAng[i] = Math.atan2(ny, nx);
-      }
+    function releaseShare() {
+      if (!ownsShare) return;
+      const S = ctx.share;
+      S.gateEnergy = 0; S.warp = 0; S.warpAt = 0; S.punch = 0; S.punchAt = 0; S.shake = null;
+      ownsShare = false;
     }
-    initEnergy();
+    function claimShare() {
+      if (ownsShare) return;
+      const S = ctx.share;
+      S.gateEnergy = 0; S.warp = 0; S.warpAt = 0; S.punch = 0; S.punchAt = 0; S.shake = null;
+      ownsShare = true;
+    }
+    claimShare();
 
-    function analyseStrip() {
+    function buildPalette() {
       if (!raw) return;
-      const ids = Array.from({ length: 1024 }, (_, i) => i);
-      const sample = (i) => { const q = i * 3, R = raw[q], G = raw[q + 1], B = raw[q + 2], mx = Math.max(R, G, B), mn = Math.min(R, G, B); return { R, G, B, sat: (mx - mn) / Math.max(1, mx), y: (0.2126 * R + 0.7152 * G + 0.0722 * B) / 255 }; };
-      const vivid = ids.slice().sort((a, b) => { const A = sample(a), B = sample(b); return B.sat * (0.35 + B.y * 0.65) - A.sat * (0.35 + A.y * 0.65); });
-      const rose = ids.slice().sort((a, b) => { const A = sample(a), B = sample(b); return (B.R + B.B - B.G * 2 + B.y * 36) - (A.R + A.B - A.G * 2 + A.y * 36); });
-      const average = (order, count) => {
-        let R = 0, G = 0, B = 0; for (let k = 0; k < count; k++) { const c = sample(order[k]); R += c.R; G += c.G; B += c.B; }
-        return [R / count, G / count, B / count];
-      };
-      let [br, bg, bb] = average(vivid, 128), [hr, hg, hb] = average(vivid, 36), [rr, rg, rb] = average(rose, 72);
-      const saturate = (R, G, B, top) => {
-        const s = clamp(params.sat, 0, 4, 1.82), y = 0.2126 * R + 0.7152 * G + 0.0722 * B;
-        R = Math.max(0, y + (R - y) * s); G = Math.max(0, y + (G - y) * s); B = Math.max(0, y + (B - y) * s);
-        const m = Math.max(1, R, G, B); return [R * top / m, G * top / m, B * top / m];
-      };
-      [bandR, bandG, bandB] = saturate(br, bg, bb, 246); [hotR, hotG, hotB] = saturate(hr, hg, hb, 255);
-      [rr, rg, rb] = saturate(rr, rg, rb, 245);
-      bandCss = `rgb(${bandR | 0},${bandG | 0},${bandB | 0})`; hotCss = `rgb(${hotR | 0},${hotG | 0},${hotB | 0})`; roseCss = `rgb(${rr | 0},${rg | 0},${rb | 0})`;
+      const candidates = [];
+      for (let i = 0; i < 1024; i++) {
+        const q = i * 3, R = raw[q], G = raw[q + 1], B = raw[q + 2];
+        const hi = Math.max(R, G, B), lo = Math.min(R, G, B), lum = 0.2126 * R + 0.7152 * G + 0.0722 * B;
+        const saturation = (hi - lo) / Math.max(1, hi), warmth = Math.max(0, (R * 1.08 + G * 0.28 - B * 0.24) / 255);
+        candidates.push({ i, score: Math.pow(saturation, 1.45) * (0.28 + Math.pow(lum / 255, 0.82)) * (0.42 + warmth) });
+      }
+      const wanted = Math.round(clamp(params.lanePool, 12, 64, 32));
+      const selected = candidates.sort((a, b) => b.score - a.score).slice(0, Math.min(192, wanted * 5)).sort((a, b) => a.i - b.i);
+      const sat = clamp(params.sat, 0.6, 3.2, 1.84), gain = clamp(params.gain, 0.35, 2.4, 1.08);
+      const knee = clamp(params.toneKnee, 128, 238, 216), shoulder = 244 - knee;
+      const tone = (v) => v > knee ? knee + shoulder * (v - knee) / Math.max(1, v - knee + shoulder) : v;
+      palette = [];
+      for (let k = 0; k < wanted; k++) {
+        const item = selected[Math.min(selected.length - 1, Math.floor((k + 0.5) * selected.length / wanted))];
+        const q = item.i * 3, R0 = raw[q], G0 = raw[q + 1], B0 = raw[q + 2];
+        const y = 0.2126 * R0 + 0.7152 * G0 + 0.0722 * B0;
+        let R = Math.max(0, y + (R0 - y) * sat), G = Math.max(0, y + (G0 - y) * sat), B = Math.max(0, y + (B0 - y) * sat);
+        const brightest = Math.max(1, R, G, B), target = clamp((174 + 62 * Math.sqrt(y / 255)) * gain, 138, 242, 228), lift = target / brightest;
+        R = Math.min(244, Math.max(0, tone(R * lift))) | 0;
+        G = Math.min(244, Math.max(0, tone(G * lift))) | 0;
+        B = Math.min(244, Math.max(0, tone(B * lift))) | 0;
+        palette.push(`rgb(${R},${G},${B})`);
+      }
     }
 
     const pic = new Image(); pic.decoding = 'async';
     const urls = assetUrls(ctx, 'sunset-strip.png'); let tryAt = 0;
     pic.onload = () => {
       if (dead) return;
-      const c = document.createElement('canvas'); c.width = 1; c.height = pic.naturalHeight || 1024;
-      const cg = c.getContext('2d', { willReadFrequently: true }); cg.drawImage(pic, 0, 0);
-      const d = cg.getImageData(0, 0, 1, c.height).data, n = c.height;
-      raw = new Float32Array(2048 * 3);
-      for (let i = 0; i < 2048; i++) {
-        const k = i < 1024 ? i : 2047 - i, q = Math.min(n - 1, Math.floor(k * n / 1024)) * 4;
-        raw[i * 3] = d[q]; raw[i * 3 + 1] = d[q + 1]; raw[i * 3 + 2] = d[q + 2];
+      const strip = document.createElement('canvas'); strip.width = 1; strip.height = pic.naturalHeight || 1024;
+      const sg = strip.getContext('2d', { willReadFrequently: true }); sg.drawImage(pic, 0, 0);
+      const data = sg.getImageData(0, 0, 1, strip.height).data;
+      raw = new Float32Array(1024 * 3);
+      for (let i = 0; i < 1024; i++) {
+        const q = Math.min(strip.height - 1, Math.floor(i * strip.height / 1024)) * 4;
+        raw[i * 3] = data[q]; raw[i * 3 + 1] = data[q + 1]; raw[i * 3 + 2] = data[q + 2];
       }
-      analyseStrip(); ready = true;
-      draw(lastPose || stillPose()); ctx.readout('gate', stateLine());
+      buildPalette(); ready = true;
+      draw(framePose(), 0, 0); ctx.readout('gate', stateLine());
     };
     pic.onerror = () => { if (!dead && ++tryAt < urls.length) pic.src = urls[tryAt]; };
     pic.src = urls[0];
 
     function stateLine() {
-      const word = state === 'traverse' ? 'crossing' : state === 'still' ? 'still' : state;
-      return 'strip 2025-03-01 sunset · reactor ' + word;
+      const word = state === 'spool' ? 'boost building' : state === 'transit' ? 'boost transit' : state === 'settle' ? 'boost settling' : state;
+      return `${word} · ${speed.toFixed(1)} u/s`;
     }
 
-    function renderEnergy(pose) {
-      if (!energy32 || !energyCtx) return;
-      const [fr, fg, fb] = BONEYARD.toRgb(ctx.tokens.field2);
-      const [ar, ag, ab] = BONEYARD.toRgb(ctx.tokens.amber);
-      const [cr, cg, cb] = BONEYARD.toRgb(ctx.tokens.phosphor);
-      if (!raw) {
-        const field = (255 << 24) | (fb << 16) | (fg << 8) | fr; energy32.fill(field); energyCtx.putImageData(energyImage, 0, 0); return;
+    function trackX(s) { return Math.sin(s * 0.103) * 0.18 + Math.sin(s * 0.039 + 1.25) * 0.1; }
+    function trackY(s) { return Math.sin(s * 0.071 + 0.8) * 0.075 + Math.sin(s * 0.027 + 2.2) * 0.035; }
+    function trackRoll(s) { return Math.sin(s * 0.092 + 0.35) * 0.055 + Math.sin(s * 0.031) * 0.025; }
+
+    function sceneGeometry() {
+      const portrait = w / Math.max(1, h) < 0.72;
+      const width = clamp(params.corridorW, 1.1, 4, 2.06) * (portrait ? 0.82 : 1);
+      const top = clamp(params.ceilH, 0.6, 2.5, 1.14) * (portrait ? 1.07 : 1);
+      const bottom = clamp(params.floorH, 0.6, 2.5, 1.24) * (portrait ? 1.05 : 1);
+      const focalK = clamp(params.focalK, 0.35, 1.3, 0.74);
+      const f = portrait ? Math.min(w * (0.8 + focalK * 0.08), h * 0.5) : Math.min(w * focalK, h * 0.84);
+      const vx = ctx.vp.x * w + w * (portrait ? 0.055 : 0.042);
+      const vy = Math.min(ctx.vp.y * h, h * (portrait ? 0.345 : 0.44));
+      return {
+        portrait, width, top, bottom, f, vx, vy,
+        near: clamp(params.near, 0.25, 1.2, 0.48), far: clamp(params.fog, 16, 64, 34),
+      };
+    }
+
+    function viewPose(M) {
+      const look = M.portrait ? 3.2 : 4.2;
+      const camX = trackX(distance) + shove, camY = trackY(distance);
+      return {
+        camX, camY,
+        tangentX: (trackX(distance + look) - camX + shove) / look,
+        tangentY: (trackY(distance + look) - camY) / look,
+      };
+    }
+
+    function project(x, y, z, M, V) {
+      const world = distance + z, roll = trackRoll(world) * (M.portrait ? 0.72 : 1);
+      const cr = Math.cos(roll), sr = Math.sin(roll), xr = x * cr - y * sr, yr = x * sr + y * cr;
+      const relX = trackX(world) + xr - V.camX - V.tangentX * z;
+      const relY = trackY(world) + yr - V.camY - V.tangentY * z;
+      const k = M.f / Math.max(M.near, z);
+      return { x: M.vx + relX * k, y: M.vy + relY * k };
+    }
+
+    function face(points, M, V, fill, alpha, stroke, lineWidth) {
+      g.beginPath();
+      for (let i = 0; i < points.length; i++) {
+        const p = project(points[i][0], points[i][1], points[i][2], M, V);
+        if (i) g.lineTo(p.x, p.y); else g.moveTo(p.x, p.y);
       }
-      const gain = clamp(params.gain, 0, 5, 1.34), sat = clamp(params.sat, 0, 4, 1.82);
-      const edgePower = clamp(params.edge, 0, 1, 0.82), stripDensity = clamp(params.stripPerUnit, 1, 220, 44);
-      const arms = Math.round(clamp(params.lanes, 3, 24, 9)), family = Math.round(clamp(params.lanePool, 4, 1024, 64));
-      const spread = clamp(params.paceSpread, 0, 1, 0.35);
-      const throatX = clamp(params.coreW, 0.035, 0.42, 0.12) * (1 + pose.travel * 0.45);
-      const throatY = clamp(params.coreH, 0.035, 0.42, 0.1) * (1 + pose.travel * 0.4);
-      const knee = clamp(params.toneKnee, 96, 248, 218), shoulder = 255 - knee;
-      const eye = clamp(params.eyeDark, 0, 1, 0.84);
-      const phase = energyPhase + clamp(params.stillDolly, -4096, 4096, 23.5) * 0.009;
-      const zoom = 1 + pose.travel * 0.72, scanX = pose.scan * 2 - 1;
-      for (let i = 0; i < energy32.length; i++) {
-        const r0 = eRad[i];
-        if (r0 > 1.04) { energy32[i] = (255 << 24) | (fb << 16) | (fg << 8) | fr; continue; }
-        const nx = eNx[i], ny = eNy[i], a = eAng[i], r = mod(r0 * zoom - pose.travel * 0.1 + phase * 0.018, 1);
-        const wi = (Math.floor((a * Math.max(3, arms - 3) + r0 * (5.5 + spread * 5.5) - phase * (2.1 + pose.travel * 4.4)) * LUTN / TAU)) & LUTMASK;
-        const ci = (Math.floor((a * Math.max(2, arms - 5) - r0 * (7.5 + spread * 3.5) + phase * (1.35 + pose.travel * 3.2) + 1.7) * LUTN / TAU)) & LUTMASK;
-        const ri = (Math.floor((r0 * (34 + pose.travel * 18) - phase * (2.4 + pose.travel * 5.8)) * LUTN / TAU)) & LUTMASK;
-        let amberLane = 0.5 + 0.5 * sinLut[wi]; amberLane *= amberLane; amberLane *= amberLane; amberLane *= amberLane; amberLane *= amberLane;
-        let cyanLane = 0.5 + 0.5 * sinLut[ci]; cyanLane *= cyanLane; cyanLane *= cyanLane; cyanLane *= cyanLane; cyanLane *= cyanLane;
-        let shellLine = 0.5 + 0.5 * sinLut[ri]; shellLine *= shellLine; shellLine *= shellLine; shellLine *= shellLine;
-        const index = (Math.floor(r * stripDensity * 37 + a * (2048 * 3 / TAU) + phase * 241 + family * 13 + 8192) & 2047) * 3;
-        const rawR = raw[index], rawG = raw[index + 1], rawB = raw[index + 2];
-        const photoY = Math.max(0, Math.min(1, (0.2126 * rawR + 0.7152 * rawG + 0.0722 * rawB) / 255));
-        const edge = 1 - smooth(0.76 + 0.14 * edgePower, 1.035, r0);
-        const er = Math.sqrt(nx * nx + ny * ny * throatX / Math.max(0.02, throatY));
-        const throat = smooth(throatX * 0.86, throatX + 0.19, er);
-        const tinyCore = 1 - smooth(throatX * 0.05, throatX * 0.31, er);
-        const scan = Math.max(0, 1 - Math.abs(nx - scanX) / (0.045 + 0.06 * pose.charge));
-        const open = edge * throat, energy = 0.28 + pose.energy * 0.72;
-        amberLane *= open * energy * (0.34 + photoY * 0.66);
-        cyanLane *= open * energy * (0.3 + 0.7 * (1 - photoY * 0.42)) * (0.62 - amberLane * 0.34);
-        shellLine *= open * (0.045 + pose.travel * 0.1 + pose.charge * 0.045);
-        const scanLine = scan * pose.charge * edge * 0.12;
-        const photoW = amberLane * gain * (0.15 + 0.12 * photoY);
-        const dark = edge * (0.22 - eye * 0.1) + 0.05;
-        let R = fr * dark + rawR * photoW + bandR * amberLane * 0.72 + cr * cyanLane * 0.3 + ar * shellLine * 0.5 + hotR * tinyCore * (0.12 + pose.charge * 0.2) + ar * scanLine;
-        let G = fg * dark + rawG * photoW + bandG * amberLane * 0.72 + cg * cyanLane * 0.3 + cg * shellLine * 0.28 + hotG * tinyCore * (0.12 + pose.charge * 0.2) + ag * scanLine;
-        let B = fb * dark + rawB * photoW + bandB * amberLane * 0.72 + cb * cyanLane * 0.3 + cb * shellLine * 0.28 + hotB * tinyCore * (0.12 + pose.charge * 0.2) + ab * scanLine;
-        const y = 0.2126 * R + 0.7152 * G + 0.0722 * B;
-        const localSat = 0.72 + sat * 0.42;
-        R = y + (R - y) * localSat; G = y + (G - y) * localSat; B = y + (B - y) * localSat;
-        if (R > knee) R = knee + shoulder * (R - knee) / (R - knee + shoulder);
-        if (G > knee) G = knee + shoulder * (G - knee) / (G - knee + shoulder);
-        if (B > knee) B = knee + shoulder * (B - knee) / (B - knee + shoulder);
-        R = Math.max(0, R) | 0; G = Math.max(0, G) | 0; B = Math.max(0, B) | 0;
-        energy32[i] = (255 << 24) | (Math.min(255, B) << 16) | (Math.min(255, G) << 8) | Math.min(255, R);
-      }
-      energyCtx.putImageData(energyImage, 0, 0);
+      g.closePath();
+      if (fill && alpha > 0.001) { g.fillStyle = fill; g.globalAlpha = alpha; g.fill(); }
+      if (stroke && alpha > 0.001) { g.strokeStyle = stroke; g.globalAlpha = Math.min(1, alpha * 1.04); g.lineWidth = lineWidth || px; g.stroke(); }
     }
 
-    function pathFrom(points) {
-      const p = new Path2D(); if (!points.length) return p;
-      p.moveTo(points[0].x, points[0].y); for (let i = 1; i < points.length; i++) p.lineTo(points[i].x, points[i].y); p.closePath(); return p;
-    }
-    function chamferPoints(cx, cy, hw, hh, cut) {
-      return [
-        { x: cx - hw + cut, y: cy - hh }, { x: cx + hw - cut, y: cy - hh },
-        { x: cx + hw, y: cy - hh + cut }, { x: cx + hw, y: cy + hh - cut },
-        { x: cx + hw - cut, y: cy + hh }, { x: cx - hw + cut, y: cy + hh },
-        { x: cx - hw, y: cy + hh - cut }, { x: cx - hw, y: cy - hh + cut },
-      ];
-    }
-    function ellipsePoint(cx, cy, rx, ry, scale, angle, dx, dy) {
-      return { x: cx + (dx || 0) + Math.cos(angle) * rx * scale, y: cy + (dy || 0) + Math.sin(angle) * ry * scale };
-    }
-    function segmentPath(cx, cy, rx, ry, outer, inner, a0, a1, dx, dy) {
-      const p = new Path2D(), A = ellipsePoint(cx, cy, rx, ry, outer, a0, dx, dy), B = ellipsePoint(cx, cy, rx, ry, outer, a1, dx, dy);
-      const C = ellipsePoint(cx, cy, rx, ry, inner, a1, dx, dy), D = ellipsePoint(cx, cy, rx, ry, inner, a0, dx, dy);
-      p.moveTo(A.x, A.y); p.lineTo(B.x, B.y); p.lineTo(C.x, C.y); p.lineTo(D.x, D.y); p.closePath(); return p;
-    }
-    function quad(a, b, c, d) { const p = new Path2D(); p.moveTo(a.x, a.y); p.lineTo(b.x, b.y); p.lineTo(c.x, c.y); p.lineTo(d.x, d.y); p.closePath(); return p; }
-
-    function geometry() {
-      const portrait = w / Math.max(1, h) < 0.78;
-      const rx = Math.max(28, Math.min(w * clamp(params.aperture, 0.15, 0.36, 0.27), h * (portrait ? 0.235 : 0.3)));
-      const ry = rx * clamp(params.apertureAspect, 0.55, 1.05, 0.78);
-      const cx = ctx.vp.x * w, cy = Math.min(ctx.vp.y * h, h * (portrait ? 0.385 : 0.43));
-      return { cx, cy, rx, ry, portrait };
+    function line(a, b, M, V, color, alpha, width) {
+      const A = project(a[0], a[1], a[2], M, V), B = project(b[0], b[1], b[2], M, V);
+      g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y);
+      g.strokeStyle = color; g.globalAlpha = alpha; g.lineWidth = width; g.stroke();
     }
 
-    function drawHangar(M, pose) {
-      const T = ctx.tokens, { cx, cy, rx, ry } = M;
-      const bloomScale = 1.7 + clamp(params.bloomW, 0, 1, 0.23) * 1.8 + clamp(params.bloomH, 0, 1, 0.16) * 1.2;
-      const glow = g.createRadialGradient(cx, cy, 0, cx, cy, Math.max(rx * bloomScale, ry * bloomScale));
-      glow.addColorStop(0, ctx.rgba(bandCss, clamp(params.haze, 0, 1.5, 0.42) * (0.08 + clamp(params.bloom, 0, 1.5, 0.28) * pose.energy * 0.42)));
-      glow.addColorStop(0.5, ctx.rgba(T.horizonTint, 0.1)); glow.addColorStop(1, ctx.rgba(T.field, 0));
-      g.fillStyle = glow; g.fillRect(0, 0, w, h);
+    function stripColor(worldDepth, lane) {
+      if (!palette.length) return ctx.tokens.field2;
+      const sample = Math.floor(worldDepth * clamp(params.stripPerUnit, 0.25, 8, 1.1) * 2.25);
+      return palette[mod(sample + lane * 11, palette.length)];
+    }
 
-      const fade = Math.max(0.1, Math.min(0.6, clamp(params.fog, 0.5, 100, 20) / 45));
-      for (let i = 4; i >= 1; i--) {
-        const perspective = clamp(params.focalK, 0.15, 1.5, 0.62);
-        const s = 1.45 + i * (0.24 + perspective * 0.31), pts = chamferPoints(cx, cy + ry * 0.04 * i, rx * s, ry * s, Math.min(rx, ry) * 0.22 * s);
-        g.strokeStyle = i === 1 ? T.phosphorDim : T.line; g.globalAlpha = fade * (0.13 + (4 - i) * 0.07);
-        g.lineWidth = (i === 1 ? 2.2 : 1.15) * px; g.stroke(pathFrom(pts));
-      }
+    function visibility(z, M) {
+      return smooth(M.near, M.near + 0.42, z) * (1 - smooth(M.far * 0.72, M.far, z));
+    }
 
-      const topY = Math.max(-h * 0.08, cy - ry * (1.12 + clamp(params.ceilH, 0.3, 2, 1.15) * 0.37));
-      const bottomY = cy + ry * (1.08 + clamp(params.floorH, 0.3, 2, 1) * 0.38);
-      g.fillStyle = ctx.rgba(T.field2, 0.48 + clamp(params.sideShade, 0, 1, 0.32) * 0.56); g.globalAlpha = 1;
-      g.fill(pathFrom([{ x: 0, y: 0 }, { x: cx - rx * 1.6, y: topY }, { x: cx - rx * 1.55, y: bottomY }, { x: 0, y: h }]));
-      g.fill(pathFrom([{ x: w, y: 0 }, { x: cx + rx * 1.6, y: topY }, { x: cx + rx * 1.55, y: bottomY }, { x: w, y: h }]));
-      g.strokeStyle = T.line; g.globalAlpha = 0.46; g.lineWidth = 1.1 * px;
-      for (let i = 0; i < 4; i++) {
-        const k = (i + 1) / 5;
-        g.beginPath(); g.moveTo(0, h * k); g.lineTo(cx - rx * (1.36 + 0.1 * i), cy + (h * k - cy) * 0.2); g.stroke();
-        g.beginPath(); g.moveTo(w, h * k); g.lineTo(cx + rx * (1.36 + 0.1 * i), cy + (h * k - cy) * 0.2); g.stroke();
+    function drawCell(station, M, V, pose, fromZ, toZ) {
+      const T = ctx.tokens, W = M.width, top = M.top, bottom = M.bottom;
+      const thickness = clamp(params.ribWidth, 0.08, 0.42, 0.19);
+      const z0 = fromZ == null ? station.z + thickness * 0.82 : fromZ;
+      const z1 = toZ == null ? Math.min(M.far + 1, station.z + station.spacing * 0.985) : toZ;
+      if (z1 <= z0) return;
+      const vis = visibility((z0 + z1) * 0.5, M); if (vis < 0.004) return;
+      const shade = clamp(params.sideShade, 0.35, 1, 0.88);
+      const seam = Math.min(Math.max(0.015, thickness * 0.12), (z1 - z0) * 0.18);
+
+      face([[-W, -top, z0], [-W, bottom, z0], [-W, bottom, z1], [-W, -top, z1]], M, V, T.field2, vis * shade, null, 0);
+      face([[W, bottom, z0], [W, -top, z0], [W, -top, z1], [W, bottom, z1]], M, V, T.field2, vis * shade, null, 0);
+      face([[-W, -top, z0], [W, -top, z0], [W, -top, z1], [-W, -top, z1]], M, V, T.field, vis * 0.96, null, 0);
+      face([[W, bottom, z0], [-W, bottom, z0], [-W, bottom, z1], [W, bottom, z1]], M, V, T.field, vis, null, 0);
+
+      if (ready) {
+        const energy = clamp(params.idleEnergy, 0.25, 1.1, 0.96) * (0.92 + pose.energy * 0.08);
+        const bandA = vis * energy;
+        const inset = 0.018;
+        const warm0 = z0 + seam, warm1 = z1 - seam, warmMid = distance + (warm0 + warm1) * 0.5;
+        const outer = [stripColor(warmMid, 0), stripColor(warmMid, 1), stripColor(warmMid, 2), stripColor(warmMid, 3)];
+        face([[-W + inset, -top * 0.52, warm0], [-W + inset, bottom * 0.18, warm0], [-W + inset, bottom * 0.18, warm1], [-W + inset, -top * 0.52, warm1]], M, V, outer[0], bandA * 0.16, null, 0);
+        face([[-W * 0.36, -top + inset, warm0], [W * 0.3, -top + inset, warm0], [W * 0.3, -top + inset, warm1], [-W * 0.36, -top + inset, warm1]], M, V, outer[1], bandA * 0.15, null, 0);
+        face([[W - inset, bottom * 0.52, warm0], [W - inset, -top * 0.18, warm0], [W - inset, -top * 0.18, warm1], [W - inset, bottom * 0.52, warm1]], M, V, outer[2], bandA * 0.16, null, 0);
+        face([[W * 0.36, bottom - inset, warm0], [-W * 0.34, bottom - inset, warm0], [-W * 0.34, bottom - inset, warm1], [W * 0.36, bottom - inset, warm1]], M, V, outer[3], bandA * 0.15, null, 0);
+
+        const pieces = Math.max(1, Math.min(3, Math.ceil((warm1 - warm0) / 0.55)));
+        const leftCore = -top * 0.17, rightCore = bottom * 0.17, yCoreHalf = (top + bottom) * 0.018;
+        const ceilingCore = -W * 0.025, floorCore = W * 0.03, xCoreHalf = W * 0.018;
+        for (let part = 0; part < pieces; part++) {
+          const za0 = warm0 + (warm1 - warm0) * part / pieces, zb0 = warm0 + (warm1 - warm0) * (part + 1) / pieces;
+          const gap = Math.min(0.026, (zb0 - za0) * 0.055), za = za0 + gap, zb = zb0 - gap;
+          const world = distance + (za + zb) * 0.5;
+          const left = stripColor(world, 0), ceiling = stripColor(world, 1), right = stripColor(world, 2), floor = stripColor(world, 3);
+          face([[-W + inset * 1.35, -top * 0.42, za], [-W + inset * 1.35, bottom * 0.1, za], [-W + inset * 1.35, bottom * 0.1, zb], [-W + inset * 1.35, -top * 0.42, zb]], M, V, left, bandA * 0.73, null, 0);
+          face([[-W * 0.25, -top + inset * 1.35, za], [W * 0.2, -top + inset * 1.35, za], [W * 0.2, -top + inset * 1.35, zb], [-W * 0.25, -top + inset * 1.35, zb]], M, V, ceiling, bandA * 0.71, null, 0);
+          face([[W - inset * 1.35, bottom * 0.42, za], [W - inset * 1.35, -top * 0.1, za], [W - inset * 1.35, -top * 0.1, zb], [W - inset * 1.35, bottom * 0.42, zb]], M, V, right, bandA * 0.73, null, 0);
+          face([[W * 0.25, bottom - inset * 1.35, za], [-W * 0.22, bottom - inset * 1.35, za], [-W * 0.22, bottom - inset * 1.35, zb], [W * 0.25, bottom - inset * 1.35, zb]], M, V, floor, bandA * 0.72, null, 0);
+          face([[-W + inset * 1.7, leftCore - yCoreHalf, za], [-W + inset * 1.7, leftCore + yCoreHalf, za], [-W + inset * 1.7, leftCore + yCoreHalf, zb], [-W + inset * 1.7, leftCore - yCoreHalf, zb]], M, V, left, bandA * 0.98, null, 0);
+          face([[ceilingCore - xCoreHalf, -top + inset * 1.7, za], [ceilingCore + xCoreHalf, -top + inset * 1.7, za], [ceilingCore + xCoreHalf, -top + inset * 1.7, zb], [ceilingCore - xCoreHalf, -top + inset * 1.7, zb]], M, V, ceiling, bandA * 0.96, null, 0);
+          face([[W - inset * 1.7, rightCore + yCoreHalf, za], [W - inset * 1.7, rightCore - yCoreHalf, za], [W - inset * 1.7, rightCore - yCoreHalf, zb], [W - inset * 1.7, rightCore + yCoreHalf, zb]], M, V, right, bandA * 0.98, null, 0);
+          face([[floorCore + xCoreHalf, bottom - inset * 1.7, za], [floorCore - xCoreHalf, bottom - inset * 1.7, za], [floorCore - xCoreHalf, bottom - inset * 1.7, zb], [floorCore + xCoreHalf, bottom - inset * 1.7, zb]], M, V, floor, bandA * 0.96, null, 0);
+        }
       }
 
-      const floorY = cy + ry * 1.1; g.globalAlpha = 0.34 + pose.travel * 0.16;
-      for (let i = -3; i <= 3; i++) {
-        g.strokeStyle = i === 0 ? T.phosphorDim : T.line; g.lineWidth = (i === 0 ? 1.8 : 1) * px;
-        g.beginPath(); g.moveTo(cx + i * rx * 0.24, floorY); g.lineTo(cx + i * w * 0.22, h); g.stroke();
-      }
-      for (let i = 1; i <= 5; i++) {
-        const u = i / 6, y = floorY + (h - floorY) * u * u;
-        g.strokeStyle = T.line; g.globalAlpha = (0.42 - i * 0.045) * (1 + pose.travel * 0.25); g.lineWidth = 1 * px;
-        g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke();
-      }
-      g.globalAlpha = 1;
+      const railA = vis * clamp(params.railAlpha, 0.1, 1, 0.7) * (0.88 + pose.energy * 0.12);
+      const rw = M.portrait ? 0.062 : 0.045;
+      face([[-W + 0.025, bottom * 0.1, z0], [-W + 0.025, bottom * (0.1 + rw), z0], [-W + 0.025, bottom * (0.1 + rw), z1], [-W + 0.025, bottom * 0.1, z1]], M, V, T.phosphorDim, railA, null, 0);
+      face([[W - 0.025, -top * 0.08, z0], [W - 0.025, -top * (0.08 + rw), z0], [W - 0.025, -top * (0.08 + rw), z1], [W - 0.025, -top * 0.08, z1]], M, V, T.phosphorDim, railA, null, 0);
+      face([[-W * 0.2, -top + 0.025, z0], [-W * (0.2 - rw), -top + 0.025, z0], [-W * (0.2 - rw), -top + 0.025, z1], [-W * 0.2, -top + 0.025, z1]], M, V, T.phosphorDim, railA, null, 0);
+      face([[W * 0.58, bottom - 0.025, z0], [W * (0.58 - rw), bottom - 0.025, z0], [W * (0.58 - rw), bottom - 0.025, z1], [W * 0.58, bottom - 0.025, z1]], M, V, T.phosphorDim, railA, null, 0);
+      line([-W + 0.021, bottom * 0.1, z0], [-W + 0.021, bottom * 0.1, z1], M, V, T.phosphor, railA * 0.13, Math.max(4 * px, M.portrait ? 7 * px : 5 * px));
+      line([W - 0.021, -top * 0.08, z0], [W - 0.021, -top * 0.08, z1], M, V, T.phosphor, railA * 0.13, Math.max(4 * px, M.portrait ? 7 * px : 5 * px));
+      line([-W + 0.021, bottom * 0.1, z0], [-W + 0.021, bottom * 0.1, z1], M, V, T.phosphorCore, railA * 0.82, Math.max(0.75 * px, M.portrait ? 1.2 * px : 0.85 * px));
+      line([W - 0.021, -top * 0.08, z0], [W - 0.021, -top * 0.08, z1], M, V, T.phosphorCore, railA * 0.82, Math.max(0.75 * px, M.portrait ? 1.2 * px : 0.85 * px));
     }
 
-    function drawChassis(M) {
-      const T = ctx.tokens, { cx, cy, rx, ry } = M;
-      const hw = rx * 1.55, hh = ry * 1.34, cut = Math.min(rx, ry) * 0.28;
-      const dx = rx * 0.075, dy = ry * clamp(params.frameDepth, 0.02, 0.28, 0.11);
-      const front = chamferPoints(cx, cy, hw, hh, cut), back = front.map((p) => ({ x: p.x + dx, y: p.y + dy }));
-      g.fillStyle = T.field; g.fill(pathFrom(back));
+    function finPolygon(type, M, z) {
+      const W = M.width, top = M.top, bottom = M.bottom;
+      const reach = clamp(params.finReach, 0.12, 0.42, 0.27), span = clamp(params.finSpan, 0.24, 0.7, 0.5);
+      if (type === 0) {
+        const end = -W + W * 2 * reach, half = (top + bottom) * span * 0.5;
+        return [[-W, -half, z], [end, -half * 0.64, z], [end, half * 0.64, z], [-W, half, z]];
+      }
+      if (type === 1) {
+        const end = -top + (top + bottom) * reach, half = W * span;
+        return [[-half, -top, z], [half, -top, z], [half * 0.64, end, z], [-half * 0.64, end, z]];
+      }
+      if (type === 2) {
+        const end = W - W * 2 * reach, half = (top + bottom) * span * 0.5;
+        return [[W, half, z], [end, half * 0.64, z], [end, -half * 0.64, z], [W, -half, z]];
+      }
+      const end = bottom - (top + bottom) * reach, half = W * span;
+      return [[half, bottom, z], [-half, bottom, z], [-half * 0.64, end, z], [half * 0.64, end, z]];
+    }
+
+    function drawFin(station, M, V, pose) {
+      const T = ctx.tokens, z = station.z, vis = visibility(z, M); if (vis < 0.004) return;
+      const type = mod(station.worldIndex, 4), depth = clamp(params.ribWidth, 0.08, 0.42, 0.19);
+      const front = finPolygon(type, M, z), back = finPolygon(type, M, z + depth);
       for (let i = 0; i < front.length; i++) {
-        const j = (i + 1) % front.length, side = quad(front[i], front[j], back[j], back[i]);
-        g.fillStyle = i < 3 ? ctx.rgba(T.phosphorDim, 0.15) : ctx.rgba(T.field, 0.96); g.fill(side);
-        g.strokeStyle = T.line; g.globalAlpha = 0.72; g.lineWidth = 1 * px; g.stroke(side);
+        const q = (i + 1) % front.length;
+        face([front[i], front[q], back[q], back[i]], M, V, i === 1 || i === 2 ? T.phosphorDim : T.field, vis * (i === 1 || i === 2 ? 0.3 : 0.92), T.line, vis * px);
       }
-      const metal = g.createLinearGradient(cx - hw, cy - hh, cx + hw, cy + hh);
-      metal.addColorStop(0, ctx.rgba(T.phosphorDim, 0.22)); metal.addColorStop(0.24, T.field2); metal.addColorStop(0.7, T.field2); metal.addColorStop(1, T.field);
-      const frontPath = pathFrom(front); g.fillStyle = metal; g.globalAlpha = 1; g.fill(frontPath);
-      g.strokeStyle = T.field; g.lineWidth = 11 * px; g.stroke(frontPath);
-      g.strokeStyle = T.phosphorDim; g.globalAlpha = 0.62; g.lineWidth = 2.2 * px; g.stroke(frontPath);
-      g.strokeStyle = T.phosphorCore; g.globalAlpha = 0.16; g.lineWidth = 0.8 * px; g.stroke(frontPath);
+      face(front, M, V, T.field2, vis * 0.99, null, 0);
+      const leadA = front[1], leadB = front[2], farBreak = smooth(M.far * 0.42, M.far * 0.82, z);
+      const trim = 0.055 + farBreak * 0.2;
+      const lead0 = [leadA[0] + (leadB[0] - leadA[0]) * trim, leadA[1] + (leadB[1] - leadA[1]) * trim, leadA[2]];
+      const lead1 = [leadA[0] + (leadB[0] - leadA[0]) * (1 - trim * 1.35), leadA[1] + (leadB[1] - leadA[1]) * (1 - trim * 1.35), leadA[2]];
+      const edgeA = vis * (1 - farBreak);
+      line(lead0, lead1, M, V, T.phosphor, edgeA * 0.13, (M.portrait ? 10 : 8) * px);
+      line(lead0, lead1, M, V, T.phosphor, edgeA * (0.72 + pose.energy * 0.16), (M.portrait ? 4.5 : 3.3) * px);
+      line(lead0, lead1, M, V, T.phosphorCore, edgeA * 0.92, (M.portrait ? 1.4 : 0.95) * px);
 
-      for (const side of [-1, 1]) {
-        const x = cx + side * rx * 1.34, y0 = cy - ry * 0.48;
-        g.fillStyle = T.field; g.globalAlpha = 0.92; g.fillRect(x - rx * 0.12, y0, rx * 0.24, ry * 0.96);
-        g.strokeStyle = T.line; g.globalAlpha = 0.9; g.lineWidth = 1.2 * px; g.strokeRect(x - rx * 0.12, y0, rx * 0.24, ry * 0.96);
-        for (let k = 0; k < 4; k++) {
-          const y = y0 + ry * (0.16 + k * 0.2); g.strokeStyle = k === 1 ? T.amber : T.phosphorDim; g.globalAlpha = k === 1 ? 0.52 : 0.36;
-          g.lineWidth = 2 * px; g.beginPath(); g.moveTo(x - rx * 0.065, y); g.lineTo(x + rx * 0.065, y); g.stroke();
-        }
-      }
-      g.globalAlpha = 1;
-    }
-
-    function drawAperture(M, pose) {
-      const T = ctx.tokens, { cx, cy, rx, ry } = M, ix = rx * 0.94, iy = ry * 0.94;
-      g.fillStyle = T.field; g.beginPath(); g.ellipse(cx, cy + ry * 0.025, rx * 1.08, ry * 1.08, 0, 0, TAU); g.fill();
-      g.strokeStyle = T.line; g.globalAlpha = 0.9; g.lineWidth = 18 * px; g.stroke();
-      g.strokeStyle = T.phosphorDim; g.globalAlpha = 0.28; g.lineWidth = 4 * px; g.stroke();
-
-      renderEnergy(pose);
-      g.save(); g.beginPath(); g.ellipse(cx, cy, ix, iy, 0, 0, TAU); g.clip();
-      g.fillStyle = T.field; g.fillRect(cx - ix, cy - iy, ix * 2, iy * 2);
-      if (energyCanvas) {
-        const zoom = 1 + pose.travel * 0.42, dw = ix * 2 * zoom, dh = iy * 2 * zoom;
-        const sx = pose.shove * ix * 0.11;
-        g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
-        g.globalAlpha = 0.94; g.drawImage(energyCanvas, cx - dw * 0.5 + sx, cy - dh * 0.5, dw, dh);
-      }
-
-      const channelCount = M.portrait ? 8 : 12, channelColors = [bandCss, hotCss, roseCss];
-      for (let i = 0; i < channelCount; i++) {
-        const a = -Math.PI / 2 + i * TAU / channelCount, bend = (i & 1 ? 1 : -1) * (0.08 + pose.travel * 0.08);
-        const A = ellipsePoint(cx, cy, ix, iy, 0.13, a - 0.13 + bend, pose.shove * ix * 0.035, 0);
-        const B = ellipsePoint(cx, cy, ix, iy, 0.38, a - 0.08 + bend * 0.72, pose.shove * ix * 0.025, 0);
-        const C = ellipsePoint(cx, cy, ix, iy, 0.72, a + bend * 0.34, pose.shove * ix * 0.012, 0);
-        const D = ellipsePoint(cx, cy, ix, iy, 1.04 + pose.travel * 0.24, a, 0, 0);
-        const path = new Path2D(); path.moveTo(A.x, A.y); path.bezierCurveTo(B.x, B.y, C.x, C.y, D.x, D.y);
-        g.strokeStyle = T.field; g.globalAlpha = 0.94; g.lineWidth = (M.portrait ? 3.2 : 4.2) * px; g.stroke(path);
-        g.strokeStyle = channelColors[i % channelColors.length]; g.globalAlpha = 0.34 + pose.energy * 0.34 + pose.travel * 0.16;
-        g.lineWidth = (M.portrait ? 0.9 : 1.15) * px * (1 + pose.charge * 0.36); g.stroke(path);
-      }
-
-      if (state === 'charge' || (state === 'still' && stillFired)) {
-        const s = 0.16 + (1 - pose.charge) * 0.86;
-        g.beginPath(); g.ellipse(cx, cy, ix * s, iy * s, 0, 0, TAU);
-        g.strokeStyle = hotCss; g.globalAlpha = 0.36 + pose.charge * 0.42; g.lineWidth = (1.1 + pose.charge * 1.15) * px; g.stroke();
-      }
-
-      const railCount = M.portrait ? 6 : 8, railWidth = M.portrait ? 0.095 : 0.074;
-      const innerScale = 0.105 + pose.travel * 0.025, railTurn = -0.16 + pose.travel * 0.19;
-      for (let i = 0; i < railCount; i++) {
-        const a = -Math.PI / 2 + i * TAU / railCount;
-        const O0 = ellipsePoint(cx, cy, ix, iy, 1.04, a - railWidth), O1 = ellipsePoint(cx, cy, ix, iy, 1.04, a + railWidth);
-        const I1 = ellipsePoint(cx, cy, ix, iy, innerScale, a + railTurn + railWidth * 0.34, pose.shove * ix * 0.035, 0);
-        const I0 = ellipsePoint(cx, cy, ix, iy, innerScale, a + railTurn - railWidth * 0.34, pose.shove * ix * 0.035, 0);
-        const rail = quad(O0, O1, I1, I0);
-        g.fillStyle = T.field; g.globalAlpha = 0.72 + 0.16 * pose.travel; g.fill(rail);
-        g.strokeStyle = T.line; g.globalAlpha = 0.48; g.lineWidth = (M.portrait ? 1.5 : 1.1) * px; g.stroke(rail);
-        g.beginPath(); g.moveTo(O1.x, O1.y); g.lineTo(I1.x, I1.y);
-        g.strokeStyle = i & 1 ? T.amber : T.phosphorDim; g.globalAlpha = 0.28 + pose.energy * 0.18; g.lineWidth = 1.1 * px; g.stroke();
-      }
-
-      const scanX = cx - ix + pose.scan * ix * 2, scan = g.createLinearGradient(scanX - ix * 0.09, 0, scanX + ix * 0.09, 0);
-      scan.addColorStop(0, ctx.rgba(T.amber, 0)); scan.addColorStop(0.5, ctx.rgba(T.amber, 0.14 * pose.charge)); scan.addColorStop(1, ctx.rgba(T.amber, 0));
-      g.fillStyle = scan; g.globalAlpha = 1; g.fillRect(scanX - ix * 0.1, cy - iy, ix * 0.2, iy * 2);
-
-      const shells = M.portrait ? 5 : Math.round(clamp(params.ribSpacing, 0.5, 5, 1.65) * 3.65);
-      const shade = clamp(params.ribShade, 0, 1, 0.58), width = clamp(params.ribWidth, 0.015, 0.25, 0.075);
-      for (let i = 0; i < shells; i++) {
-        const u = mod((i + 0.22) / shells + energyPhase * 0.012 + pose.travel * 0.48, 1);
-        const s = 0.12 + Math.pow(u, 1.48) * 1.08, ox = pose.shove * ix * 0.045 * (1 - u);
-        const thick = (2.4 + s * 9.5 + width * 10) * px;
-        g.beginPath(); g.ellipse(cx + ox, cy + thick * 0.24, ix * s, iy * s, 0, 0, TAU);
-        g.strokeStyle = T.field; g.globalAlpha = 0.98; g.lineWidth = thick + 4 * px; g.stroke();
-        g.beginPath(); g.ellipse(cx + ox, cy, ix * s, iy * s, 0, 0, TAU);
-        g.strokeStyle = T.field2; g.globalAlpha = 0.96; g.lineWidth = thick; g.stroke();
-        g.strokeStyle = i & 1 ? T.amber : T.phosphorDim; g.globalAlpha = 0.16 + shade * (0.24 + 0.22 * u);
-        g.lineWidth = Math.max(1, thick * 0.16); g.stroke();
-        if (pose.travel > 0.04 && u > 0.74) {
-          g.strokeStyle = hotCss; g.globalAlpha = pose.travel * smooth(0.74, 1, u) * 0.72;
-          g.lineWidth = Math.max(1 * px, thick * 0.075); g.stroke();
+      if (ready) {
+        const color = stripColor(distance + z, type);
+        if (type === 0 || type === 2) {
+          const root = type === 0 ? -M.width + 0.13 : M.width - 0.13;
+          face([[root, -M.top * 0.58, z - 0.002], [root, M.bottom * 0.54, z - 0.002], [root + (type === 0 ? 0.085 : -0.085), M.bottom * 0.5, z - 0.002], [root + (type === 0 ? 0.085 : -0.085), -M.top * 0.54, z - 0.002]], M, V, color, vis * 0.76, T.field, vis * px);
+        } else {
+          const root = type === 1 ? -M.top + 0.13 : M.bottom - 0.13;
+          face([[-M.width * 0.58, root, z - 0.002], [M.width * 0.54, root, z - 0.002], [M.width * 0.5, root + (type === 1 ? 0.085 : -0.085), z - 0.002], [-M.width * 0.54, root + (type === 1 ? 0.085 : -0.085), z - 0.002]], M, V, color, vis * 0.76, T.field, vis * px);
         }
       }
 
-      const coreS = 0.105 + pose.travel * 0.018;
-      g.beginPath(); g.ellipse(cx + pose.shove * ix * 0.03, cy, ix * coreS, iy * coreS, 0, 0, TAU);
-      g.fillStyle = T.field; g.globalAlpha = 0.98; g.fill();
-      g.strokeStyle = T.phosphorDim; g.globalAlpha = 0.54; g.lineWidth = 2.4 * px; g.stroke();
-      g.strokeStyle = T.amber; g.globalAlpha = 0.32 + pose.charge * 0.32; g.lineWidth = 0.9 * px; g.stroke();
-      g.beginPath(); g.moveTo(cx + pose.shove * ix * 0.03 - Math.max(2.5 * px, ix * 0.022), cy);
-      g.lineTo(cx + pose.shove * ix * 0.03 + Math.max(2.5 * px, ix * 0.022), cy);
-      g.strokeStyle = hotCss; g.globalAlpha = 0.56 + pose.charge * 0.26; g.lineWidth = 1.15 * px; g.stroke();
-      g.restore();
-
-      g.beginPath(); g.ellipse(cx, cy + ry * 0.045, rx * 1.02, ry * 1.02, 0, 0, TAU);
-      g.strokeStyle = T.field; g.globalAlpha = 1; g.lineWidth = 24 * px; g.stroke();
-      for (let i = 0; i < 3; i++) {
-        const s = 1.01 - i * 0.045; g.beginPath(); g.ellipse(cx, cy, rx * s, ry * s, 0, 0, TAU);
-        g.strokeStyle = i === 1 ? T.phosphorDim : T.field; g.globalAlpha = i === 1 ? 0.56 : 0.96;
-        g.lineWidth = (12 - i * 3.2) * px; g.stroke();
-      }
-      g.beginPath(); g.ellipse(cx, cy, rx * 0.965, ry * 0.965, 0, 0, TAU);
-      g.strokeStyle = pose.charge > 0.55 ? T.amber : T.phosphor;
-      g.globalAlpha = (0.24 + pose.energy * 0.32) * clamp(params.rim, 0, 1.5, 0.62);
-      g.lineWidth = (1.2 + pose.charge * 1.8) * px; g.stroke();
-      g.globalAlpha = 1;
-    }
-
-    function drawSegments(M, pose) {
-      const T = ctx.tokens, { cx, cy, rx, ry } = M, n = Math.round(clamp(params.segments, 8, 20, 12));
-      const gap = clamp(params.segmentGap, 0.008, 0.16, 0.045), fw = clamp(params.frameWidth, 0.12, 0.5, 0.27);
-      const opening = pose.charge * 0.035 + pose.travel * 0.05;
-      const outer = 1 + fw, inner = 1.015 + opening, dx = rx * 0.045, dy = ry * clamp(params.frameDepth, 0.02, 0.28, 0.11);
-      const metal = g.createLinearGradient(cx - rx * outer, cy - ry * outer, cx + rx * outer, cy + ry * outer);
-      metal.addColorStop(0, ctx.rgba(T.phosphorDim, 0.35)); metal.addColorStop(0.28, T.field2); metal.addColorStop(0.72, T.field2); metal.addColorStop(1, T.field);
-      for (let i = 0; i < n; i++) {
-        const a0 = -Math.PI / 2 + i * TAU / n + gap, a1 = -Math.PI / 2 + (i + 1) * TAU / n - gap;
-        const back = segmentPath(cx, cy, rx, ry, outer, inner, a0, a1, dx, dy);
-        g.fillStyle = T.field; g.globalAlpha = 0.98; g.fill(back); g.strokeStyle = T.line; g.lineWidth = 1.3 * px; g.stroke(back);
-        const A = ellipsePoint(cx, cy, rx, ry, outer, a0), B = ellipsePoint(cx, cy, rx, ry, inner, a0);
-        const C = ellipsePoint(cx, cy, rx, ry, inner, a0, dx, dy), D = ellipsePoint(cx, cy, rx, ry, outer, a0, dx, dy);
-        g.fillStyle = i & 1 ? T.field2 : T.field; g.fill(quad(A, B, C, D));
-      }
-      const litTo = pose.charge * n * 1.15 + energized * 1.4;
-      for (let i = 0; i < n; i++) {
-        const a0 = -Math.PI / 2 + i * TAU / n + gap, a1 = -Math.PI / 2 + (i + 1) * TAU / n - gap;
-        const face = segmentPath(cx, cy, rx, ry, outer, inner, a0, a1, 0, 0), active = smooth(i - 0.7, i + 0.65, litTo);
-        g.fillStyle = metal; g.globalAlpha = 1; g.fill(face);
-        g.fillStyle = i & 1 ? ctx.rgba(T.line, 0.16) : ctx.rgba(T.phosphorDim, 0.09); g.fill(face);
-        if (active > 0.01) { g.fillStyle = ctx.rgba(T.amber, 0.04 + active * 0.15 * pose.energy); g.fill(face); }
-        g.strokeStyle = T.field; g.globalAlpha = 0.94; g.lineWidth = 7.5 * px; g.stroke(face);
-        g.strokeStyle = active > 0.5 ? T.amber : T.phosphorDim; g.globalAlpha = 0.26 + active * 0.5;
-        g.lineWidth = (2.2 + active * 1.1) * px; g.stroke(face);
-        g.strokeStyle = T.phosphorCore; g.globalAlpha = 0.12 + active * 0.2; g.lineWidth = 0.75 * px; g.stroke(face);
-        const mid = (a0 + a1) * 0.5, bolt = ellipsePoint(cx, cy, rx, ry, 1 + fw * 0.55, mid);
-        const bs = Math.max(1.2 * px, Math.min(rx, ry) * 0.018);
-        g.fillStyle = active > 0.6 ? T.amber : T.phosphorCore; g.globalAlpha = 0.42 + active * 0.48;
-        g.fillRect(bolt.x - bs * 0.5, bolt.y - bs * 0.5, bs, bs);
-      }
-      g.globalAlpha = 1;
-    }
-
-    function drawClamp(M, pose, angle, major) {
-      const T = ctx.tokens, { cx, cy, rx, ry } = M, minR = Math.min(rx, ry);
-      const anchor = ellipsePoint(cx, cy, rx, ry, 1.25, angle), retract = pose.charge * minR * (major ? 0.13 : 0.07);
-      g.save(); g.translate(anchor.x, anchor.y); g.rotate(angle); g.translate(retract, 0);
-      const vertical = Math.abs(Math.cos(angle)) < 0.5;
-      const len = minR * (major ? (vertical ? 0.34 : 0.54) : 0.32), thick = minR * (major ? 0.24 : 0.13);
-      const p = new Path2D(); p.moveTo(-len * 0.3, -thick * 0.5); p.lineTo(len * 0.52, -thick * 0.5); p.lineTo(len, -thick * 0.24);
-      p.lineTo(len, thick * 0.24); p.lineTo(len * 0.52, thick * 0.5); p.lineTo(-len * 0.3, thick * 0.5); p.closePath();
-      g.fillStyle = T.field; g.fill(p); g.strokeStyle = T.phosphorDim; g.globalAlpha = major ? 0.82 : 0.5; g.lineWidth = 2.2 * px; g.stroke(p);
-      g.strokeStyle = T.phosphorCore; g.globalAlpha = 0.17; g.lineWidth = 0.75 * px; g.stroke(p);
-      g.fillStyle = T.field2; g.globalAlpha = 1; g.fillRect(-len * 0.13, -thick * 0.28, len * 0.58, thick * 0.56);
-      g.strokeStyle = pose.charge > 0.62 ? T.amber : T.line; g.globalAlpha = 0.74; g.lineWidth = 1.4 * px; g.strokeRect(-len * 0.13, -thick * 0.28, len * 0.58, thick * 0.56);
-      const bolt = thick * 0.12; g.fillStyle = pose.charge > 0.78 ? T.amber : T.phosphorCore; g.globalAlpha = 0.72;
-      g.fillRect(len * 0.02 - bolt, -bolt, bolt * 2, bolt * 2); g.fillRect(len * 0.31 - bolt, -bolt, bolt * 2, bolt * 2);
-      g.restore(); g.globalAlpha = 1;
-    }
-
-    function drawClamps(M, pose) {
-      for (let i = 0; i < 4; i++) drawClamp(M, pose, i * Math.PI / 2, true);
-      for (let i = 0; i < 4; i++) drawClamp(M, pose, Math.PI / 4 + i * Math.PI / 2, false);
-    }
-
-    function drawPressureRing(M, pose) {
-      if (pose.burst <= 0.005) return;
-      const T = ctx.tokens, u = smooth(0, 1, pose.travel), s = 1.02 + u * 0.82;
-      g.beginPath(); g.ellipse(M.cx, M.cy, M.rx * s, M.ry * s, 0, 0, TAU);
-      g.strokeStyle = T.amber; g.globalAlpha = clamp(params.burst, 0, 1, 0.72) * pose.burst * (1 - 0.42 * u);
-      g.lineWidth = (2.2 + 5.5 * pose.burst) * px; g.stroke();
-      g.strokeStyle = T.phosphorCore; g.globalAlpha *= 0.34; g.lineWidth = 1.1 * px; g.stroke(); g.globalAlpha = 1;
+      const seamA = front[0], seamB = front[3];
+      line(seamA, seamB, M, V, T.line, vis * 0.85, (M.portrait ? 2 : 1.35) * px);
     }
 
     function draw(pose, sx, sy) {
-      lastPose = pose; const T = ctx.tokens;
+      const T = ctx.tokens, M = sceneGeometry(), V = viewPose(M);
       g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.fillStyle = T.field; g.fillRect(0, 0, w, h);
-      const M = geometry(); g.save(); g.translate(sx || 0, sy || 0);
-      drawHangar(M, pose);
-      const approach = 1 + smooth(0.02, 0.82, pose.travel) * 0.42;
-      g.save(); g.translate(M.cx, M.cy); g.scale(approach, approach); g.translate(-M.cx, -M.cy);
-      drawChassis(M); drawAperture(M, pose); drawSegments(M, pose); drawClamps(M, pose); g.restore();
-      drawPressureRing(M, pose);
+      g.save(); g.translate(sx || 0, sy || 0); g.lineJoin = 'bevel'; g.lineCap = 'square';
+      const spacing = clamp(params.ribSpacing, 1.6, 4.4, 2.55);
+      const count = M.portrait ? 11 : 15, span = count * spacing, travel = mod(distance, span);
+      M.far = Math.min(M.far, span);  /* the wrapped phone station enters beyond the zero-alpha far seam */
+      const stations = [];
+      for (let slot = 0; slot < count; slot++) {
+        const z = M.near + mod(slot * spacing - travel, span);
+        const worldIndex = Math.round((distance + z - M.near) / spacing);
+        stations.push({ slot, z, spacing, worldIndex });
+      }
+      stations.sort((a, b) => b.z - a.z);
+      for (const station of stations) { drawCell(station, M, V, pose); drawFin(station, M, V, pose); }
+      const nearest = stations[stations.length - 1], foregroundEnd = nearest.z - clamp(params.ribWidth, 0.08, 0.42, 0.19) * 0.12;
+      if (foregroundEnd > M.near + 0.04) {
+        drawCell({ worldIndex: nearest.worldIndex - 1, z: M.near, spacing }, M, V, pose, M.near + 0.015, foregroundEnd);
+      }
       g.restore(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1;
     }
 
-    function stillPose(fired) {
-      return fired
-        ? { charge: 0.96, travel: 0.2, burst: 0, energy: 1, scan: 0.78, shove: 0 }
-        : { charge: 0.72, travel: 0.08, burst: 0, energy: 0.88, scan: 0.57, shove: 0 };
-    }
-    function poseAt(t, calm) {
-      const idle = clamp(params.idleEnergy, 0.15, 1, 0.62), breathe = 0.96 + 0.04 * Math.sin(t * 0.72);
-      const scanRate = clamp(params.scanRate, 0, 2, 0.24);
-      let pose = { charge: 0.18 + energized * 0.18, travel: 0, burst: 0, energy: idle * breathe * (0.84 + energized * 0.16), scan: mod(energyPhase * scanRate * 0.375, 1), shove };
-      if (state === 'still') return stillPose(stillFired);
-      if (state === 'charge') {
-        const u = smooth(0, 1, seqT / clamp(params.chargeTime, 0.25, 4, 1.05));
-        pose.charge = u; pose.energy = idle + (1 - idle) * u; pose.scan = mod(u * 2.35, 1);
-      } else if (state === 'traverse') {
-        const u = smooth(0, 1, seqT / clamp(params.travelTime, 0.2, 3, 0.82));
-        pose.charge = 1 - 0.18 * u; pose.travel = u; pose.burst = Math.sin(Math.PI * u); pose.energy = 1; pose.scan = mod(0.35 + u * 3.1, 1);
-      } else if (state === 'settle') {
-        const u = smooth(0, 1, seqT / clamp(params.recoveryTime, 0.25, 5, 1.15));
-        pose.charge = 0.82 - 0.42 * u; pose.travel = 1 - u; pose.energy = 1 - 0.16 * u; pose.scan = mod(0.45 + u * 0.35, 1);
+    function framePose() {
+      if (state === 'spool') {
+        const u = smooth(0, 1, seqT / clamp(params.chargeTime, 0.2, 3, 0.5)); return { energy: 0.18 + u * 0.48, burst: 0 };
       }
-      if (calm) {
-        pose.charge *= 0.66; pose.travel *= 0.24; pose.burst = 0; pose.energy *= 0.78;
+      if (state === 'transit') {
+        const u = smooth(0, 1, seqT / clamp(params.travelTime, 0.35, 4, 1.3)); return { energy: 0.72 + Math.sin(Math.PI * u) * 0.28, burst: Math.sin(Math.PI * u) };
       }
-      return pose;
+      if (state === 'settle') {
+        const u = smooth(0, 1, seqT / clamp(params.recoveryTime, 0.3, 5, 1.15)); return { energy: 0.64 * (1 - u), burst: 0 };
+      }
+      if (state === 'still') return { energy: stillFired ? 0.82 : 0.34, burst: 0 };
+      return { energy: 0, burst: 0 };
     }
 
     function enter(next) {
       state = next; seqT = 0;
-      if (next === 'traverse' && ctx.dial === 'full') {
-        kick = 1;
+      if (next === 'transit' && ctx.dial === 'full' && !transitSent) {
+        transitSent = true; kick = 1;
         window.dispatchEvent(new CustomEvent('boneyard:gate', { detail: { phase: 'transit' } }));
       }
     }
-    function advance(dt) {
-      if (state === 'charge' && seqT >= clamp(params.chargeTime, 0.25, 4, 1.05)) enter('traverse');
-      else if (state === 'traverse' && seqT >= clamp(params.travelTime, 0.2, 3, 0.82)) enter('settle');
-      else if (state === 'settle' && seqT >= clamp(params.recoveryTime, 0.25, 5, 1.15)) { energized = 1; enter('idle'); }
-      else seqT += dt;
+
+    function advanceSequence(dt) {
+      if (state !== 'spool' && state !== 'transit' && state !== 'settle') return;
+      seqT += dt;
+      if (state === 'spool' && seqT >= clamp(params.chargeTime, 0.2, 3, 0.5)) enter('transit');
+      else if (state === 'transit' && seqT >= clamp(params.travelTime, 0.35, 4, 1.3)) enter('settle');
+      else if (state === 'settle' && seqT >= clamp(params.recoveryTime, 0.3, 5, 1.15)) enter('glide');
     }
 
-    function clearShare() {
-      if (!ownsShare) return;
-      const S = ctx.share;
-      S.gateEnergy = 0; S.warp = 0; S.warpAt = 0; S.punch = 0; S.shake = null; S.punchAt = 0;
-      ownsShare = false;
+    function speedTarget(progress, calm) {
+      const base = clamp(params.cruise, 0.2, 20, 2.9) * (calm ? clamp(params.calmCruise, 0.25, 1, 0.62) : 1);
+      const scroll = 1 + clamp(params.scrollGain, 0, 6, 0.8) * clamp(progress, 0, 0.3, 0);
+      if (state === 'spool') {
+        const u = smooth(0, 1, seqT / clamp(params.chargeTime, 0.2, 3, 0.5)); return base * scroll * (1 + u * (calm ? 0.25 : 0.72));
+      }
+      if (state === 'transit') {
+        const u = smooth(0, 1, seqT / clamp(params.travelTime, 0.35, 4, 1.3));
+        const swell = Math.sin(Math.PI * u); return base * scroll * (calm ? 1.32 + swell * 0.28 : 1.72 + swell * clamp(params.burst, 0.4, 5, 3.2));
+      }
+      if (state === 'settle') {
+        const u = smooth(0, 1, seqT / clamp(params.recoveryTime, 0.3, 5, 1.15)); return base * scroll * (1 + (1 - u) * (calm ? 0.32 : 1.05));
+      }
+      return base * scroll;
     }
 
     function launch() {
       if (dead || !ready) return false;
       if (ctx.dial === 'still') {
-        stillFired = true; state = 'still'; seqT = 0; energized = 1;
-        energyPhase = mod(energyPhase + 0.67, 2048); ctx.share.gateEnergy = 0; ownsShare = true;
-        draw(stillPose(true), 0, 0); if (ready) ctx.readout('gate', 'strip 2025-03-01 sunset · reactor armed');
+        stillFired = true; state = 'still'; seqT = 0; kick = 0;
+        distance = clamp(params.stillDolly, -4096, 4096, 18.35) + clamp(params.ribSpacing, 1.6, 4.4, 2.55) * 0.46;
+        claimShare(); ctx.share.gateEnergy = 0; ctx.share.punch = 0; ctx.share.shake = null;
+        draw(framePose(), 0, 0); ctx.readout('gate', 'selected travel frame');
         return true;
       }
-      energized = Math.max(0.58, energized); kick = ctx.dial === 'full' ? 0.12 : 0; enter('charge'); return true;
+      claimShare(); transitSent = false; kick = 0; enter('spool'); return true;
     }
 
     return {
       tick(dt, t, progress, pointer) {
         if (dead) return;
-        dt = clamp(dt, 0, 0.05, 0.016); lastTick = t || 1e-3;
-        if (state === 'still') enter('idle'); advance(dt);
+        dt = clamp(dt, 0, 0.05, 0.016); lastTick = t || 1e-3; claimShare();
+        if (state === 'still') { stillFired = false; enter('glide'); }
+        advanceSequence(dt);
         const calm = ctx.dial === 'calm', p = pointer || ctx.pointer;
-        const want = p && p.present && !p.coarse ? (clamp(p.nx, 0, 1, 0.5) - 0.5) * 2 * clamp(params.shove, 0, 2, 0.65) : 0;
-        shove += (want - shove) * (1 - Math.exp(-dt / clamp(params.settle, 0.04, 3, 0.45)));
-        const past = clamp(progress, 0, 0.3, 0), flow = clamp(params.cruise, 0, 100, 9) * 0.018 + clamp(params.scrollGain, 0, 60, 12) * past * 0.035;
-        const pose = poseAt(t || 0, calm); energyPhase = mod(energyPhase + dt * (flow + pose.charge * 0.46 + pose.travel * 1.55), 2048);
-        kick *= Math.exp(-dt / 0.16); if (kick < 0.01) kick = 0; clock += dt;
-        const localShake = ctx.dial === 'full' ? clamp(params.shakePx, 0, 10, 2.4) * Math.max(kick, pose.burst * 0.24) : 0;
-        const sx = localShake * (0.68 * Math.sin(clock * 47.3) + 0.32 * Math.sin(clock * 79.1 + 1.2));
-        const sy = localShake * (0.68 * Math.sin(clock * 59.7 + 0.8) + 0.32 * Math.sin(clock * 83.9 + 2.3));
-        const S = ctx.share, now = performance.now(); ownsShare = true;
-        S.warp = state === 'idle' ? pose.energy * 0.08 : Math.min(1, 0.18 + pose.charge * 0.45 + pose.travel * 0.3); S.warpAt = now;
-        S.gateEnergy = state === 'charge' ? Math.min(1, pose.charge * 0.78)
-          : state === 'traverse' ? Math.min(1, 0.78 + pose.travel * 0.22)
-            : state === 'settle' ? Math.max(0, 0.5 * (1 - seqT / clamp(params.recoveryTime, 0.25, 5, 1.15))) : 0;
-        S.punch = ctx.dial === 'full' ? kick : 0; S.shake = localShake > 0.05 ? { x: sx, y: sy } : null; S.punchAt = now;
+        const want = !calm && p && p.present && !p.coarse ? (clamp(p.nx, 0, 1, 0.5) - 0.5) * 2 * clamp(params.shove, 0, 0.7, 0.18) : 0;
+        shove += (want - shove) * (1 - Math.exp(-dt / clamp(params.settle, 0.08, 2, 0.34)));
+        const target = speedTarget(progress, calm), tau = target > speed ? 0.16 : clamp(params.settle, 0.08, 2, 0.34);
+        speed += (target - speed) * (1 - Math.exp(-dt / tau));
+        speed = Math.max(0.05, speed); distance += speed * dt;
+        if (distance > 1048576) distance -= 1048576;
+        kick *= Math.exp(-dt / 0.19); if (kick < 0.008) kick = 0; clock += dt;
+        const pose = framePose(), shake = !calm && state === 'transit' ? clamp(params.shakePx, 0, 8, 1.85) * Math.max(kick, pose.burst * 0.28) : 0;
+        const sx = shake * (0.67 * Math.sin(clock * 47.7) + 0.33 * Math.sin(clock * 81.1 + 1.2));
+        const sy = shake * (0.67 * Math.sin(clock * 59.3 + 0.8) + 0.33 * Math.sin(clock * 89.7 + 2.1));
+        const S = ctx.share, now = performance.now();
+        S.warp = 0; S.warpAt = 0;
+        S.gateEnergy = state === 'spool' ? Math.min(0.7, 0.14 + pose.energy * 0.72)
+          : state === 'transit' ? Math.min(1, 0.72 + pose.burst * 0.28)
+            : state === 'settle' ? Math.max(0, pose.energy * 0.58) : 0;
+        S.punch = calm ? 0 : kick; S.punchAt = calm || !kick ? 0 : now; S.shake = shake > 0.04 ? { x: sx, y: sy } : null;
         draw(pose, sx * bd, sy * bd); if (ready) ctx.readout('gate', stateLine());
       },
-      resize(nw, nh, ndpr) { w = Math.max(1, Math.round(nw)); h = Math.max(1, Math.round(nh)); bd = clamp(ndpr, 0.5, 4, 1); px = Math.max(0.65, bd); },
+      resize(nw, nh, ndpr) {
+        w = Math.max(1, Math.round(nw)); h = Math.max(1, Math.round(nh)); bd = clamp(ndpr, 0.5, 4, 1); px = Math.max(0.65, bd);
+      },
       still() {
-        const entering = state !== 'still'; state = 'still'; seqT = 0; energized = 0.9;
-        if (entering) {
-          stillFired = false;
-          energyPhase = mod(clamp(params.stillDolly, -4096, 4096, 23.5) * 0.071, 2048);
-        }
-        ctx.share.gateEnergy = 0; ownsShare = true;
-        draw(stillPose(stillFired), 0, 0);
-        if (ready) ctx.readout('gate', 'strip 2025-03-01 sunset · reactor ' + (stillFired ? 'armed' : 'still'));
+        const entering = state !== 'still'; state = 'still'; seqT = 0; kick = 0; speed = clamp(params.cruise, 0.2, 20, 2.9);
+        if (entering) { stillFired = false; distance = clamp(params.stillDolly, -4096, 4096, 18.35); }
+        claimShare(); ctx.share.gateEnergy = 0; ctx.share.warp = 0; ctx.share.warpAt = 0; ctx.share.punch = 0; ctx.share.punchAt = 0; ctx.share.shake = null;
+        draw(framePose(), 0, 0); if (ready) ctx.readout('gate', stillFired ? 'selected travel frame' : 'stable travel frame');
       },
       deactivate() {
         if (dead) return;
-        if (state !== 'still' && state !== 'idle') { state = 'idle'; seqT = 0; kick = 0; }
-        clearShare();
+        if (state !== 'still') state = 'glide';
+        seqT = 0; transitSent = false; kick = 0;
+        speed = clamp(params.cruise, 0.2, 20, 2.9) * (ctx.dial === 'calm' ? clamp(params.calmCruise, 0.25, 1, 0.62) : 1);
+        releaseShare();
       },
       launch,
       get state() { return state; },
       destroy() {
-        dead = true; state = 'dead'; pic.onload = null; pic.onerror = null;
-        raw = null; energy32 = null; energyImage = null; energyCtx = null; energyCanvas = null; eRad = null; eAng = null; eNx = null; eNy = null;
-        clearShare();
-        g.clearRect(0, 0, w, h);
+        dead = true; state = 'dead'; pic.onload = null; pic.onerror = null; raw = null; palette = [];
+        releaseShare(); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, w, h);
       },
-      params(p) {
-        if (p && typeof p === 'object') params = p;
-        if (raw) analyseStrip();
-        if (ctx.dial === 'still' || !lastTick) draw(state === 'still' ? stillPose(stillFired) : poseAt(lastTick, ctx.dial === 'calm'), 0, 0);
+      params(next) {
+        if (next && typeof next === 'object') params = next;
+        if (raw) buildPalette();
+        if (ctx.dial === 'still' || !lastTick) draw(framePose(), 0, 0);
       },
     };
   }
+
   BAYS.push({ slug: 'gate', title: 'Gate', order: 2, role: 'bay', params: PARAMS, mount });
 })();
 

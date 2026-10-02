@@ -1,4 +1,11 @@
-# Gate acceptance, 2026-10-01
+# Gate reactor review, 2026-10-01: owner rejected
+
+This review records revision `b87011b033c01fbcf43e2dde268c229dafdf5cc2`.
+The independent reviewer passed it and its technical checks passed, but the owner
+subsequently rejected the rendered result: "terrible... revert it or make it fit the vibe
+of retro and traveling through something... take your time". The reactor direction is
+creatively rejected. Neither the review nor publication represented owner acceptance.
+The replacement is documented in [the travel correction](travel-brief.md).
 
 Owner feedback: "gate 2 sucks.. i need you do go all out and ramp it up!!"
 Baseline: ec9a2b5edf15f18ee951d173cad15faa788f7100.

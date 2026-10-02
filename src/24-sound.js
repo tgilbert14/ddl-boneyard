@@ -1,11 +1,11 @@
 /* BONEYARD SOUND · the gesture-led engine room (PUNCH item 7)
  * what        one SOUND button in the header. Sound is enabled by default, but stays silent until a visitor scrolls,
- *             uses ride navigation, fires Gate or starts Auto-fly. An explicit on or off choice is remembered. When sounding: a low synth engine bed whose pitch and filter
+ *             uses ride navigation, boosts Gate or starts Auto-fly. An explicit on or off choice is remembered. When sounding: a low synth engine bed whose pitch and filter
  *             follow scroll speed, a CRT relay clunk plus a high-voltage whine tick on every tube switch, a rising
- *             filtered-noise whoosh with a pitch sweep when a hyperspace warp crosses 0.6 or Gate begins a Full traversal.
- *             Gate's charge also raises the existing engine bed. SCOPE keeps its own tone.
+ *             filtered-noise whoosh with a pitch sweep when a hyperspace warp crosses 0.6 or Gate reaches its Full boost.
+ *             Gate's speed rise also raises the existing engine bed. SCOPE keeps its own tone.
  * law         no playback before real ride intent. Pointer, touch and keyboard gestures may unlock a silent context;
- *             a scroll, navigation action, Fire gate or active Auto-fly request starts the bed. A wheel alone cannot unlock audio
+ *             a scroll, navigation action, Boost or active Auto-fly request starts the bed. A wheel alone cannot unlock audio
  *             in every browser, so a blocked request is shown as pending and the SOUND button completes it. An explicit
  *             stored off always wins. Sound is independent of the motion dial. Hidden tabs suspend the context.
  *             The bed ducks to near zero while SCOPE is current and held.
@@ -169,7 +169,7 @@
   let outputLive = false;                  /* the graph's master has been raised */
   let igniteOnStart = true, pressOnStart = false;
   let resumeFlight = null, resumeToken = 0, sleepT = 0;
-  let lastClunk = { on: -1, off: -1 }, lastWhoosh = -1, warpHigh = false, sawSwitchEvent = false, prevBay = null;
+  let lastClunk = { on: -1, off: -1 }, lastWhoosh = -Infinity, warpHigh = false, sawSwitchEvent = false, prevBay = null;
   let sm = 0, lastY = window.scrollY, yMovedAt = 0;
   const stats = { clunks: 0, whooshes: 0, freq: 0, speed: 0, ducked: false };
 
@@ -337,7 +337,7 @@
   addEventListener('boneyard:switch', (e) => { rouse(); sawSwitchEvent = true; onSwitch(e.detail && e.detail.dir); });
   addEventListener('boneyard:warp', (e) => {
     const r = ride(), cur = r && r.bays[Math.max(0, r.current)];
-    if (cur?.slug === 'gate') return;  /* Gate's own traversal event owns its synchronized voice. */
+    if (cur?.slug === 'gate') return;  /* Gate's own surge event owns its synchronized voice. */
     rouse(); sawWarpEvent = true; onWarp(+(e.detail && e.detail.level) || 1, true);
   });
   addEventListener('boneyard:gate', (e) => {
